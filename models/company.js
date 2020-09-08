@@ -6,8 +6,14 @@ const companySchema = new Schema(
     name: String,
     address: String,
     deliveryPlace: String,
-    block: Number,
-    deliveryTime: String,
+    deliveryGuy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    block: {
+      type: Schema.Types.ObjectId,
+      ref: "Block",
+    },
   },
   { timestamps: true }
 );

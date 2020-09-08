@@ -26,6 +26,7 @@ exports.register = async (req, res, next) => {
   const lastName = req.body.lastName;
   const email = req.body.email;
   const password = req.body.password;
+  const plan = req.body.plan;
   const companyId = req.body.companyId;
   try {
     const userCheck = await User.findOne({ email: email });
@@ -40,6 +41,7 @@ exports.register = async (req, res, next) => {
       lastName: lastName,
       email: email,
       password: hashedPassword,
+      plan: plan,
       companyId: companyId,
     });
     const userSaved = await user.save();
@@ -126,7 +128,7 @@ exports.changePassword = async (req, res, next) => {
     }
     const checkPassword = bcrypt.compareSync(password, user.password);
     if (checkPassword) {
-      const err = new Error("You cannot change password to old password!");
+      const err = new Error("Change your password to a new one!");
       err.status = 402;
       throw err;
     }

@@ -7,7 +7,34 @@ const UserSchema = new Schema(
     lastName: String,
     email: String,
     password: String,
-    companyId: {
+    plan: String,
+    referrals: Number,
+    credits: Number,
+    role: { type: String, default: "user" },
+    package: {
+      type: Schema.Types.ObjectId,
+      ref: "Package",
+    },
+    vouchers: {
+      type: Schema.Types.ObjectId,
+      ref: "Voucher",
+    },
+    cart: {
+      type: Schema.Types.ObjectId,
+      ref: "Cart",
+    },
+    history: {
+      type: Schema.Types.ObjectId,
+      ref: "History",
+    },
+    notifications: [
+      {
+        title: String,
+        description: String,
+        status: { type: String, default: "active" },
+      },
+    ],
+    company: {
       type: Schema.Types.ObjectId,
       ref: "Company",
     },

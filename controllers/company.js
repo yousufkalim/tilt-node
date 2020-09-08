@@ -1,5 +1,6 @@
 // Import Models
 const Company = require("../models/company");
+const Block = require("../models/block");
 
 // Gets
 exports.getAll = async (req, res, next) => {
@@ -36,15 +37,15 @@ exports.getById = async (req, res, next) => {
   }
 };
 exports.getAllByBlock = async (req, res, next) => {
-  const block = req.params.block;
+  const blockId = req.params.block;
   try {
-    const companies = await Company.find({ block: block });
-    if (!companies) {
+    const block = await Block.findById(blockId).populate("companies").exec();
+    if (!block) {
       const err = new Error("Whoops, there was en error!");
       err.status = 404;
       throw err;
     }
-    res.status(200).json({ companies: companies });
+    res.status(200).json({ companies: block });
   } catch (err) {
     if (!err.status) {
       err.status = 500;
@@ -56,10 +57,10 @@ exports.getAllByBlock = async (req, res, next) => {
 // Posts
 exports.addCompany = async (req, res, next) => {
   const name = req.body.name;
+  const blockId = req.body.block;
   const address = req.body.address;
-  const deliveryPlace = req.body.deliveryPlace;
-  const block = req.body.block;
   const deliveryTime = req.body.deliveryTime;
+  const deliveryPlace = req.body.deliveryPlace;
 
   try {
     const companyCheck = await Company.findOne({ name: name });
@@ -71,12 +72,18 @@ exports.addCompany = async (req, res, next) => {
     const company = new Company({
       name: name,
       address: address,
-      deliveryPlace: deliveryPlace,
-      block: block,
       deliveryTime: deliveryTime,
+      deliveryPlace: deliveryPlace,
     });
+    const block = await Block.findById(blockId);
+    if (!block) {
+      const err = new Error("Whoops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
     const companySaved = await company.save();
-
+    block.companies.push(companySaved._id);
+    await block.save();
     res.status(201).json({ company: companySaved });
   } catch (err) {
     if (!err.status) {
@@ -87,10 +94,10 @@ exports.addCompany = async (req, res, next) => {
 };
 exports.editCompany = async (req, res, next) => {
   const companyId = req.params.companyId;
+  const name = req.body.name;
   const address = req.body.address;
-  const deliveryPlace = req.body.deliveryPlace;
-  const block = req.body.block;
   const deliveryTime = req.body.deliveryTime;
+  const deliveryPlace = req.body.deliveryPlace;
   try {
     const company = await Company.findById(companyId);
     if (!company) {
@@ -98,12 +105,14 @@ exports.editCompany = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
+    company.name = name;
     company.address = address;
-    company.deliveryPlace = deliveryPlace;
-    company.block = block;
     company.deliveryTime = deliveryTime;
+    company.deliveryPlace = deliveryPlace;
+
     const companySaved = await company.save();
-    res.status(200).json({ company: companySaved });
+
+    res.status(201).json({ company: companySaved });
   } catch (err) {
     if (!err.status) {
       err.status = 500;
@@ -115,6 +124,7 @@ exports.editCompany = async (req, res, next) => {
 // Others
 exports.deleteCompany = async (req, res, next) => {
   const companyId = req.params.companyId;
+  const blockId = req.params.block;
   try {
     const company = await Company.findByIdAndDelete(companyId);
     if (!company) {
@@ -122,6 +132,18 @@ exports.deleteCompany = async (req, res, next) => {
       error.status = 404;
       throw error;
     }
+    const block = await Block.findById(blockId);
+    if (!block) {
+      const error = new Error("Whoops, there was an error!");
+      error.status = 404;
+      throw error;
+    }
+
+    const companies = block.companies.filter(
+      (company) => String(company) !== String(company._id)
+    );
+    block.companies = companies;
+    await block.save();
     res.status(201).json({ deleted: true, company: company });
   } catch (err) {
     next(err);
