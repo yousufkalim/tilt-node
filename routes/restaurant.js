@@ -33,7 +33,6 @@ var uploadRes = multer({
 // GET
 router.get("/", restaurantController.getAll);
 router.get("/get/:restaurantId", restaurantController.getById);
-// router.get("/getallbyblock/:block", isAuth, restaurantController.getAllByBlock);
 
 // POST
 router.post(

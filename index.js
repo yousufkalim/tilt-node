@@ -13,6 +13,7 @@ const helmet = require("helmet"); // headers
 const companyRoutes = require("./routes/company");
 // const deliveryRoutes = require("./routes/delivery");
 const restaurantRoutes = require("./routes/restaurant");
+const dishRoutes = require("./routes/dish");
 // const userRoutes = require("./routes/user");
 
 // App initialization
@@ -51,6 +52,7 @@ app.use("/data", express.static(path.join(__dirname, "data")));
 app.use("/company", companyRoutes);
 // app.use("/delivery", deliveryRoutes);
 app.use("/restaurant", restaurantRoutes);
+app.use("/dish", dishRoutes);
 // app.use("/user", userRoutes);
 
 // Error Handler

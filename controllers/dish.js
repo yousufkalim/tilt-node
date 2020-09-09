@@ -5,13 +5,12 @@ const Restaurant = require("../models/restaurant");
 // Gets
 exports.getAll = async (req, res, next) => {
   try {
-    const dishes = await Dish.find();
+    const dishes = await Dish.find().populate("restaurant").exec();
     if (!dishes) {
-      const err = new Error("Whoops, there was en error!");
-      err.status = 404;
-      throw err;
+      res.status(200).json({ dishes: [] });
+    } else {
+      res.status(200).json({ dishes: dishes });
     }
-    res.status(200).json({ dishes: dishes });
   } catch (err) {
     if (!err.status) {
       err.status = 500;
@@ -22,13 +21,30 @@ exports.getAll = async (req, res, next) => {
 exports.getById = async (req, res, next) => {
   const dishId = req.params.dishId;
   try {
-    const dish = await Dish.findById(dishId);
+    const dish = await Dish.findById(dishId).populate("restaurant").exec();
     if (!dish) {
-      const err = new Error("Whoops, there was en error!");
-      err.status = 404;
-      throw err;
+      res.status(200).json({ dish: "" });
+    } else {
+      res.status(200).json({ dish: dish });
     }
-    res.status(200).json({ dish: dish });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.getAllByRestaurant = async (req, res, next) => {
+  const restaurantId = req.params.restaurantId;
+  try {
+    const dishes = await Dish.find({ restaurant: restaurantId })
+      .populate("restaurant")
+      .exec();
+    if (!dishes) {
+      res.status(200).json({ dishes: [] });
+    } else {
+      res.status(200).json({ dishes: dishes });
+    }
   } catch (err) {
     if (!err.status) {
       err.status = 500;
@@ -41,11 +57,11 @@ exports.getById = async (req, res, next) => {
 exports.addDish = async (req, res, next) => {
   const restaurantId = req.body.restaurantId;
   const name = req.body.name;
-  const description = req.body.description;
   const price = req.body.price;
   const dishType = req.body.dishType;
-  let imagePath = req.file.path;
-  imagePath = imagePath.replace(/\\/g, "/");
+  const description = req.body.description;
+  let imagePath = req.file !== undefined ? req.file.path : "";
+  imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
   try {
     let restaurant = await Restaurant.findById(restaurantId)
       .populate("dishes")
@@ -71,11 +87,12 @@ exports.addDish = async (req, res, next) => {
       price: price,
       dishType: dishType,
       image: imagePath,
+      restaurant: restaurantId,
     });
     const dishSaved = await dish.save();
     restaurant.dishes.push(dishSaved._id);
     await restaurant.save();
-    res.status(201).json({ dish: dishSaved });
+    res.status(201).json({ registered: true, dish: dishSaved });
   } catch (err) {
     if (!err.status) {
       err.status = 500;
@@ -87,9 +104,9 @@ exports.editDish = async (req, res, next) => {
   const dishId = req.params.dishId;
   const restaurantId = req.body.restaurantId;
   const name = req.body.name;
-  const description = req.body.description;
   const price = req.body.price;
   const dishType = req.body.dishType;
+  const description = req.body.description;
   let imagePath = req.file !== undefined ? req.file.path : "";
   imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
 
@@ -122,7 +139,7 @@ exports.editDish = async (req, res, next) => {
     imagePath !== "" && (dish.image = imagePath);
     const dishSaved = await dish.save();
 
-    res.status(201).json({ dish: dishSaved });
+    res.status(201).json({ updated: true, dish: dishSaved });
   } catch (err) {
     if (!err.status) {
       err.status = 500;
@@ -133,16 +150,9 @@ exports.editDish = async (req, res, next) => {
 
 // Others
 exports.deleteDish = async (req, res, next) => {
-  //   const userId = req.userId;
-  const DishId = req.params.DishId;
+  const dishId = req.params.dishId;
   const restaurantId = req.body.restaurantId;
   try {
-    // const user = await User.findById(userId);
-    // if (!user) {
-    //   const err = new Error("Whoops, there was en error!");
-    //   err.status = 404;
-    //   throw err;
-    // }
     const dish = await Dish.findById(dishId);
     if (!dish) {
       const err = new Error("Whoops, there was en error!");
@@ -164,12 +174,17 @@ exports.deleteDish = async (req, res, next) => {
       throw err;
     }
 
-    const dishDeleted = await Dish.findByIdAndDelete(DishId);
+    const dishDeleted = await Dish.findByIdAndDelete(dishId);
     if (!dishDeleted) {
       const error = new Error("Whoops, there was an error!");
       error.status = 404;
       throw error;
     }
+    const newDishes = restaurant.dishes.filter(
+      (dish) => String(dish) !== String(dishId)
+    );
+    restaurant.dishes = newDishes;
+    await restaurant.save();
 
     res.status(201).json({ deleted: true, dish: dishDeleted });
   } catch (err) {

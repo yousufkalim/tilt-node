@@ -9,8 +9,12 @@ const dishSchema = new Schema(
     discountedPrice: { type: Number },
     onPromotion: { type: Boolean },
     dishType: { type: String, required: true },
-    image: { type: String, required: true },
-    status: { type: String, required: true },
+    image: { type: String },
+    status: { type: String, default: "active" },
+    restaurant: {
+      type: Schema.Types.ObjectId,
+      ref: "Restaurant",
+    },
   },
   { timestamps: true }
 );
