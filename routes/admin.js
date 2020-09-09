@@ -1,17 +1,20 @@
 const express = require("express");
 const router = express.Router();
 
+const adminController = require("../controllers/admin");
 const isAuth = require("../utils/isAuth");
 
-// // Posts
-// router.post("/register", AuthController.register);
-// router.post("/login", AuthController.login);
+// GET
+router.get("/package", adminController.getAllPackages);
+router.get("/package/get/:packageId", adminController.getPackage);
 
-// // Gets
-// router.get("/checkemail/:email", AuthController.checkEmail);
+// POST
+router.post("/package", adminController.registerPackage);
 
-// // others
-// router.put("/edit", isAuth, AuthController.editProfile);
-// router.put("/editpassword", isAuth, AuthController.changePassword);
+// PUT
+router.put("/package/edit/:packageId", adminController.editPackage);
+
+// DELETE
+router.delete("/package/delete/:packageId", adminController.deletePackage);
 
 module.exports = router;

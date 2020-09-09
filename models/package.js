@@ -5,7 +5,7 @@ const packageSchema = new Schema(
   {
     name: { type: String, required: true },
     price: { type: Number, required: true },
-    off: { type: Number, required: true },
+    offPrice: { type: Number, required: true },
     credits: { type: Number, required: true },
     expiration: { type: Number, required: true },
   },
