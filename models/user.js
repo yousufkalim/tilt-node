@@ -10,7 +10,16 @@ const UserSchema = new Schema(
     plan: String,
     referrals: Number,
     credits: Number,
-    role: { type: String, default: "user" },
+    status: { type: String, default: "active" },
+    role: {
+      name: {
+        type: String,
+        default: "user",
+      },
+      id: {
+        type: String,
+      },
+    },
     package: {
       type: Schema.Types.ObjectId,
       ref: "Package",

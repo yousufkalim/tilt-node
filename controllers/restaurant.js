@@ -1,6 +1,8 @@
 // Import Models
+const User = require("../models/user");
 const Restaurant = require("../models/restaurant");
 const Dish = require("../models/dish");
+const bcrypt = require("bcryptjs");
 
 // Gets
 exports.getAll = async (req, res, next) => {
@@ -38,75 +40,98 @@ exports.getById = async (req, res, next) => {
 };
 
 // Posts
-exports.addRestaurant = async (req, res, next) => {
+exports.registerRestaurant = async (req, res, next) => {
+  const email = req.body.email;
+  const password = req.body.password;
   const name = req.body.name;
-  const description = req.body.description;
   const address = req.body.address;
   const pickupPlace = req.body.pickupPlace;
   let imagePath = req.file.path;
   imagePath = imagePath.replace(/\\/g, "/");
   try {
+    const userCheck = await User.findOne({ email });
+    if (userCheck) {
+      const error = new Error("Email already exists!");
+      error.status = 404;
+      throw error;
+    }
     const restaurantCheck = await Restaurant.findOne({ name: name });
     if (restaurantCheck) {
-      const err = new Error("Restaurant already exists with that name!");
-      err.status = 404;
-      throw err;
+      const error = new Error("Restaurant with this name already exists!");
+      error.status = 404;
+      throw error;
     }
     const restaurant = new Restaurant({
       name: name,
-      description: description,
       address: {
-        street: address.street,
-        city: address.city,
-        postalCode: address.postalCode,
-        lat: address.lat,
-        long: address.long,
+        street: JSON.parse(address).street,
+        city: JSON.parse(address).city,
+        zip: JSON.parse(address).zip,
+        lat: 0,
+        long: 0,
       },
-      pickupPlace: pickupPlace,
       image: imagePath,
+      pickupPlace: pickupPlace,
     });
-    const restaurantsaved = await restaurant.save();
-    res.status(201).json({ restaurant: restaurantsaved });
+    const restaurantSaved = await restaurant.save();
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const user = new User({
+      email: email,
+      password: hashedPassword,
+      status: "pending",
+      role: {
+        name: "restaurant",
+        id: restaurantSaved._id,
+      },
+    });
+    await user.save();
+
+    res.status(201).json({ registered: true });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
+
 exports.editRestaurant = async (req, res, next) => {
   const restaurantId = req.params.restaurantId;
+  const email = req.body.email;
   const name = req.body.name;
-  const description = req.body.description;
   const address = req.body.address;
   const pickupPlace = req.body.pickupPlace;
   let imagePath = req.file !== undefined ? req.file.path : "";
   imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
-
   try {
+    const user = await User.findOne({ "role.id": restaurantId });
+    if (!user) {
+      const error = new Error("Email not found!");
+      error.status = 404;
+      throw error;
+    }
     const restaurant = await Restaurant.findById(restaurantId);
     if (!restaurant) {
-      const err = new Error("Whoops, there was en error!");
-      err.status = 404;
-      throw err;
+      const error = new Error("Restaurant not found!");
+      error.status = 404;
+      throw error;
     }
+
+    user.email = email;
+
     restaurant.name = name;
-    restaurant.description = description;
-    restaurant.address.street = address.street;
-    restaurant.address.city = address.city;
-    restaurant.address.postalCode = address.postalCode;
-    restaurant.address.lat = address.lat;
-    restaurant.address.long = address.long;
+    restaurant.address.street = JSON.parse(address).street;
+    restaurant.address.city = JSON.parse(address).city;
+    restaurant.address.zip = JSON.parse(address).zip;
     restaurant.pickupPlace = pickupPlace;
     imagePath !== "" && (restaurant.image = imagePath);
-
-    const restaurantsaved = await restaurant.save();
-
-    res.status(201).json({ restaurant: restaurantsaved });
+    const userSaved = await user.save();
+    let restaurantSaved = await restaurant.save();
+    res.status(201).json({
+      updated: true,
+      restaurant: {
+        email: userSaved.email,
+        ...restaurantSaved.toObject(),
+      },
+    });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -115,15 +140,21 @@ exports.editRestaurant = async (req, res, next) => {
 exports.deleteRestaurant = async (req, res, next) => {
   const restaurantId = req.params.restaurantId;
   try {
+    const user = await User.findOneAndDelete({ "role.id": restaurantId });
+    if (!user) {
+      const error = new Error("Whoops, there was an error!");
+      error.status = 404;
+      throw error;
+    }
     const restaurant = await Restaurant.findByIdAndDelete(restaurantId);
     if (!restaurant) {
       const error = new Error("Whoops, there was an error!");
       error.status = 404;
       throw error;
     }
-    restaurant.dishes.map(dishId => {
+    restaurant.dishes.map(async (dishId) => {
       await Dish.findByIdAndDelete(dishId);
-    })
+    });
     res.status(201).json({ deleted: true, restaurant: restaurant });
   } catch (err) {
     next(err);

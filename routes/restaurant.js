@@ -1,23 +1,55 @@
 const express = require("express");
+const multer = require("multer");
 const router = express.Router();
 
 const restaurantController = require("../controllers/restaurant");
 const isAuth = require("../utils/isAuth");
 
-// Gets
-router.get("/getall", isAuth, restaurantController.getAll);
-router.get("/getbyid/:restaurantId", isAuth, restaurantController.getById);
-router.get("/getallbyblock/:block", isAuth, restaurantController.getAllByBlock);
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/jpeg"
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+var storageRes = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "data/restaurants");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
 
-// Posts
-router.post("/add", isAuth, restaurantController.addRestaurant);
+var uploadRes = multer({
+  storage: storageRes,
+  fileFilter: fileFilter,
+});
 
-// Others
-router.put("/edit/:restaurantId", isAuth, restaurantController.editRestaurant);
-router.delete(
-  "/delete/:restaurantId",
-  isAuth,
-  restaurantController.deleteRestaurant
+// GET
+router.get("/", restaurantController.getAll);
+router.get("/get/:restaurantId", restaurantController.getById);
+// router.get("/getallbyblock/:block", isAuth, restaurantController.getAllByBlock);
+
+// POST
+router.post(
+  "/",
+  uploadRes.single("image"),
+  restaurantController.registerRestaurant
 );
+
+// PUT
+router.put(
+  "/edit/:restaurantId",
+  uploadRes.single("image"),
+  restaurantController.editRestaurant
+);
+
+// DELETE
+router.delete("/delete/:restaurantId", restaurantController.deleteRestaurant);
 
 module.exports = router;

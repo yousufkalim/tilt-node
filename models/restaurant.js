@@ -3,18 +3,17 @@ const Schema = mongoose.Schema;
 
 const restaurantSchema = new Schema(
   {
-    name: { type: String, required: true },
-    description: { type: String, required: true },
+    name: { type: String },
     address: {
-      street: { type: String, required: true },
-      city: { type: String, required: true },
-      postalCode: { type: String, required: true },
-      lat: { type: Number, required: true },
-      long: { type: Number, required: true },
+      street: { type: String },
+      city: { type: String },
+      zip: { type: String },
+      lat: { type: Number },
+      long: { type: Number },
     },
-    image: { type: String, required: true },
-    pickupPlace: { type: String, required: true },
-    deliveryCost: { type: String, required: true },
+    image: { type: String },
+    pickupPlace: { type: String },
+    deliveryCost: { type: String },
     dishes: [
       {
         type: Schema.Types.ObjectId,
