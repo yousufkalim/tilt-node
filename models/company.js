@@ -4,16 +4,14 @@ const Schema = mongoose.Schema;
 const companySchema = new Schema(
   {
     name: String,
-    address: String,
+    address: {
+      street: { type: String },
+      city: { type: String },
+      zip: { type: String },
+      lat: { type: Number },
+      long: { type: Number },
+    },
     deliveryPlace: String,
-    deliveryGuy: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-    },
-    block: {
-      type: Schema.Types.ObjectId,
-      ref: "Block",
-    },
   },
   { timestamps: true }
 );

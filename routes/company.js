@@ -4,16 +4,17 @@ const router = express.Router();
 const companyController = require("../controllers/company");
 const isAuth = require("../utils/isAuth");
 
-// Gets
-router.get("/getall", isAuth, companyController.getAll);
-router.get("/getbyid/:companyId", isAuth, companyController.getById);
-router.get("/getallbyblock/:block", isAuth, companyController.getAllByBlock);
+// GET
+router.get("/", companyController.getAll);
+router.get("/get/:companyId", companyController.getById);
 
-// Posts
-router.post("/add", isAuth, companyController.addCompany);
+// POST
+router.post("/", companyController.registerCompany);
 
-// Others
-router.put("/edit/:companyId", isAuth, companyController.editCompany);
-router.delete("/delete/:companyId", isAuth, companyController.deleteCompany);
+// PUT
+router.put("/edit/:companyId", companyController.editCompany);
+
+// DELETE
+router.delete("/delete/:companyId", companyController.deleteCompany);
 
 module.exports = router;

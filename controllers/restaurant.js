@@ -25,11 +25,6 @@ exports.getById = async (req, res, next) => {
   const restaurantId = req.params.restaurantId;
   try {
     const restaurant = await Restaurant.findById(restaurantId);
-    if (!restaurant) {
-      const err = new Error("Whoops, there was en error!");
-      err.status = 404;
-      throw err;
-    }
     res.status(200).json({ restaurant: restaurant });
   } catch (err) {
     if (!err.status) {
@@ -84,9 +79,15 @@ exports.registerRestaurant = async (req, res, next) => {
         id: restaurantSaved._id,
       },
     });
-    await user.save();
+    const userSaved = await user.save();
 
-    res.status(201).json({ registered: true });
+    res.status(201).json({
+      registered: true,
+      restaurant: {
+        email: userSaved.email,
+        ...restaurantSaved.toObject(),
+      },
+    });
   } catch (err) {
     next(err);
   }
