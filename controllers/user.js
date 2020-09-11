@@ -26,7 +26,6 @@ exports.register = async (req, res, next) => {
   const lastName = req.body.lastName;
   const email = req.body.email;
   const password = req.body.password;
-  const plan = req.body.plan;
   const companyId = req.body.companyId;
   try {
     const userCheck = await User.findOne({ email: email });
@@ -41,7 +40,6 @@ exports.register = async (req, res, next) => {
       lastName: lastName,
       email: email,
       password: hashedPassword,
-      plan: plan,
       companyId: companyId,
     });
     const userSaved = await user.save();

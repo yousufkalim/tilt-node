@@ -12,6 +12,7 @@ const companySchema = new Schema(
       long: { type: Number },
     },
     deliveryPlace: String,
+    // block relation
   },
   { timestamps: true }
 );

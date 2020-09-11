@@ -4,8 +4,9 @@ const Schema = mongoose.Schema;
 const blockSchema = new Schema(
   {
     name: String,
-    pickupTime: String,
+    pickUpTime: String,
     deliveryTime: String,
+    deliveryCost: Number,
     deliveryPerson: {
       type: Schema.Types.ObjectId,
       ref: "User",
