@@ -10,6 +10,7 @@ const HistorySchema = new Schema(
         orderId: String,
         order: Schema.Types.Mixed,
         paid: Number,
+        status: { type: String, default: "In progress" },
       },
     ],
   },
