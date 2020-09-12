@@ -24,6 +24,11 @@ exports.getById = async (req, res, next) => {
   const companyId = req.params.companyId;
   try {
     const company = await Company.findById(companyId);
+    if (!company) {
+      const err = new Error("No such company exists!");
+      err.status = 404;
+      throw err;
+    }
     res.status(200).json({ company: company });
   } catch (err) {
     if (!err.status) {
@@ -101,13 +106,13 @@ exports.editCompany = async (req, res, next) => {
   try {
     const user = await User.findOne({ "role.id": companyId });
     if (!user) {
-      const error = new Error("Email not found!");
+      const error = new Error("No such company found!");
       error.status = 404;
       throw error;
     }
     const company = await Company.findById(companyId);
     if (!company) {
-      const err = new Error("Whoops, there was en error!");
+      const err = new Error("No such company found!");
       err.status = 404;
       throw err;
     }
@@ -142,18 +147,20 @@ exports.editCompany = async (req, res, next) => {
 exports.deleteCompany = async (req, res, next) => {
   const companyId = req.params.companyId;
   try {
-    const user = await User.findOneAndDelete({ "role.id": companyId });
+    const user = await User.findOne({ "role.id": companyId });
     if (!user) {
       const error = new Error("Whoops, there was an error!");
       error.status = 404;
       throw error;
     }
-    const company = await Company.findByIdAndDelete(companyId);
+    const company = await Company.findById(companyId);
     if (!company) {
       const error = new Error("Whoops, there was an error!");
       error.status = 404;
       throw error;
     }
+    user.status = "deleted";
+    const userSaved = await user.save();
     const users = await User.find({ company: companyId });
     await Promise.all(
       users.map(async (userIn) => {
@@ -165,7 +172,7 @@ exports.deleteCompany = async (req, res, next) => {
     res.status(201).json({
       deleted: true,
       company: {
-        email: user.email,
+        email: userSaved.email,
         ...company.toObject(),
       },
     });

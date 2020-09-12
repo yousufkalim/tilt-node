@@ -15,8 +15,7 @@ const cartSchema = new Schema(
         count: Number,
       },
     ],
-    // change specific name
-    cart: [
+    restaurantCart: [
       {
         company: {
           type: Schema.Types.ObjectId,

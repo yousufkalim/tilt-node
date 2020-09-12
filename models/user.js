@@ -7,7 +7,6 @@ const UserSchema = new Schema(
     lastName: String,
     email: String,
     password: String,
-    plan: String,
     referrals: Number,
     credits: Number,
     status: { type: String, default: "active" },
@@ -23,10 +22,6 @@ const UserSchema = new Schema(
     package: {
       type: Schema.Types.ObjectId,
       ref: "Package",
-    },
-    vouchers: {
-      type: Schema.Types.ObjectId,
-      ref: "Voucher",
     },
     cart: {
       type: Schema.Types.ObjectId,

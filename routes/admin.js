@@ -5,21 +5,25 @@ const adminController = require("../controllers/admin");
 const isAuth = require("../utils/isAuth");
 
 // GET
-router.get("/package", adminController.getAllPackages);
-router.get("/package/get/:packageId", adminController.getPackage);
-router.get("/block", adminController.getAllBlocks);
-router.get("/block/get/:blockId", adminController.getBlock);
+router.get("/package", isAuth, adminController.getAllPackages);
+router.get("/package/get/:packageId", isAuth, adminController.getPackage);
+router.get("/block", isAuth, adminController.getAllBlocks);
+router.get("/block/get/:blockId", isAuth, adminController.getBlock);
 
 // POST
-router.post("/package", adminController.registerPackage);
-router.post("/block", adminController.registerBlock);
+router.post("/package", isAuth, adminController.registerPackage);
+router.post("/block", isAuth, adminController.registerBlock);
 
 // PUT
-router.put("/package/edit/:packageId", adminController.editPackage);
-router.put("/block/edit/:blockId", adminController.editBlock);
+router.put("/package/edit/:packageId", isAuth, adminController.editPackage);
+router.put("/block/edit/:blockId", isAuth, adminController.editBlock);
 
 // DELETE
-router.delete("/package/delete/:packageId", adminController.deletePackage);
-router.delete("/block/delete/:blockId", adminController.deleteBlock);
+router.delete(
+  "/package/delete/:packageId",
+  isAuth,
+  adminController.deletePackage
+);
+router.delete("/block/delete/:blockId", isAuth, adminController.deleteBlock);
 
 module.exports = router;

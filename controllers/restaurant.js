@@ -141,22 +141,30 @@ exports.editRestaurant = async (req, res, next) => {
 exports.deleteRestaurant = async (req, res, next) => {
   const restaurantId = req.params.restaurantId;
   try {
-    const user = await User.findOneAndDelete({ "role.id": restaurantId });
+    const user = await User.findOne({ "role.id": restaurantId });
     if (!user) {
       const error = new Error("Whoops, there was an error!");
       error.status = 404;
       throw error;
     }
-    const restaurant = await Restaurant.findByIdAndDelete(restaurantId);
+    const restaurant = await Restaurant.findById(restaurantId);
     if (!restaurant) {
       const error = new Error("Whoops, there was an error!");
       error.status = 404;
       throw error;
     }
+    user.status = "deleted";
+    const userSaved = await user.save();
     restaurant.dishes.map(async (dishId) => {
       await Dish.findByIdAndDelete(dishId);
     });
-    res.status(201).json({ deleted: true, restaurant: restaurant });
+    res.status(201).json({
+      deleted: true,
+      restaurant: {
+        email: userSaved.email,
+        ...restaurant.toObject(),
+      },
+    });
   } catch (err) {
     next(err);
   }

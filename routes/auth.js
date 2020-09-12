@@ -1,16 +1,16 @@
 const express = require("express");
 const router = express.Router();
 
+const AuthController = require("../controllers/auth");
 const isAuth = require("../utils/isAuth");
 
-// // Posts
-// router.post("/login", AuthController.login);
+// GET
+router.get("/checkemail/:email", AuthController.checkEmail);
 
-// // Gets
-// router.get("/checkemail/:email", AuthController.checkEmail);
+// POST
+router.post("/login", AuthController.login);
 
-// // others
-// router.put("/edit", isAuth, AuthController.editProfile);
-// router.put("/editpassword", isAuth, AuthController.changePassword);
+// PUT
+router.put("/editpassword", isAuth, AuthController.changePassword);
 
 module.exports = router;

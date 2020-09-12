@@ -32,20 +32,26 @@ var uploadRes = multer({
 
 // ======================== GET =========================
 // Profile
-router.get("/", dishController.getAll);
-router.get("/get/:dishId", dishController.getById);
+router.get("/", isAuth, dishController.getAll);
+router.get("/get/:dishId", isAuth, dishController.getById);
 router.get(
   "/getallbyrestaurant/:restaurantId",
+  isAuth,
   dishController.getAllByRestaurant
 );
 
 // ======================== POST ========================
-router.post("/", uploadRes.single("image"), dishController.addDish);
+router.post("/", isAuth, uploadRes.single("image"), dishController.addDish);
 
 // ======================== PUT =========================
-router.put("/edit/:dishId", uploadRes.single("image"), dishController.editDish);
+router.put(
+  "/edit/:dishId",
+  isAuth,
+  uploadRes.single("image"),
+  dishController.editDish
+);
 
 // ======================== DELETE ======================
-router.delete("/delete/:dishId", dishController.deleteDish);
+router.delete("/delete/:dishId", isAuth, dishController.deleteDish);
 
 module.exports = router;

@@ -71,7 +71,6 @@ exports.addDish = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    console.log(restaurant);
     restaurant.dishes.map((dish) => {
       if (dish.name === name) {
         const err = new Error("Dish with this name already exists!");
@@ -80,7 +79,6 @@ exports.addDish = async (req, res, next) => {
       }
     });
     restaurant.depopulate("dishes");
-    console.log(restaurant);
     const dish = new Dish({
       name: name,
       description: description,

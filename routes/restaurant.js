@@ -31,8 +31,8 @@ var uploadRes = multer({
 });
 
 // GET
-router.get("/", restaurantController.getAll);
-router.get("/get/:restaurantId", restaurantController.getById);
+router.get("/", isAuth, restaurantController.getAll);
+router.get("/get/:restaurantId", isAuth, restaurantController.getById);
 
 // POST
 router.post(
@@ -44,11 +44,16 @@ router.post(
 // PUT
 router.put(
   "/edit/:restaurantId",
+  isAuth,
   uploadRes.single("image"),
   restaurantController.editRestaurant
 );
 
 // DELETE
-router.delete("/delete/:restaurantId", restaurantController.deleteRestaurant);
+router.delete(
+  "/delete/:restaurantId",
+  isAuth,
+  restaurantController.deleteRestaurant
+);
 
 module.exports = router;

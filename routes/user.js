@@ -1,18 +1,23 @@
 const express = require("express");
 const router = express.Router();
 
-const AuthController = require("../controllers/user");
+const UserController = require("../controllers/user");
 const isAuth = require("../utils/isAuth");
 
-// Posts
-router.post("/register", AuthController.register);
-router.post("/login", AuthController.login);
+// GET
+router.get("/", isAuth, UserController.getAll);
+router.get("/get/:userId", isAuth, UserController.getUser);
+router.get("/cart", isAuth, UserController.getCart);
 
-// Gets
-router.get("/checkemail/:email", AuthController.checkEmail);
+// POST
+router.post("/", UserController.registerUser);
+router.post("/cart", isAuth, UserController.addToCart);
 
-// others
-router.put("/edit", isAuth, AuthController.editProfile);
-router.put("/editpassword", isAuth, AuthController.changePassword);
+// PUT
+router.put("/edit/:userId", isAuth, UserController.editUser);
+router.put("/cart", isAuth, UserController.removeFromCart);
+
+// DELETE
+router.delete("/delete/:userId", isAuth, UserController.deleteUser);
 
 module.exports = router;

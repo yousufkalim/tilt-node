@@ -4,11 +4,9 @@ const Schema = mongoose.Schema;
 const dishSchema = new Schema(
   {
     name: { type: String, required: true },
-    description: { type: String, required: true },
     price: { type: Number, required: true },
-    // discountedPrice: { type: Number },
-    // onPromotion: { type: Boolean },
     dishType: { type: String, required: true },
+    description: { type: String, required: true },
     image: { type: String },
     status: { type: String, default: "active" },
     restaurant: {
