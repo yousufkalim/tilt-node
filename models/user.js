@@ -47,3 +47,17 @@ const UserSchema = new Schema(
 );
 
 module.exports = mongoose.model("User", UserSchema);
+
+// function obfuscate(cc) {
+//   return "****-****-****-" + cc.slice(cc.length - 4, cc.length);
+// }
+
+// var AccountSchema = new Schema({
+//   creditCardNumber: { type: String, get: obfuscate },
+// });
+
+// var Account = mongoose.model("Account", AccountSchema);
+
+// Account.findById(someId, function (err, found) {
+//   console.log(found.creditCardNumber); // '****-****-****-1234'
+// });

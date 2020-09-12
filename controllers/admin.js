@@ -1,6 +1,8 @@
 // Import Models
 const Package = require("../models/package");
 const Block = require("../models/block");
+const Restaurant = require("../models/restaurant");
+const Company = require("../models/company");
 
 // Gets
 exports.getAllPackages = async (req, res, next) => {
@@ -164,6 +166,7 @@ exports.getBlock = async (req, res, next) => {
 // Posts
 exports.registerBlock = async (req, res, next) => {
   const name = req.body.name;
+  const orderTime = req.body.orderTime;
   const pickUpTime = req.body.pickUpTime;
   const deliveryTime = req.body.deliveryTime;
   const deliveryCost = req.body.deliveryCost;
@@ -177,6 +180,7 @@ exports.registerBlock = async (req, res, next) => {
     }
     const block = new Block({
       name: name,
+      orderTime: orderTime,
       pickUpTime: pickUpTime,
       deliveryTime: deliveryTime,
       deliveryCost: deliveryCost,
@@ -193,6 +197,7 @@ exports.registerBlock = async (req, res, next) => {
 exports.editBlock = async (req, res, next) => {
   const blockId = req.params.blockId;
   const name = req.body.name;
+  const orderTime = req.body.orderTime;
   const pickUpTime = req.body.pickUpTime;
   const deliveryTime = req.body.deliveryTime;
   const deliveryCost = req.body.deliveryCost;
@@ -204,6 +209,7 @@ exports.editBlock = async (req, res, next) => {
       throw err;
     }
     block.name = name;
+    block.orderTime = orderTime;
     block.pickUpTime = pickUpTime;
     block.deliveryTime = deliveryTime;
     block.deliveryCost = deliveryCost;
@@ -231,6 +237,64 @@ exports.deleteBlock = async (req, res, next) => {
     }
 
     res.status(201).json({ deleted: true, block: block });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.addRestaurantToBlock = async (req, res, next) => {
+  const restaurantId = req.body.restaurantId;
+  const blockId = req.body.blockId;
+
+  try {
+    const restaurant = await Restaurant.findById(restaurantId);
+    if (!restaurant) {
+      const err = new Error("No such restaurant exists!!");
+      err.status = 404;
+      throw err;
+    }
+    const block = await Block.findById(blockId);
+    if (!block) {
+      const err = new Error("No such block exists!!");
+      err.status = 404;
+      throw err;
+    }
+    restaurant.block = block._id;
+    block.restaurants.push(restaurant._id);
+    const restaurantSaved = await restaurant.save();
+    const blockSaved = await block.save();
+    res
+      .status(201)
+      .json({ added: true, restaurant: restaurantSaved, block: blockSaved });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.addCompanyToBlock = async (req, res, next) => {
+  const companyId = req.body.companyId;
+  const blockId = req.body.blockId;
+
+  try {
+    const company = await Company.findById(companyId);
+    if (!company) {
+      const err = new Error("No such company exists!!");
+      err.status = 404;
+      throw err;
+    }
+    const block = await Block.findById(blockId);
+    if (!block) {
+      const err = new Error("No such block exists!!");
+      err.status = 404;
+      throw err;
+    }
+    company.block = block._id;
+    block.companies.push(company._id);
+    const companySaved = await company.save();
+    const blockSaved = await block.save();
+    res
+      .status(201)
+      .json({ added: true, company: companySaved, block: blockSaved });
   } catch (err) {
     next(err);
   }

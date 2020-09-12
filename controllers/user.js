@@ -3,14 +3,21 @@ const bcrypt = require("bcryptjs");
 // Import Models
 const User = require("../models/user");
 const Cart = require("../models/cart");
+const History = require("../models/history");
 
 // Gets
 exports.getAll = async (req, res, next) => {
   try {
     const users = await User.find({ "role.name": "user" })
-      .populate("company")
       .populate("package")
-      .populate("cart")
+      .populate({
+        path: "company",
+        populate: { path: "block" },
+      })
+      .populate({
+        path: "cart",
+        populate: { path: "dishes.id" },
+      })
       .exec();
     if (!users) {
       const err = new Error("Whoops, there was en error!");
@@ -25,13 +32,46 @@ exports.getAll = async (req, res, next) => {
     next(err);
   }
 };
+exports.getProfile = async (req, res, next) => {
+  const userId = req.userId;
+  try {
+    const user = await User.findById(userId)
+      .populate("package")
+      .populate({
+        path: "company",
+        populate: { path: "block" },
+      })
+      .populate({
+        path: "cart",
+        populate: { path: "dishes.id" },
+      })
+      .exec();
+    if (!user) {
+      const err = new Error("No such user exists!");
+      err.status = 404;
+      throw err;
+    }
+    res.status(200).json({ user: user });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
 exports.getUser = async (req, res, next) => {
   const userId = req.params.userId;
   try {
     const user = await User.findById(userId)
-      .populate("company")
       .populate("package")
-      .populate("cart")
+      .populate({
+        path: "company",
+        populate: { path: "block" },
+      })
+      .populate({
+        path: "cart",
+        populate: { path: "dishes.id" },
+      })
       .exec();
     if (!user) {
       const err = new Error("No such user exists!");
@@ -219,80 +259,98 @@ exports.removeFromCart = async (req, res, next) => {
 exports.getCart = async (req, res, next) => {
   let userId = req.userId;
   try {
-    const cart = await Cart.findOne({ user: userId });
+    const cart = await Cart.findOne({ user: userId })
+      .populate("dishes.id")
+      .exec();
     if (!cart) {
-      res.status(200).json({ cart: "" });
+      const error = new Error("Whoops, no cart found!");
+      error.status = 404;
+      throw error;
+    }
+    res.status(200).json({ cart: cart });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.order = async (req, res, next) => {
+  let userId = req.userId;
+  try {
+    const cart = await Cart.findOne({ user: userId })
+      .populate("dishes.id")
+      .populate({
+        path: "user",
+        populate: {
+          path: "package",
+          path: "company",
+          populate: {
+            path: "block",
+          },
+        },
+      })
+      .exec();
+    if (!cart) {
+      const error = new Error("Whoops, no cart found!");
+      error.status = 404;
+      throw error;
+    }
+    let totalPrice = cart.totalPrice + cart.user.company.block.deliveryCost;
+    const user = await User.findById(cart.user._id);
+    if (user.credits && user.credits > 0) {
+      let offPrice = cart.user.package.offPrice;
+      totalPrice -= offPrice;
+      user.credits -= 1;
+    }
+    if (user.referrals && user.referrals > 0) {
+      let referralOff = 2;
+      totalPrice -= referralOff;
+      user.referrals -= 1;
+    }
+
+    const history = await History.findOne({ user: userId });
+    let orderId = "3920023804923409234";
+    if (history) {
+      history.history.push({
+        orderId: orderId,
+        order: cart.toObject(),
+        paid: totalPrice,
+      });
+      history.markModified("history.order");
+      const historySaved = await history.save();
+      await Cart.findByIdAndDelete(cart._id);
+      res.status(201).json({ ordered: true, history: historySaved, orderId });
     } else {
-      res.status(200).json({ cart: cart });
+      const newHistory = new History({
+        user: userId,
+        history: [
+          {
+            orderId: orderId,
+            order: cart.toObject(),
+            paid: totalPrice,
+          },
+        ],
+      });
+      newHistory.markModified("history.order");
+      const historySaved = await newHistory.save();
+      await Cart.findByIdAndDelete(cart._id);
+      res.status(201).json({ ordered: true, history: historySaved, orderId });
     }
   } catch (err) {
     next(err);
   }
 };
 
-// // Purchases
-// // Make purchase
-// exports.purchase = async (req, res, next) => {
-//   let userId = req.userId;
-//   const address = req.body.address;
-//   const zip = req.body.zip;
-//   const city = req.body.city;
-//   const country = req.body.country;
-//   try {
-//     const cart = await Cart.findOne({ userId })
-//       .populate("userId")
-//       .populate("dishes.id")
-//       .exec();
-//     if (!cart) {
-//       const error = new Error("Whoops, no cart found!");
-//       error.status = 404;
-//       throw error;
-//     }
-//     const purchases = await Purchases.findOne({ userId });
-//     const trackLink = new RandExp(/([A-Za-z]\w{16})\1/).gen();
-//     if (purchases) {
-//       purchases.carts.push(cart);
-//       purchases.track = trackLink;
-//       purchases.shipping = {
-//         address: address,
-//         zip: zip,
-//         city: city,
-//         country: country,
-//       };
-//       const purchaseSaved = await purchases.save();
-//       await Cart.findOneAndDelete({ userId });
-//       res.status(201).json({ purchases: purchaseSaved, link: trackLink });
-//     } else {
-//       const newPurchase = new Purchases({
-//         userId: userId,
-//         carts: [cart],
-//         track: trackLink,
-//         shipping: {
-//           address: address,
-//           zip: zip,
-//           city: city,
-//           country: country,
-//         },
-//       });
-//       const purchaseSaved = await newPurchase.save();
-//       await Cart.findOneAndDelete({ userId });
-//       res.status(201).json({ purchases: purchaseSaved, link: trackLink });
-//     }
-//   } catch (err) {
-//     next(err);
-//   }
-// };
-// // Get purchases
-// exports.getPurchases = async (req, res, next) => {
-//   let userId = req.userId;
-//   try {
-//     const purchases = await Purchases.findOne({ userId });
-//     if (!purchases) {
-//       res.status(200).json({ purchases: "" });
-//     } else {
-//       res.status(200).json({ purchases: purchases });
-//     }
-//   } catch (err) {
-//     next(err);
-//   }
-// };
+// Get purchases
+exports.orders = async (req, res, next) => {
+  let userId = req.userId;
+  try {
+    const history = await History.findOne({ user: userId });
+    if (!history) {
+      res.status(200).json({ history: "" });
+    } else {
+      res.status(200).json({ history: history });
+    }
+  } catch (err) {
+    next(err);
+  }
+};

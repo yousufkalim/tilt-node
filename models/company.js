@@ -12,7 +12,10 @@ const companySchema = new Schema(
       long: { type: Number },
     },
     deliveryPlace: String,
-    // block relation
+    block: {
+      type: Schema.Types.ObjectId,
+      ref: "Block",
+    },
   },
   { timestamps: true }
 );

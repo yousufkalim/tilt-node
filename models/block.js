@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 const blockSchema = new Schema(
   {
     name: String,
+    orderTime: String,
     pickUpTime: String,
     deliveryTime: String,
     deliveryCost: Number,
@@ -15,6 +16,12 @@ const blockSchema = new Schema(
       {
         type: Schema.Types.ObjectId,
         ref: "Restaurant",
+      },
+    ],
+    companies: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Company",
       },
     ],
   },

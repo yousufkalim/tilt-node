@@ -6,8 +6,11 @@ const isAuth = require("../utils/isAuth");
 
 // GET
 router.get("/", isAuth, UserController.getAll);
-router.get("/get/:userId", isAuth, UserController.getUser);
+router.get("/get", isAuth, UserController.getProfile);
+router.get("/getbyid/:userId", isAuth, UserController.getUser);
 router.get("/cart", isAuth, UserController.getCart);
+router.get("/order", isAuth, UserController.order);
+router.get("/orders", isAuth, UserController.orders);
 
 // POST
 router.post("/", UserController.registerUser);

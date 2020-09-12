@@ -13,6 +13,12 @@ router.get("/block/get/:blockId", isAuth, adminController.getBlock);
 // POST
 router.post("/package", isAuth, adminController.registerPackage);
 router.post("/block", isAuth, adminController.registerBlock);
+router.post(
+  "/block/addRestaurant",
+  isAuth,
+  adminController.addRestaurantToBlock
+);
+router.post("/block/addCompany", isAuth, adminController.addCompanyToBlock);
 
 // PUT
 router.put("/package/edit/:packageId", isAuth, adminController.editPackage);

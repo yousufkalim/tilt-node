@@ -1,14 +1,15 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const PurchasesSchema = new Schema(
+const HistorySchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: "User" },
     restaurant: { type: Schema.Types.ObjectId, ref: "Restaurant" },
-    histories: [
+    history: [
       {
         orderId: String,
-        history: Schema.Types.Mixed,
+        order: Schema.Types.Mixed,
+        paid: Number,
       },
     ],
   },
@@ -17,7 +18,7 @@ const PurchasesSchema = new Schema(
   }
 );
 
-module.exports = mongoose.model("Purchases", PurchasesSchema);
+module.exports = mongoose.model("History", HistorySchema);
 
 // person.anything = { x: [3, 4, { y: "changed" }] };
 // person.markModified('anything');
