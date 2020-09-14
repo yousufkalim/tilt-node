@@ -86,6 +86,35 @@ exports.getUser = async (req, res, next) => {
     next(err);
   }
 };
+exports.changePassword = async (req, res, next) => {
+  const userId = req.userId;
+  const password = req.body.password;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      const err = new Error("Whoops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
+    const checkPassword = bcrypt.compareSync(password, user.password);
+    if (checkPassword) {
+      const err = new Error("Change your password to a new one!");
+      err.status = 402;
+      throw err;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    user.password = hashedPassword;
+    const userSaved = await user.save();
+    res.status(201).json({ updated: true, user: userSaved });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+
 exports.registerUser = async (req, res, next) => {
   const firstName = req.body.firstName;
   const lastName = req.body.lastName;
@@ -118,12 +147,22 @@ exports.registerUser = async (req, res, next) => {
   }
 };
 exports.editUser = async (req, res, next) => {
-  const userId = req.params.userId;
+  const userId = req.userId;
   const firstName = req.body.firstName;
   const lastName = req.body.lastName;
   const email = req.body.email;
   try {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId)
+      .populate("package")
+      .populate({
+        path: "company",
+        populate: { path: "block" },
+      })
+      .populate({
+        path: "cart",
+        populate: { path: "dishes.id" },
+      })
+      .exec();
     if (!user) {
       const err = new Error("No such user found!");
       err.status = 404;

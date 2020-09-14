@@ -17,8 +17,9 @@ router.post("/", UserController.registerUser);
 router.post("/cart", isAuth, UserController.addToCart);
 
 // PUT
-router.put("/edit/:userId", isAuth, UserController.editUser);
+router.put("/edit", isAuth, UserController.editUser);
 router.put("/cart", isAuth, UserController.removeFromCart);
+router.put("/editpassword", isAuth, UserController.changePassword);
 
 // DELETE
 router.delete("/delete/:userId", isAuth, UserController.deleteUser);
