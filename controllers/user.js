@@ -114,6 +114,42 @@ exports.changePassword = async (req, res, next) => {
     next(err);
   }
 };
+exports.changeCompany = async (req, res, next) => {
+  const userId = req.userId;
+  const companyId = req.params.companyId;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      const err = new Error("Whoops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
+    user.company = companyId;
+    await user.save();
+    const user2 = await User.findById(userId)
+      .populate("package")
+      .populate({
+        path: "company",
+        populate: { path: "block" },
+      })
+      .populate({
+        path: "cart",
+        populate: { path: "dishes.id" },
+      })
+      .exec();
+    if (!user2) {
+      const err = new Error("Whoops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
+    res.status(201).json({ updated: true, user: user2 });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
 
 exports.registerUser = async (req, res, next) => {
   const firstName = req.body.firstName;
