@@ -13,13 +13,13 @@ exports.login = async (req, res, next) => {
       email: email,
       status: { $ne: "deleted" },
     })
-      .populate("package")
+      .populate("user.package")
       .populate({
-        path: "company",
+        path: "user.company",
         populate: { path: "block" },
       })
       .populate({
-        path: "cart",
+        path: "user.cart",
         populate: { path: "dishes.id" },
       })
       .exec();

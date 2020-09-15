@@ -9,14 +9,14 @@ const History = require("../models/history");
 // Gets
 exports.getAll = async (req, res, next) => {
   try {
-    const users = await User.find({ "role.name": "user" })
-      .populate("package")
+    const users = await User.find({ role: "user" })
+      .populate("user.package")
       .populate({
-        path: "company",
+        path: "user.company",
         populate: { path: "block" },
       })
       .populate({
-        path: "cart",
+        path: "user.cart",
         populate: { path: "dishes.id" },
       })
       .exec();
@@ -37,40 +37,13 @@ exports.getProfile = async (req, res, next) => {
   const userId = req.userId;
   try {
     const user = await User.findById(userId)
-      .populate("package")
+      .populate("user.package")
       .populate({
-        path: "company",
+        path: "user.company",
         populate: { path: "block" },
       })
       .populate({
-        path: "cart",
-        populate: { path: "dishes.id" },
-      })
-      .exec();
-    if (!user) {
-      const err = new Error("No such user exists!");
-      err.status = 404;
-      throw err;
-    }
-    res.status(200).json({ user: user });
-  } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
-    next(err);
-  }
-};
-exports.getUser = async (req, res, next) => {
-  const userId = req.params.userId;
-  try {
-    const user = await User.findById(userId)
-      .populate("package")
-      .populate({
-        path: "company",
-        populate: { path: "block" },
-      })
-      .populate({
-        path: "cart",
+        path: "user.cart",
         populate: { path: "dishes.id" },
       })
       .exec();
@@ -125,16 +98,16 @@ exports.changeCompany = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    user.company = companyId;
+    user.user.company = companyId;
     await user.save();
     const user2 = await User.findById(userId)
-      .populate("package")
+      .populate("user.package")
       .populate({
-        path: "company",
+        path: "user.company",
         populate: { path: "block" },
       })
       .populate({
-        path: "cart",
+        path: "user.cart",
         populate: { path: "dishes.id" },
       })
       .exec();
@@ -171,7 +144,9 @@ exports.registerUser = async (req, res, next) => {
       lastName: lastName,
       email: email,
       password: hashedPassword,
-      company: companyId,
+      user: {
+        company: companyId,
+      },
     });
     const userSaved = await user.save();
 
@@ -190,13 +165,13 @@ exports.editUser = async (req, res, next) => {
   const email = req.body.email;
   try {
     const user = await User.findById(userId)
-      .populate("package")
+      .populate("user.package")
       .populate({
-        path: "company",
+        path: "user.company",
         populate: { path: "block" },
       })
       .populate({
-        path: "cart",
+        path: "user.cart",
         populate: { path: "dishes.id" },
       })
       .exec();
@@ -221,7 +196,7 @@ exports.editUser = async (req, res, next) => {
 
 // Others
 exports.deleteUser = async (req, res, next) => {
-  const userId = req.params.userId;
+  const userId = req.userId;
   try {
     const user = await User.findById(userId);
     if (!user) {
@@ -404,8 +379,8 @@ exports.order = async (req, res, next) => {
       .populate({
         path: "user",
         populate: {
-          path: "package",
-          path: "company",
+          path: "user.package",
+          path: "user.company",
           populate: {
             path: "block",
           },
@@ -422,15 +397,15 @@ exports.order = async (req, res, next) => {
       cart.userCarts.map(async (userCart) => {
         if (userCart.dishes.length > 0) {
           const restaurantCart = await Cart.findOne({
-            restaurant: userCart.restaurant,
+            user: userCart.restaurant,
           });
           if (!restaurantCart) {
             // restaurantCart not found
             const newRestaurantCart = new Cart({
-              restaurant: userCart.restaurant,
+              user: userCart.restaurant,
               restaurantCarts: [
                 {
-                  company: cart.user.company._id,
+                  company: cart.user.user.company._id,
                   carts: [
                     {
                       id: cart.user._id,
@@ -445,12 +420,13 @@ exports.order = async (req, res, next) => {
           } else {
             const companyIndex = restaurantCart.restaurantCarts.findIndex(
               (element) =>
-                element.company.toString() === cart.user.company._id.toString()
+                element.company.toString() ===
+                cart.user.user.company._id.toString()
             );
             if (companyIndex < 0) {
               // company not found
               restaurantCart.restaurantCarts.push({
-                company: cart.user.company._id,
+                company: cart.user.user.company._id,
                 carts: [
                   {
                     id: cart.user._id,

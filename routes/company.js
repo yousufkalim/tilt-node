@@ -6,15 +6,15 @@ const isAuth = require("../utils/isAuth");
 
 // GET
 router.get("/", isAuth, companyController.getAll);
-router.get("/get/:companyId", isAuth, companyController.getById);
+router.get("/get", isAuth, companyController.getById);
 
 // POST
 router.post("/", companyController.registerCompany);
 
 // PUT
-router.put("/edit/:companyId", isAuth, companyController.editCompany);
+router.put("/edit", isAuth, companyController.editCompany);
 
 // DELETE
-router.delete("/delete/:companyId", isAuth, companyController.deleteCompany);
+router.delete("/delete", isAuth, companyController.deleteCompany);
 
 module.exports = router;

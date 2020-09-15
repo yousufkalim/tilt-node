@@ -7,25 +7,17 @@ const UserSchema = new Schema(
     lastName: String,
     email: String,
     password: String,
-    referrals: Number,
-    credits: Number,
+    address: {
+      street: { type: String },
+      city: { type: String },
+      zip: { type: String },
+      lat: { type: Number },
+      long: { type: Number },
+    },
     status: { type: String, default: "active" },
-    role: {
-      name: {
-        type: String,
-        default: "user",
-      },
-      id: {
-        type: String,
-      },
-    },
-    package: {
+    block: {
       type: Schema.Types.ObjectId,
-      ref: "Package",
-    },
-    cart: {
-      type: Schema.Types.ObjectId,
-      ref: "Cart",
+      ref: "Block",
     },
     history: {
       type: Schema.Types.ObjectId,
@@ -38,9 +30,43 @@ const UserSchema = new Schema(
         status: { type: String, default: "active" },
       },
     ],
+    role: {
+      type: String,
+      default: "user",
+    },
+    user: {
+      referrals: { type: Number, default: 0 },
+      credits: { type: Number, default: 0 },
+      package: {
+        type: Schema.Types.ObjectId,
+        ref: "Package",
+      },
+      cart: {
+        type: Schema.Types.ObjectId,
+        ref: "Cart",
+      },
+      company: this,
+      // company: [UserSchema]
+    },
+    restaurant: {
+      image: { type: String },
+      pickupPlace: { type: String },
+      deliveryCost: { type: String },
+      dishes: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "Dish",
+        },
+      ],
+      menus: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "Menu",
+        },
+      ],
+    },
     company: {
-      type: Schema.Types.ObjectId,
-      ref: "Company",
+      deliveryPlace: String,
     },
   },
   { timestamps: true }

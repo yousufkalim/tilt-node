@@ -1,13 +1,12 @@
 // Import Models
 const User = require("../models/user");
-const Restaurant = require("../models/restaurant");
 const Dish = require("../models/dish");
+const Cart = require("../models/cart");
 const bcrypt = require("bcryptjs");
 
-// Gets
 exports.getAll = async (req, res, next) => {
   try {
-    const restaurants = await Restaurant.find();
+    const restaurants = await User.find({ role: "restaurant" });
     if (!restaurants) {
       const err = new Error("Whoops, there was en error!");
       err.status = 404;
@@ -22,9 +21,9 @@ exports.getAll = async (req, res, next) => {
   }
 };
 exports.getById = async (req, res, next) => {
-  const restaurantId = req.userId;
+  const userId = req.userId;
   try {
-    const restaurant = await Restaurant.findById(restaurantId);
+    const restaurant = await User.findById(userId);
     if (!restaurant) {
       const err = new Error("Whoops, there was en error!");
       err.status = 404;
@@ -39,7 +38,6 @@ exports.getById = async (req, res, next) => {
   }
 };
 
-// Posts
 exports.registerRestaurant = async (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -55,14 +53,19 @@ exports.registerRestaurant = async (req, res, next) => {
       error.status = 404;
       throw error;
     }
-    const restaurantCheck = await Restaurant.findOne({ name: name });
+    const restaurantCheck = await User.findOne({ firstName: name });
     if (restaurantCheck) {
       const error = new Error("Restaurant with this name already exists!");
       error.status = 404;
       throw error;
     }
-    const restaurant = new Restaurant({
-      name: name,
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const restaurant = new User({
+      firstName: name,
+      email: email,
+      password: hashedPassword,
+      status: "pending",
+      role: "restaurant",
       address: {
         street: JSON.parse(address).street,
         city: JSON.parse(address).city,
@@ -70,28 +73,16 @@ exports.registerRestaurant = async (req, res, next) => {
         lat: 0,
         long: 0,
       },
-      image: imagePath,
-      pickupPlace: pickupPlace,
-    });
-    const restaurantSaved = await restaurant.save();
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const user = new User({
-      email: email,
-      password: hashedPassword,
-      status: "pending",
-      role: {
-        name: "restaurant",
-        id: restaurantSaved._id,
+      restaurant: {
+        image: imagePath,
+        pickupPlace: pickupPlace,
       },
     });
-    const userSaved = await user.save();
+    const restaurantSaved = await restaurant.save();
 
     res.status(201).json({
       registered: true,
-      restaurant: {
-        email: userSaved.email,
-        ...restaurantSaved.toObject(),
-      },
+      restaurant: restaurantSaved,
     });
   } catch (err) {
     next(err);
@@ -99,7 +90,7 @@ exports.registerRestaurant = async (req, res, next) => {
 };
 
 exports.editRestaurant = async (req, res, next) => {
-  const restaurantId = req.userId;
+  const userId = req.userId;
   const email = req.body.email;
   const name = req.body.name;
   const address = req.body.address;
@@ -107,84 +98,62 @@ exports.editRestaurant = async (req, res, next) => {
   let imagePath = req.file !== undefined ? req.file.path : "";
   imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
   try {
-    const user = await User.findOne({ "role.id": restaurantId });
+    const user = await User.findById(userId);
     if (!user) {
       const error = new Error("Email not found!");
       error.status = 404;
       throw error;
     }
-    const restaurant = await Restaurant.findById(restaurantId);
-    if (!restaurant) {
-      const error = new Error("Restaurant not found!");
-      error.status = 404;
-      throw error;
-    }
 
+    user.firstName = name;
     user.email = email;
-
-    restaurant.name = name;
-    restaurant.address.street = JSON.parse(address).street;
-    restaurant.address.city = JSON.parse(address).city;
-    restaurant.address.zip = JSON.parse(address).zip;
-    restaurant.pickupPlace = pickupPlace;
-    imagePath !== "" && (restaurant.image = imagePath);
-    const userSaved = await user.save();
-    let restaurantSaved = await restaurant.save();
+    user.address.street = JSON.parse(address).street;
+    user.address.city = JSON.parse(address).city;
+    user.address.zip = JSON.parse(address).zip;
+    user.restaurant.pickupPlace = pickupPlace;
+    imagePath !== "" && (user.restaurant.image = imagePath);
+    const restaurantSaved = await user.save();
     res.status(201).json({
       updated: true,
-      restaurant: {
-        email: userSaved.email,
-        ...restaurantSaved.toObject(),
-      },
+      restaurant: restaurantSaved,
     });
   } catch (err) {
     next(err);
   }
 };
 
-// Others
 exports.deleteRestaurant = async (req, res, next) => {
-  const restaurantId = req.userId;
+  const userId = req.userId;
   try {
-    const user = await User.findOne({ "role.id": restaurantId });
+    const user = await User.findById(userId);
     if (!user) {
       const error = new Error("Whoops, there was an error!");
       error.status = 404;
       throw error;
     }
-    const restaurant = await Restaurant.findById(restaurantId);
-    if (!restaurant) {
-      const error = new Error("Whoops, there was an error!");
-      error.status = 404;
-      throw error;
-    }
     user.status = "deleted";
-    const userSaved = await user.save();
-    restaurant.dishes.map(async (dishId) => {
+    const restaurantSaved = await user.save();
+    restaurantSaved.restaurant.dishes.map(async (dishId) => {
       await Dish.findByIdAndDelete(dishId);
     });
     res.status(201).json({
       deleted: true,
-      restaurant: {
-        email: userSaved.email,
-        ...restaurant.toObject(),
-      },
+      restaurant: restaurantSaved,
     });
   } catch (err) {
     next(err);
   }
 };
 
-// Gets
-exports.getAll = async (req, res, next) => {
+exports.getCart = async (req, res, next) => {
+  const userId = req.userId;
   try {
-    const restaurants = await Restaurant.find();
-    if (!restaurants) {
-      const err = new Error("Whoops, there was en error!");
-      err.status = 404;
-      throw err;
-    }
-    res.status(200).json({ restaurants: restaurants });
+    const cart = await Cart.findOne({ user: userId })
+      .populate("restaurantCarts.company")
+      .populate("restaurantCarts.carts.id")
+      .populate("restaurantCarts.carts.dishes.id")
+      .exec();
+    res.status(200).json({ cart: cart });
   } catch (err) {
     if (!err.status) {
       err.status = 500;

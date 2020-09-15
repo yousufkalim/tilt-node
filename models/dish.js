@@ -11,7 +11,7 @@ const dishSchema = new Schema(
     status: { type: String, default: "active" },
     restaurant: {
       type: Schema.Types.ObjectId,
-      ref: "Restaurant",
+      ref: "User",
     },
   },
   { timestamps: true }

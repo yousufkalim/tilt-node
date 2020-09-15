@@ -7,7 +7,6 @@ const isAuth = require("../utils/isAuth");
 // GET
 router.get("/", isAuth, UserController.getAll);
 router.get("/get", isAuth, UserController.getProfile);
-router.get("/getbyid/:userId", isAuth, UserController.getUser);
 router.get("/cart", isAuth, UserController.getCart);
 router.get("/order", isAuth, UserController.order);
 router.get("/orders", isAuth, UserController.orders);
@@ -23,6 +22,6 @@ router.put("/editpassword", isAuth, UserController.changePassword);
 router.put("/company/:companyId", isAuth, UserController.changeCompany);
 
 // DELETE
-router.delete("/delete/:userId", isAuth, UserController.deleteUser);
+router.delete("/delete", isAuth, UserController.deleteUser);
 
 module.exports = router;

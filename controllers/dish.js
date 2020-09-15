@@ -1,16 +1,17 @@
 // Import Models
 const Dish = require("../models/dish");
-const Restaurant = require("../models/restaurant");
+const User = require("../models/user");
 
 // Gets
 exports.getAll = async (req, res, next) => {
   try {
     const dishes = await Dish.find().populate("restaurant").exec();
     if (!dishes) {
-      res.status(200).json({ dishes: [] });
-    } else {
-      res.status(200).json({ dishes: dishes });
+      const err = new Error("Whoops, there was a problem!");
+      err.status = 404;
+      throw err;
     }
+    res.status(200).json({ dishes: dishes });
   } catch (err) {
     if (!err.status) {
       err.status = 500;
@@ -23,10 +24,11 @@ exports.getById = async (req, res, next) => {
   try {
     const dish = await Dish.findById(dishId).populate("restaurant").exec();
     if (!dish) {
-      res.status(200).json({ dish: "" });
-    } else {
-      res.status(200).json({ dish: dish });
+      const err = new Error("Whoops, there was a problem!");
+      err.status = 404;
+      throw err;
     }
+    res.status(200).json({ dish: dish });
   } catch (err) {
     if (!err.status) {
       err.status = 500;
@@ -41,10 +43,11 @@ exports.getAllByRestaurant = async (req, res, next) => {
       .populate("restaurant")
       .exec();
     if (!dishes) {
-      res.status(200).json({ dishes: [] });
-    } else {
-      res.status(200).json({ dishes: dishes });
+      const err = new Error("Whoops, there was a problem!");
+      err.status = 404;
+      throw err;
     }
+    res.status(200).json({ dishes: dishes });
   } catch (err) {
     if (!err.status) {
       err.status = 500;
@@ -55,7 +58,7 @@ exports.getAllByRestaurant = async (req, res, next) => {
 
 // Posts
 exports.addDish = async (req, res, next) => {
-  const restaurantId = req.body.restaurantId;
+  const userId = req.userId;
   const name = req.body.name;
   const price = req.body.price;
   const dishType = req.body.dishType;
@@ -63,32 +66,32 @@ exports.addDish = async (req, res, next) => {
   let imagePath = req.file !== undefined ? req.file.path : "";
   imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
   try {
-    let restaurant = await Restaurant.findById(restaurantId)
-      .populate("dishes")
+    let restaurant = await User.findById(userId)
+      .populate("restaurant.dishes")
       .exec();
     if (!restaurant) {
       const err = new Error("Whoops, there was a problem!");
       err.status = 404;
       throw err;
     }
-    restaurant.dishes.map((dish) => {
+    restaurant.restaurant.dishes.map((dish) => {
       if (dish.name === name) {
         const err = new Error("Dish with this name already exists!");
         err.status = 404;
         throw err;
       }
     });
-    restaurant.depopulate("dishes");
+    restaurant.restaurant.depopulate("dishes");
     const dish = new Dish({
       name: name,
       description: description,
       price: price,
       dishType: dishType,
       image: imagePath,
-      restaurant: restaurantId,
+      restaurant: userId,
     });
     const dishSaved = await dish.save();
-    restaurant.dishes.push(dishSaved._id);
+    restaurant.restaurant.dishes.push(dishSaved._id);
     await restaurant.save();
     res.status(201).json({ registered: true, dish: dishSaved });
   } catch (err) {
@@ -99,8 +102,8 @@ exports.addDish = async (req, res, next) => {
   }
 };
 exports.editDish = async (req, res, next) => {
+  const userId = req.userId;
   const dishId = req.params.dishId;
-  const restaurantId = req.body.restaurantId;
   const name = req.body.name;
   const price = req.body.price;
   const dishType = req.body.dishType;
@@ -115,13 +118,13 @@ exports.editDish = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    const restaurant = await Restaurant.findById(restaurantId);
+    const restaurant = await User.findById(userId);
     if (!restaurant) {
       const err = new Error("Whoops, there was en error!");
       err.status = 404;
       throw err;
     }
-    const dishIndex = restaurant.dishes.findIndex(
+    const dishIndex = restaurant.restaurant.dishes.findIndex(
       (dish) => String(dish) === String(dishId)
     );
     if (dishIndex < 0) {
@@ -149,7 +152,7 @@ exports.editDish = async (req, res, next) => {
 // Others
 exports.deleteDish = async (req, res, next) => {
   const dishId = req.params.dishId;
-  const restaurantId = req.body.restaurantId;
+  const userId = req.userId;
   try {
     const dish = await Dish.findById(dishId);
     if (!dish) {
@@ -157,13 +160,13 @@ exports.deleteDish = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    const restaurant = await Restaurant.findById(restaurantId);
+    const restaurant = await User.findById(userId);
     if (!restaurant) {
       const err = new Error("Whoops, there was en error!");
       err.status = 404;
       throw err;
     }
-    const dishIndex = restaurant.dishes.findIndex(
+    const dishIndex = restaurant.restaurant.dishes.findIndex(
       (dish) => String(dish) === String(dishId)
     );
     if (dishIndex < 0) {
@@ -178,10 +181,10 @@ exports.deleteDish = async (req, res, next) => {
       error.status = 404;
       throw error;
     }
-    const newDishes = restaurant.dishes.filter(
+    const newDishes = restaurant.restaurant.dishes.filter(
       (dish) => String(dish) !== String(dishId)
     );
-    restaurant.dishes = newDishes;
+    restaurant.restaurant.dishes = newDishes;
     await restaurant.save();
 
     res.status(201).json({ deleted: true, dish: dishDeleted });

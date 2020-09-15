@@ -1,8 +1,7 @@
 // Import Models
+const User = require("../models/user");
 const Package = require("../models/package");
 const Block = require("../models/block");
-const Restaurant = require("../models/restaurant");
-const Company = require("../models/company");
 
 // Gets
 exports.getAllPackages = async (req, res, next) => {
@@ -247,7 +246,7 @@ exports.addRestaurantToBlock = async (req, res, next) => {
   const blockId = req.body.blockId;
 
   try {
-    const restaurant = await Restaurant.findById(restaurantId);
+    const restaurant = await User.findById(restaurantId);
     if (!restaurant) {
       const err = new Error("No such restaurant exists!!");
       err.status = 404;
@@ -276,7 +275,7 @@ exports.addCompanyToBlock = async (req, res, next) => {
   const blockId = req.body.blockId;
 
   try {
-    const company = await Company.findById(companyId);
+    const company = await User.findById(companyId);
     if (!company) {
       const err = new Error("No such company exists!!");
       err.status = 404;

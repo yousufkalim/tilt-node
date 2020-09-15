@@ -15,13 +15,13 @@ const blockSchema = new Schema(
     restaurants: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Restaurant",
+        ref: "User",
       },
     ],
     companies: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Company",
+        ref: "User",
       },
     ],
   },

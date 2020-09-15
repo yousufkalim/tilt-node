@@ -4,13 +4,12 @@ const Schema = mongoose.Schema;
 const cartSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: "User" },
-    restaurant: { type: Schema.Types.ObjectId, ref: "Restaurant" },
     totalPrice: Number,
     userCarts: [
       {
         restaurant: {
           type: Schema.Types.ObjectId,
-          ref: "Restaurant",
+          ref: "User",
         },
         dishes: [
           {
@@ -27,7 +26,7 @@ const cartSchema = new Schema(
       {
         company: {
           type: Schema.Types.ObjectId,
-          ref: "Company",
+          ref: "User",
         },
         status: { type: String, default: "active" },
         stopped: { type: Boolean, default: false },
