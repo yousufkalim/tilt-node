@@ -100,7 +100,7 @@ exports.editRestaurant = async (req, res, next) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      const error = new Error("Email not found!");
+      const error = new Error("Whoops, there was an error!");
       error.status = 404;
       throw error;
     }
