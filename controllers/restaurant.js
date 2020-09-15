@@ -22,9 +22,14 @@ exports.getAll = async (req, res, next) => {
   }
 };
 exports.getById = async (req, res, next) => {
-  const restaurantId = req.params.restaurantId;
+  const restaurantId = req.userId;
   try {
     const restaurant = await Restaurant.findById(restaurantId);
+    if (!restaurant) {
+      const err = new Error("Whoops, there was en error!");
+      err.status = 404;
+      throw err;
+    }
     res.status(200).json({ restaurant: restaurant });
   } catch (err) {
     if (!err.status) {
@@ -94,7 +99,7 @@ exports.registerRestaurant = async (req, res, next) => {
 };
 
 exports.editRestaurant = async (req, res, next) => {
-  const restaurantId = req.params.restaurantId;
+  const restaurantId = req.userId;
   const email = req.body.email;
   const name = req.body.name;
   const address = req.body.address;
@@ -139,7 +144,7 @@ exports.editRestaurant = async (req, res, next) => {
 
 // Others
 exports.deleteRestaurant = async (req, res, next) => {
-  const restaurantId = req.params.restaurantId;
+  const restaurantId = req.userId;
   try {
     const user = await User.findOne({ "role.id": restaurantId });
     if (!user) {
@@ -166,6 +171,24 @@ exports.deleteRestaurant = async (req, res, next) => {
       },
     });
   } catch (err) {
+    next(err);
+  }
+};
+
+// Gets
+exports.getAll = async (req, res, next) => {
+  try {
+    const restaurants = await Restaurant.find();
+    if (!restaurants) {
+      const err = new Error("Whoops, there was en error!");
+      err.status = 404;
+      throw err;
+    }
+    res.status(200).json({ restaurants: restaurants });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
     next(err);
   }
 };

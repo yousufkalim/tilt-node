@@ -6,36 +6,47 @@ const cartSchema = new Schema(
     user: { type: Schema.Types.ObjectId, ref: "User" },
     restaurant: { type: Schema.Types.ObjectId, ref: "Restaurant" },
     totalPrice: Number,
-    dishes: [
+    userCarts: [
       {
-        id: {
+        restaurant: {
           type: Schema.Types.ObjectId,
-          ref: "Dish",
+          ref: "Restaurant",
         },
-        count: Number,
+        dishes: [
+          {
+            id: {
+              type: Schema.Types.ObjectId,
+              ref: "Dish",
+            },
+            count: Number,
+          },
+        ],
       },
     ],
-    restaurantCart: [
+    restaurantCarts: [
       {
         company: {
           type: Schema.Types.ObjectId,
           ref: "Company",
         },
-        totalPrice: Number,
-        count: Number,
-        status: String,
-        dishes: [
+        status: { type: String, default: "active" },
+        stopped: { type: Boolean, default: false },
+        carts: [
           {
-            user: {
+            id: {
               type: Schema.Types.ObjectId,
               ref: "User",
             },
-            dish: {
-              type: Schema.Types.ObjectId,
-              ref: "Dish",
-            },
-            count: Number,
-            status: String,
+            dishes: [
+              {
+                id: {
+                  type: Schema.Types.ObjectId,
+                  ref: "Dish",
+                },
+                count: Number,
+              },
+            ],
+            totalPrice: Number,
           },
         ],
       },

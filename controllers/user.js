@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 // Import Models
 const User = require("../models/user");
 const Cart = require("../models/cart");
+const Dish = require("../models/dish");
 const History = require("../models/history");
 
 // Gets
@@ -246,41 +247,75 @@ exports.addToCart = async (req, res, next) => {
   const dishCount = req.body.dishCount;
   try {
     const cart = await Cart.findOne({ user: userId });
+    const dish = await Dish.findById(dishId);
     if (cart) {
       // Cart found
-      const dishIndex = cart.dishes.findIndex(
-        (dish) => String(dish.id._id) === String(dishId)
+      const restaurantCartIndex = cart.userCarts.findIndex(
+        (element) =>
+          element.restaurant.toString() === dish.restaurant.toString()
       );
-      if (dishIndex < 0) {
-        // dish not found
+      if (restaurantCartIndex < 0) {
+        // restaurnat entry not found
         cart.totalPrice += +dishPrice * +dishCount;
-        cart.dishes.push({
-          id: dishId,
-          count: +dishCount,
+        cart.userCarts.push({
+          restaurant: dish.restaurant,
+          dishes: [
+            {
+              id: dishId,
+              count: +dishCount,
+            },
+          ],
         });
         const cartSaved = await cart.save();
         const cartToSend = await Cart.findById(cartSaved._id)
-          .populate("dishes.id")
+          .populate("userCarts.restaurant")
+          .populate("userCarts.dishes.id")
           .exec();
         res.status(201).json({ added: true, cart: cartToSend });
       } else {
-        // dish found
-        cart.dishes[dishIndex].count += +dishCount;
-        cart.totalPrice += +dishPrice * +dishCount;
-        const cartSaved = await cart.save();
-        const cartToSend = await Cart.findById(cartSaved._id)
-          .populate("dishes.id")
-          .exec();
-        res.status(201).json({ added: true, cart: cartToSend });
+        const dishIndex = cart.userCarts[restaurantCartIndex].dishes.findIndex(
+          (dish) => String(dish.id) === String(dishId)
+        );
+        if (dishIndex < 0) {
+          // dish not found
+          cart.totalPrice += +dishPrice * +dishCount;
+          cart.userCarts[restaurantCartIndex].dishes.push({
+            id: dishId,
+            count: +dishCount,
+          });
+          const cartSaved = await cart.save();
+          const cartToSend = await Cart.findById(cartSaved._id)
+            .populate("userCarts.restaurant")
+            .populate("userCarts.dishes.id")
+            .exec();
+          res.status(201).json({ added: true, cart: cartToSend });
+        } else {
+          // dish found
+          cart.userCarts[restaurantCartIndex].dishes[
+            dishIndex
+          ].count += +dishCount;
+          cart.totalPrice += +dishPrice * +dishCount;
+          const cartSaved = await cart.save();
+          const cartToSend = await Cart.findById(cartSaved._id)
+            .populate("userCarts.restaurant")
+            .populate("userCarts.dishes.id")
+            .exec();
+          res.status(201).json({ added: true, cart: cartToSend });
+        }
       }
     } else {
       const newCart = new Cart({
         user: userId,
         totalPrice: +dishPrice * +dishCount,
-        dishes: [
+        userCarts: [
           {
-            id: dishId,
-            count: +dishCount,
+            restaurant: dish.restaurant,
+            dishes: [
+              {
+                id: dishId,
+                count: +dishCount,
+              },
+            ],
           },
         ],
       });
@@ -289,7 +324,8 @@ exports.addToCart = async (req, res, next) => {
       user.cart = newCart._id;
       await user.save();
       const cartToSend = await Cart.findById(cartSaved._id)
-        .populate("dishes.id")
+        .populate("userCarts.restaurant")
+        .populate("userCarts.dishes.id")
         .exec();
       res.status(201).json({ added: true, cart: cartToSend });
     }
@@ -297,35 +333,47 @@ exports.addToCart = async (req, res, next) => {
     next(err);
   }
 };
-
 // Remove dish
 exports.removeFromCart = async (req, res, next) => {
   let userId = req.userId;
   const dishId = req.body.dishId;
   const dishPrice = req.body.dishPrice;
   try {
-    const cart = await Cart.findOne({ user: userId })
-      .populate("dishes.id")
-      .exec();
+    const cart = await Cart.findOne({ user: userId });
+    const dish = await Dish.findById(dishId);
     if (!cart) {
       const error = new Error("Whoops, no cart found!");
       error.status = 404;
       throw error;
     }
-    let dishIndex = cart.dishes.findIndex(
-      (dish) => String(dish.id._id) === String(dishId)
+
+    let restaurantCartIndex = cart.userCarts.findIndex(
+      (element) => element.restaurant.toString() === dish.restaurant.toString()
+    );
+    if (restaurantCartIndex < 0) {
+      const error = new Error("No such dish, found!");
+      error.status = 404;
+      throw error;
+    }
+    let dishIndex = cart.userCarts[restaurantCartIndex].dishes.findIndex(
+      (dish) => String(dish.id) === String(dishId)
     );
     if (dishIndex < 0) {
       const error = new Error("No such dish found!");
       error.status = 404;
       throw error;
     }
-    cart.totalPrice -= +dishPrice * +cart.dishes[dishIndex].count;
-    cart.dishes = cart.dishes.filter(
-      (dish) => String(dish.id._id) !== String(dishId)
-    );
+    cart.totalPrice -=
+      +dishPrice * +cart.userCarts[restaurantCartIndex].dishes[dishIndex].count;
+    cart.userCarts[restaurantCartIndex].dishes = cart.userCarts[
+      restaurantCartIndex
+    ].dishes.filter((dish) => String(dish.id) !== String(dishId));
     const cartSaved = await cart.save();
-    res.status(201).json({ removed: true, cart: cartSaved });
+    const cartToSend = await Cart.findById(cartSaved._id)
+      .populate("userCarts.restaurant")
+      .populate("userCarts.dishes.id")
+      .exec();
+    res.status(201).json({ removed: true, cart: cartToSend });
   } catch (err) {
     next(err);
   }
@@ -335,7 +383,8 @@ exports.getCart = async (req, res, next) => {
   let userId = req.userId;
   try {
     const cart = await Cart.findOne({ user: userId })
-      .populate("dishes.id")
+      .populate("userCarts.restaurant")
+      .populate("userCarts.dishes.id")
       .exec();
     if (!cart) {
       const error = new Error("Whoops, no cart found!");
@@ -352,7 +401,6 @@ exports.order = async (req, res, next) => {
   let userId = req.userId;
   try {
     const cart = await Cart.findOne({ user: userId })
-      .populate("dishes.id")
       .populate({
         path: "user",
         populate: {
@@ -364,52 +412,143 @@ exports.order = async (req, res, next) => {
         },
       })
       .exec();
-    if (!cart) {
+    if (!cart || cart.totalPrice <= 0) {
       const error = new Error("Whoops, no cart found!");
       error.status = 404;
       throw error;
     }
-    let totalPrice = cart.totalPrice + cart.user.company.block.deliveryCost;
-    const user = await User.findById(cart.user._id);
-    if (user.credits && user.credits > 0) {
-      let offPrice = cart.user.package.offPrice;
-      totalPrice -= offPrice;
-      user.credits -= 1;
-    }
-    if (user.referrals && user.referrals > 0) {
-      let referralOff = 2;
-      totalPrice -= referralOff;
-      user.referrals -= 1;
-    }
-
-    const history = await History.findOne({ user: userId });
     let orderId = "3920023804923409234";
-    if (history) {
-      history.history.push({
-        orderId: orderId,
-        order: cart.toObject(),
-        paid: totalPrice,
-      });
-      history.markModified("history.order");
-      const historySaved = await history.save();
-      await Cart.findByIdAndDelete(cart._id);
-      res.status(201).json({ ordered: true, history: historySaved, orderId });
-    } else {
-      const newHistory = new History({
-        user: userId,
-        history: [
-          {
-            orderId: orderId,
-            order: cart.toObject(),
-            paid: totalPrice,
-          },
-        ],
-      });
-      newHistory.markModified("history.order");
-      const historySaved = await newHistory.save();
-      await Cart.findByIdAndDelete(cart._id);
-      res.status(201).json({ ordered: true, history: historySaved, orderId });
-    }
+    await Promise.all(
+      cart.userCarts.map(async (userCart) => {
+        if (userCart.dishes.length > 0) {
+          const restaurantCart = await Cart.findOne({
+            restaurant: userCart.restaurant,
+          });
+          if (!restaurantCart) {
+            // restaurantCart not found
+            const newRestaurantCart = new Cart({
+              restaurant: userCart.restaurant,
+              restaurantCarts: [
+                {
+                  company: cart.user.company._id,
+                  carts: [
+                    {
+                      id: cart.user._id,
+                      totalPrice: cart.totalPrice,
+                      dishes: userCart.dishes,
+                    },
+                  ],
+                },
+              ],
+            });
+            await newRestaurantCart.save();
+          } else {
+            const companyIndex = restaurantCart.restaurantCarts.findIndex(
+              (element) =>
+                element.company.toString() === cart.user.company._id.toString()
+            );
+            if (companyIndex < 0) {
+              // company not found
+              restaurantCart.restaurantCarts.push({
+                company: cart.user.company._id,
+                carts: [
+                  {
+                    id: cart.user._id,
+                    totalPrice: cart.totalPrice,
+                    dishes: userCart.dishes,
+                  },
+                ],
+              });
+              await restaurantCart.save();
+            } else {
+              // company found
+              if (restaurantCart.restaurantCarts[companyIndex].stopped) {
+                const error = new Error(
+                  "Whoops, restaurant restricted more orders !"
+                );
+                error.status = 404;
+                throw error;
+              }
+              const userIndex = restaurantCart.restaurantCarts[
+                companyIndex
+              ].carts.findIndex(
+                (element) => element.id.toString() === cart.user._id.toString()
+              );
+              if (userIndex < 0) {
+                // user entry not found
+                restaurantCart.restaurantCarts[companyIndex].carts.push({
+                  id: cart.user._id,
+                  totalPrice: cart.totalPrice,
+                  dishes: userCart.dishes,
+                });
+                await restaurantCart.save();
+              } else {
+                // user entry found
+                restaurantCart.restaurantCarts[companyIndex].carts[
+                  userIndex
+                ].totalPrice += cart.totalPrice;
+                let newDishesArray =
+                  restaurantCart.restaurantCarts[companyIndex].carts[userIndex]
+                    .dishes;
+                userCart.dishes.map((element) => {
+                  newDishesArray.push({
+                    id: element.id,
+                    count: element.count,
+                  });
+                });
+                restaurantCart.restaurantCarts[companyIndex].carts[
+                  userIndex
+                ].dishes = newDishesArray;
+                await restaurantCart.save();
+              }
+            }
+          }
+        }
+      })
+    );
+    await Cart.findByIdAndDelete(cart._id);
+    res.status(201).json({ ordered: true, orderId });
+
+    // let totalPrice = cart.totalPrice + cart.user.company.block.deliveryCost;
+    // const user = await User.findById(cart.user._id);
+    // if (user.credits && user.credits > 0) {
+    //   let offPrice = cart.user.package.offPrice;
+    //   totalPrice -= offPrice;
+    //   user.credits -= 1;
+    // }
+    // if (user.referrals && user.referrals > 0) {
+    //   let referralOff = 2;
+    //   totalPrice -= referralOff;
+    //   user.referrals -= 1;
+    // }
+    // const history = await History.findOne({ user: userId });
+    // let orderId = "3920023804923409234";
+    // if (history) {
+    //   history.history.push({
+    //     orderId: orderId,
+    //     order: cart.toObject(),
+    //     paid: totalPrice,
+    //   });
+    //   history.markModified("history.order");
+    //   const historySaved = await history.save();
+    //   await Cart.findByIdAndDelete(cart._id);
+    //   res.status(201).json({ ordered: true, history: historySaved, orderId });
+    // } else {
+    //   const newHistory = new History({
+    //     user: userId,
+    //     history: [
+    //       {
+    //         orderId: orderId,
+    //         order: cart.toObject(),
+    //         paid: totalPrice,
+    //       },
+    //     ],
+    //   });
+    //   newHistory.markModified("history.order");
+    //   const historySaved = await newHistory.save();
+    //   await Cart.findByIdAndDelete(cart._id);
+    //   res.status(201).json({ ordered: true, history: historySaved, orderId });
+    // }
   } catch (err) {
     next(err);
   }
