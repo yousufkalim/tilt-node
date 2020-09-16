@@ -149,22 +149,44 @@ exports.getCart = async (req, res, next) => {
   const userId = req.userId;
   try {
     const cart = await Cart.findOne({ user: userId })
-      .populate("restaurantCarts.company")
+      .populate({
+        path: "restaurantCarts.company",
+        populate: {
+          path: "block",
+        },
+      })
       .populate("restaurantCarts.carts.id")
       .populate("restaurantCarts.carts.dishes.id")
-      // or this approach
-      // .populate({
-      //   path: "user.cart",
-      //   populate: [
-      //     {
-      //       path: "userCarts.restaurant",
-      //     },
-      //     {
-      //       path: "userCarts.dishes.id",
-      //     },
-      //   ],
-      // })
       .exec();
+    res.status(200).json({ cart: cart });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.stopOrdering = async (req, res, next) => {
+  const userId = req.userId;
+  const companyId = req.params.companyId;
+  try {
+    const cart = await Cart.findOne({ user: userId })
+      .populate({
+        path: "restaurantCarts.company",
+        populate: {
+          path: "block",
+        },
+      })
+      .populate("restaurantCarts.carts.id")
+      .populate("restaurantCarts.carts.dishes.id")
+      .exec();
+
+    const companyIndex = cart.restaurantCarts.findIndex(
+      (company) => company.company._id.toString() === companyId.toString()
+    );
+
+    cart.restaurantCarts[companyIndex].stopped = true;
+    await cart.save();
     res.status(200).json({ cart: cart });
   } catch (err) {
     if (!err.status) {
