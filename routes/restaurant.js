@@ -49,6 +49,7 @@ router.put(
   uploadRes.single("image"),
   restaurantController.editRestaurant
 );
+router.put("/editpassword", isAuth, restaurantController.changePassword);
 
 // DELETE
 router.delete("/delete", isAuth, restaurantController.deleteRestaurant);

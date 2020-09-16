@@ -20,10 +20,16 @@ exports.login = async (req, res, next) => {
       })
       .populate({
         path: "user.cart",
-        populate: { path: "dishes.id" },
+        populate: [
+          {
+            path: "userCarts.restaurant",
+          },
+          {
+            path: "userCarts.dishes.id",
+          },
+        ],
       })
       .exec();
-
     if (!user) {
       const err = new Error("No user exists with that email!");
       err.status = 404;

@@ -87,3 +87,30 @@ module.exports = mongoose.model("User", UserSchema);
 // Account.findById(someId, function (err, found) {
 //   console.log(found.creditCardNumber); // '****-****-****-1234'
 // });
+
+// Course
+//         .findById(req.params.courseId)
+//         .populate({
+//             path: 'classes',
+//             model: 'Classroom',
+//             populate: {
+//                 path: 'instructors',
+//                 model: 'User'
+//             }
+//         })
+//         .exec(function(err, cour) {
+//             if (err)
+//                 console.log(err);
+//             else {
+//                 Course.populate(cour,
+//                     {
+//                         path: 'classes.location',
+//                         model: 'Location',
+//                     }, function(err, c1) {
+//                         if (err)
+//                             console.log(err);
+//                         else
+//                             console.log(util.inspect(c1, { showHidden: true, depth: null }));
+//                     })
+//             }
+//         })

@@ -152,8 +152,49 @@ exports.getCart = async (req, res, next) => {
       .populate("restaurantCarts.company")
       .populate("restaurantCarts.carts.id")
       .populate("restaurantCarts.carts.dishes.id")
+      // or this approach
+      // .populate({
+      //   path: "user.cart",
+      //   populate: [
+      //     {
+      //       path: "userCarts.restaurant",
+      //     },
+      //     {
+      //       path: "userCarts.dishes.id",
+      //     },
+      //   ],
+      // })
       .exec();
     res.status(200).json({ cart: cart });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+
+exports.changePassword = async (req, res, next) => {
+  const userId = req.userId;
+  const password = req.body.password;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      const err = new Error("Whoops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
+    const checkPassword = bcrypt.compareSync(password, user.password);
+    if (checkPassword) {
+      const err = new Error("Change your password to a new one!");
+      err.status = 402;
+      throw err;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    user.password = hashedPassword;
+    const userSaved = await user.save();
+    res.status(201).json({ updated: true, user: userSaved });
   } catch (err) {
     if (!err.status) {
       err.status = 500;

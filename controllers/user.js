@@ -17,7 +17,14 @@ exports.getAll = async (req, res, next) => {
       })
       .populate({
         path: "user.cart",
-        populate: { path: "dishes.id" },
+        populate: [
+          {
+            path: "userCarts.restaurant",
+          },
+          {
+            path: "userCarts.dishes.id",
+          },
+        ],
       })
       .exec();
     if (!users) {
@@ -44,7 +51,14 @@ exports.getProfile = async (req, res, next) => {
       })
       .populate({
         path: "user.cart",
-        populate: { path: "dishes.id" },
+        populate: [
+          {
+            path: "userCarts.restaurant",
+          },
+          {
+            path: "userCarts.dishes.id",
+          },
+        ],
       })
       .exec();
     if (!user) {
@@ -108,7 +122,14 @@ exports.changeCompany = async (req, res, next) => {
       })
       .populate({
         path: "user.cart",
-        populate: { path: "dishes.id" },
+        populate: [
+          {
+            path: "userCarts.restaurant",
+          },
+          {
+            path: "userCarts.dishes.id",
+          },
+        ],
       })
       .exec();
     if (!user2) {
@@ -172,7 +193,14 @@ exports.editUser = async (req, res, next) => {
       })
       .populate({
         path: "user.cart",
-        populate: { path: "dishes.id" },
+        populate: [
+          {
+            path: "userCarts.restaurant",
+          },
+          {
+            path: "userCarts.dishes.id",
+          },
+        ],
       })
       .exec();
     if (!user) {
@@ -296,7 +324,7 @@ exports.addToCart = async (req, res, next) => {
       });
       const cartSaved = await newCart.save();
       const user = await User.findById(userId);
-      user.cart = newCart._id;
+      user.user.cart = newCart._id;
       await user.save();
       const cartToSend = await Cart.findById(cartSaved._id)
         .populate("userCarts.restaurant")
