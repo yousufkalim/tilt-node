@@ -28,7 +28,7 @@ const cartSchema = new Schema(
           type: Schema.Types.ObjectId,
           ref: "User",
         },
-        status: { type: String, default: "active" },
+        status: { type: String, default: "in progress" },
         stopped: { type: Boolean, default: false },
         carts: [
           {

@@ -6,7 +6,6 @@ const Cart = require("../models/cart");
 const Dish = require("../models/dish");
 const History = require("../models/history");
 
-// Gets
 exports.getAll = async (req, res, next) => {
   try {
     const users = await User.find({ role: "user" })
@@ -222,7 +221,6 @@ exports.editUser = async (req, res, next) => {
   }
 };
 
-// Others
 exports.deleteUser = async (req, res, next) => {
   const userId = req.userId;
   try {
@@ -242,7 +240,6 @@ exports.deleteUser = async (req, res, next) => {
     next(err);
   }
 };
-
 exports.addToCart = async (req, res, next) => {
   const userId = req.userId;
   const dishId = req.body.dishId;
@@ -336,7 +333,6 @@ exports.addToCart = async (req, res, next) => {
     next(err);
   }
 };
-// Remove dish
 exports.removeFromCart = async (req, res, next) => {
   let userId = req.userId;
   const dishId = req.body.dishId;
@@ -381,7 +377,6 @@ exports.removeFromCart = async (req, res, next) => {
     next(err);
   }
 };
-// Get Cart
 exports.getCart = async (req, res, next) => {
   let userId = req.userId;
   try {
@@ -399,7 +394,6 @@ exports.getCart = async (req, res, next) => {
     next(err);
   }
 };
-
 exports.order = async (req, res, next) => {
   let userId = req.userId;
   try {
@@ -510,59 +504,62 @@ exports.order = async (req, res, next) => {
         }
       })
     );
-    await Cart.findByIdAndDelete(cart._id);
-    res.status(201).json({ ordered: true, orderId });
 
-    // let totalPrice = cart.totalPrice + cart.user.company.block.deliveryCost;
-    // const user = await User.findById(cart.user._id);
-    // if (user.credits && user.credits > 0) {
-    //   let offPrice = cart.user.package.offPrice;
-    //   totalPrice -= offPrice;
-    //   user.credits -= 1;
-    // }
-    // if (user.referrals && user.referrals > 0) {
-    //   let referralOff = 2;
-    //   totalPrice -= referralOff;
-    //   user.referrals -= 1;
-    // }
-    // const history = await History.findOne({ user: userId });
-    // let orderId = "3920023804923409234";
-    // if (history) {
-    //   history.history.push({
-    //     orderId: orderId,
-    //     order: cart.toObject(),
-    //     paid: totalPrice,
-    //   });
-    //   history.markModified("history.order");
-    //   const historySaved = await history.save();
-    //   await Cart.findByIdAndDelete(cart._id);
-    //   res.status(201).json({ ordered: true, history: historySaved, orderId });
-    // } else {
-    //   const newHistory = new History({
-    //     user: userId,
-    //     history: [
-    //       {
-    //         orderId: orderId,
-    //         order: cart.toObject(),
-    //         paid: totalPrice,
-    //       },
-    //     ],
-    //   });
-    //   newHistory.markModified("history.order");
-    //   const historySaved = await newHistory.save();
-    //   await Cart.findByIdAndDelete(cart._id);
-    //   res.status(201).json({ ordered: true, history: historySaved, orderId });
-    // }
+    let totalPrice =
+      cart.totalPrice + cart.user.user.company.block.deliveryCost;
+    const user = await User.findById(cart.user._id);
+    if (user.user.credits && user.user.credits > 0) {
+      let offPrice = cart.user.user.package.offPrice;
+      totalPrice -= offPrice;
+      user.user.credits -= 1;
+    }
+    if (user.user.referrals && user.user.referrals > 0) {
+      let referralOff = 2;
+      totalPrice -= referralOff;
+      user.user.referrals -= 1;
+    }
+
+    const history = await History.findOne({ user: userId });
+    if (history) {
+      history.orderHistory.push({
+        totalPrice: cart.totalPrice,
+        paidPrice: totalPrice,
+        orderId: orderId,
+        status: "in progress",
+        order: cart.userCarts,
+      });
+      const historySaved = await history.save();
+      await Cart.findByIdAndDelete(cart._id);
+      res.status(201).json({ ordered: true, history: historySaved, orderId });
+    } else {
+      const newHistory = new History({
+        user: cart.user._id,
+        orderHistory: [
+          {
+            totalPrice: cart.totalPrice,
+            paidPrice: totalPrice,
+            orderId: orderId,
+            status: "in progress",
+            order: cart.userCarts,
+          },
+        ],
+      });
+      const historySaved = await newHistory.save();
+      await Cart.findByIdAndDelete(cart._id);
+      res.status(201).json({ ordered: true, history: historySaved, orderId });
+    }
   } catch (err) {
     next(err);
   }
 };
-
-// Get purchases
 exports.orders = async (req, res, next) => {
   let userId = req.userId;
   try {
-    const history = await History.findOne({ user: userId });
+    const history = await History.findOne({ user: userId })
+      .populate("user")
+      .populate("orderHistory.order.restaurant")
+      .populate("orderHistory.order.dishes.id")
+      .exec();
     if (!history) {
       res.status(200).json({ history: "" });
     } else {

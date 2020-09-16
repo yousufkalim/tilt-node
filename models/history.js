@@ -4,12 +4,31 @@ const Schema = mongoose.Schema;
 const HistorySchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: "User" },
-    history: [
+    orderHistory: [
       {
+        totalPrice: Number,
+        paidPrice: Number,
         orderId: String,
-        order: Schema.Types.Mixed,
-        paid: Number,
-        status: { type: String, default: "In progress" },
+        time: { type: Date, default: Date.now },
+        completedAt: { type: Date },
+        status: { type: String, default: "in progress" },
+        order: [
+          {
+            restaurant: {
+              type: Schema.Types.ObjectId,
+              ref: "User",
+            },
+            dishes: [
+              {
+                id: {
+                  type: Schema.Types.ObjectId,
+                  ref: "Dish",
+                },
+                count: Number,
+              },
+            ],
+          },
+        ],
       },
     ],
   },
