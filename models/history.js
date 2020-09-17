@@ -31,6 +31,38 @@ const HistorySchema = new Schema(
         ],
       },
     ],
+    restaurantHistory: [
+      {
+        company: {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+        },
+        status: { type: String, default: "in progress" },
+        stopped: { type: Boolean, default: false },
+        orderId: { type: String },
+        deliveredAt: { type: Date },
+        completedAt: { type: Date, default: Date.now },
+        carts: [
+          {
+            id: {
+              type: Schema.Types.ObjectId,
+              ref: "User",
+            },
+            orderId: { type: String },
+            dishes: [
+              {
+                id: {
+                  type: Schema.Types.ObjectId,
+                  ref: "Dish",
+                },
+                count: Number,
+              },
+            ],
+            totalPrice: Number,
+          },
+        ],
+      },
+    ],
   },
   {
     timestamps: true,

@@ -11,6 +11,6 @@ router.get("/checkemail/:email", AuthController.checkEmail);
 router.post("/login", AuthController.login);
 
 // PUT
-router.put("/editpassword", isAuth, AuthController.changePassword);
+router.put("/recover", isAuth, AuthController.recover);
 
 module.exports = router;

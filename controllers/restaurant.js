@@ -2,6 +2,7 @@
 const User = require("../models/user");
 const Dish = require("../models/dish");
 const Cart = require("../models/cart");
+const History = require("../models/history");
 const bcrypt = require("bcryptjs");
 
 exports.getAll = async (req, res, next) => {
@@ -122,6 +123,35 @@ exports.editRestaurant = async (req, res, next) => {
   }
 };
 
+exports.changePassword = async (req, res, next) => {
+  const userId = req.userId;
+  const password = req.body.password;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      const err = new Error("Whoops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
+    const checkPassword = bcrypt.compareSync(password, user.password);
+    if (checkPassword) {
+      const err = new Error("Change your password to a new one!");
+      err.status = 402;
+      throw err;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    user.password = hashedPassword;
+    const userSaved = await user.save();
+    res.status(201).json({ updated: true, user: userSaved });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+
 exports.deleteRestaurant = async (req, res, next) => {
   const userId = req.userId;
   try {
@@ -148,7 +178,10 @@ exports.deleteRestaurant = async (req, res, next) => {
 exports.getCart = async (req, res, next) => {
   const userId = req.userId;
   try {
-    const cart = await Cart.findOne({ user: userId })
+    const cart = await Cart.findOne({
+      user: userId,
+      "restaurantCarts.status": "in progress",
+    })
       .populate({
         path: "restaurantCarts.company",
         populate: {
@@ -196,27 +229,57 @@ exports.stopOrdering = async (req, res, next) => {
   }
 };
 
-exports.changePassword = async (req, res, next) => {
+exports.completeOrder = async (req, res, next) => {
   const userId = req.userId;
-  const password = req.body.password;
+  const companyId = req.params.companyId;
   try {
-    const user = await User.findById(userId);
-    if (!user) {
-      const err = new Error("Whoops, there was an error!");
-      err.status = 404;
-      throw err;
-    }
-    const checkPassword = bcrypt.compareSync(password, user.password);
-    if (checkPassword) {
-      const err = new Error("Change your password to a new one!");
-      err.status = 402;
-      throw err;
-    }
+    const cart = await Cart.findOne({ user: userId })
+      .populate("restaurantCarts.carts.id")
+      .populate("restaurantCarts.carts.dishes.id")
+      .exec();
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-    user.password = hashedPassword;
-    const userSaved = await user.save();
-    res.status(201).json({ updated: true, user: userSaved });
+    const companyIndex = cart.restaurantCarts.findIndex(
+      (company) => company.company.toString() === companyId.toString()
+    );
+
+    const companyCart = cart.restaurantCarts[companyIndex];
+    console.log(companyCart);
+
+    const history = await History.findOne({ user: userId });
+    if (history) {
+      history.restaurantHistory.push({
+        company: companyCart.company,
+        status: "cooked",
+        stopped: companyCart.stopped,
+        carts: companyCart.carts,
+      });
+      const historySaved = await history.save();
+      cart.restaurantCarts.pull(companyCart);
+      await cart.save();
+      res.status(201).json({
+        completed: true,
+        history: historySaved,
+      });
+    } else {
+      const newHistory = new History({
+        user: userId,
+        restaurantHistory: [
+          {
+            company: companyCart.company,
+            status: "cooked",
+            stopped: companyCart.stopped,
+            carts: companyCart.carts,
+          },
+        ],
+      });
+      const historySaved = await newHistory.save();
+      cart.restaurantCarts.pull(companyCart);
+      await cart.save();
+      res.status(201).json({
+        completed: true,
+        history: historySaved,
+      });
+    }
   } catch (err) {
     if (!err.status) {
       err.status = 500;

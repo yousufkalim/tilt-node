@@ -31,14 +31,14 @@ exports.login = async (req, res, next) => {
       })
       .exec();
     if (!user) {
-      const err = new Error("No user exists with that email!");
+      const err = new Error("The combination is incorrect, please try again!");
       err.status = 404;
       throw err;
     }
 
     const checkPassword = bcrypt.compareSync(password, user.password);
     if (!checkPassword) {
-      const err = new Error("Your password is incorrect!");
+      const err = new Error("The combination is incorrect, please try again!");
       err.status = 402;
       throw err;
     }
@@ -72,27 +72,20 @@ exports.checkEmail = async (req, res, next) => {
     next(err);
   }
 };
-exports.changePassword = async (req, res, next) => {
-  const userId = req.userId;
-  const password = req.body.password;
+exports.recover = async (req, res, next) => {
+  const email = req.body.email;
   try {
-    const user = await User.findById(userId);
+    const user = await User.findOne({ email });
     if (!user) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error("Whoops, no user found with this email!");
       err.status = 404;
       throw err;
     }
-    const checkPassword = bcrypt.compareSync(password, user.password);
-    if (checkPassword) {
-      const err = new Error("Change your password to a new one!");
-      err.status = 402;
-      throw err;
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const generatePassword = "passwordReset12";
+    const hashedPassword = await bcrypt.hash(generatePassword, 12);
     user.password = hashedPassword;
-    const userSaved = await user.save();
-    res.status(201).json({ updated: true, user: userSaved });
+    await user.save();
+    res.status(201).json({ reset: true });
   } catch (err) {
     if (!err.status) {
       err.status = 500;

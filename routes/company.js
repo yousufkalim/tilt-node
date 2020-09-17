@@ -5,7 +5,7 @@ const companyController = require("../controllers/company");
 const isAuth = require("../utils/isAuth");
 
 // GET
-router.get("/", isAuth, companyController.getAll);
+router.get("/", companyController.getAll);
 router.get("/get", isAuth, companyController.getById);
 
 // POST

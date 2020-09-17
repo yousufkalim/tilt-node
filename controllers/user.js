@@ -414,7 +414,9 @@ exports.order = async (req, res, next) => {
       error.status = 404;
       throw error;
     }
-    let orderId = "3920023804923409234";
+    let orderId = "0000000000000000".replace(/0/g, function () {
+      return (~~(Math.random() * 16)).toString(16);
+    });
     await Promise.all(
       cart.userCarts.map(async (userCart) => {
         if (userCart.dishes.length > 0) {
@@ -431,6 +433,7 @@ exports.order = async (req, res, next) => {
                   carts: [
                     {
                       id: cart.user._id,
+                      orderId: orderId,
                       totalPrice: cart.totalPrice,
                       dishes: userCart.dishes,
                     },
@@ -449,9 +452,11 @@ exports.order = async (req, res, next) => {
               // company not found
               restaurantCart.restaurantCarts.push({
                 company: cart.user.user.company._id,
+                orderId: orderId,
                 carts: [
                   {
                     id: cart.user._id,
+                    orderId: orderId,
                     totalPrice: cart.totalPrice,
                     dishes: userCart.dishes,
                   },
@@ -476,6 +481,7 @@ exports.order = async (req, res, next) => {
                 // user entry not found
                 restaurantCart.restaurantCarts[companyIndex].carts.push({
                   id: cart.user._id,
+                  orderId: orderId,
                   totalPrice: cart.totalPrice,
                   dishes: userCart.dishes,
                 });

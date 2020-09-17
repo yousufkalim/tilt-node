@@ -51,6 +51,11 @@ router.put(
 );
 router.put("/editpassword", isAuth, restaurantController.changePassword);
 router.put("/cart/stop/:companyId", isAuth, restaurantController.stopOrdering);
+router.put(
+  "/cart/complete/:companyId",
+  isAuth,
+  restaurantController.completeOrder
+);
 
 // DELETE
 router.delete("/delete", isAuth, restaurantController.deleteRestaurant);
