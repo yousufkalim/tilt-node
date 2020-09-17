@@ -243,7 +243,6 @@ exports.completeOrder = async (req, res, next) => {
     );
 
     const companyCart = cart.restaurantCarts[companyIndex];
-    console.log(companyCart);
 
     const history = await History.findOne({ user: userId });
     if (history) {
@@ -279,6 +278,34 @@ exports.completeOrder = async (req, res, next) => {
         completed: true,
         history: historySaved,
       });
+    }
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.getHistory = async (req, res, next) => {
+  const userId = req.userId;
+  try {
+    const history = await History.findOne({
+      user: userId,
+      // "restaurantHistory.status": { $ne: "in progress" },
+    })
+      .populate({
+        path: "restaurantHistory.company",
+        populate: {
+          path: "block",
+        },
+      })
+      .populate("restaurantHistory.carts.id")
+      .populate("restaurantHistory.carts.dishes.id")
+      .exec();
+    if (!history) {
+      res.status(200).json({ history: [] });
+    } else {
+      res.status(200).json({ history: history.restaurantHistory });
     }
   } catch (err) {
     if (!err.status) {
