@@ -35,6 +35,7 @@ const UserSchema = new Schema(
       default: "user",
     },
     user: {
+      affiliateCode: { type: String },
       referrals: { type: Number, default: 0 },
       credits: { type: Number, default: 0 },
       package: {
@@ -52,12 +53,6 @@ const UserSchema = new Schema(
       image: { type: String },
       pickupPlace: { type: String },
       deliveryCost: { type: String },
-      dishes: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: "Dish",
-        },
-      ],
       menus: [
         {
           type: Schema.Types.ObjectId,

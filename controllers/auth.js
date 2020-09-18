@@ -55,7 +55,6 @@ exports.login = async (req, res, next) => {
     next(err);
   }
 };
-
 exports.checkEmail = async (req, res, next) => {
   const email = req.params.email;
   try {

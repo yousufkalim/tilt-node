@@ -2,9 +2,13 @@
 const User = require("../models/user");
 const Dish = require("../models/dish");
 const Cart = require("../models/cart");
+const Menu = require("../models/menu");
 const History = require("../models/history");
 const bcrypt = require("bcryptjs");
 
+// Ctrl + K + 0 to fold all and Ctrl + K + J to unfold all.
+
+// Profile
 exports.getAll = async (req, res, next) => {
   try {
     const restaurants = await User.find({ role: "restaurant" });
@@ -38,7 +42,6 @@ exports.getById = async (req, res, next) => {
     next(err);
   }
 };
-
 exports.registerRestaurant = async (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -89,7 +92,6 @@ exports.registerRestaurant = async (req, res, next) => {
     next(err);
   }
 };
-
 exports.editRestaurant = async (req, res, next) => {
   const userId = req.userId;
   const email = req.body.email;
@@ -122,7 +124,6 @@ exports.editRestaurant = async (req, res, next) => {
     next(err);
   }
 };
-
 exports.changePassword = async (req, res, next) => {
   const userId = req.userId;
   const password = req.body.password;
@@ -151,7 +152,6 @@ exports.changePassword = async (req, res, next) => {
     next(err);
   }
 };
-
 exports.deleteRestaurant = async (req, res, next) => {
   const userId = req.userId;
   try {
@@ -175,12 +175,13 @@ exports.deleteRestaurant = async (req, res, next) => {
   }
 };
 
+// Ordering
 exports.getCart = async (req, res, next) => {
   const userId = req.userId;
   try {
     const cart = await Cart.findOne({
       user: userId,
-      "restaurantCarts.status": "in progress",
+      "restaurantCarts.status": "In progress",
     })
       .populate({
         path: "restaurantCarts.company",
@@ -228,7 +229,6 @@ exports.stopOrdering = async (req, res, next) => {
     next(err);
   }
 };
-
 exports.completeOrder = async (req, res, next) => {
   const userId = req.userId;
   const companyId = req.params.companyId;
@@ -248,7 +248,7 @@ exports.completeOrder = async (req, res, next) => {
     if (history) {
       history.restaurantHistory.push({
         company: companyCart.company,
-        status: "cooked",
+        status: "Cooked",
         stopped: companyCart.stopped,
         carts: companyCart.carts,
       });
@@ -265,7 +265,7 @@ exports.completeOrder = async (req, res, next) => {
         restaurantHistory: [
           {
             company: companyCart.company,
-            status: "cooked",
+            status: "Cooked",
             stopped: companyCart.stopped,
             carts: companyCart.carts,
           },
@@ -291,7 +291,7 @@ exports.getHistory = async (req, res, next) => {
   try {
     const history = await History.findOne({
       user: userId,
-      // "restaurantHistory.status": { $ne: "in progress" },
+      // "restaurantHistory.status": { $ne: "In progress" },
     })
       .populate({
         path: "restaurantHistory.company",
@@ -311,6 +311,267 @@ exports.getHistory = async (req, res, next) => {
     if (!err.status) {
       err.status = 500;
     }
+    next(err);
+  }
+};
+
+// Menu
+exports.getMenuList = async (req, res, next) => {
+  const userId = req.userId;
+  try {
+    const menuList = await Menu.find({
+      user: userId,
+    })
+      .populate("dishes")
+      .exec();
+    if (!menuList) {
+      res.status(200).json({ menuList: [] });
+    } else {
+      res.status(200).json({ menuList: menuList });
+    }
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.registerMenu = async (req, res, next) => {
+  const userId = req.userId;
+  const name = req.body.name;
+  const type = req.body.type;
+  try {
+    let restaurant = await User.findById(userId)
+      .populate("restaurant.menus")
+      .exec();
+    if (!restaurant) {
+      const err = new Error("Whoops, there was a problem!");
+      err.status = 404;
+      throw err;
+    }
+    restaurant.restaurant.menus.map((menu) => {
+      if (menu.name === name) {
+        const err = new Error("Menu with this name already exists!");
+        err.status = 404;
+        throw err;
+      }
+    });
+    restaurant.restaurant.depopulate("menus");
+    const menu = new Menu({
+      user: userId,
+      name: name,
+      menuType: type,
+    });
+    const menuSaved = await menu.save();
+    restaurant.restaurant.menus.push(menuSaved._id);
+    await restaurant.save();
+    res.status(201).json({ registered: true, menu: menuSaved });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.editMenu = async (req, res, next) => {
+  const userId = req.userId;
+  const menuId = req.body.menuId;
+  const name = req.body.name;
+  try {
+    let menu = await Menu.findById(menuId).populate("dishes").exec();
+    if (!menu) {
+      const err = new Error("Whoops, there was a problem!");
+      err.status = 404;
+      throw err;
+    }
+    menu.name = name;
+    const menuSaved = await menu.save();
+    res.status(201).json({ updated: true, menu: menuSaved });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.getMenu = async (req, res, next) => {
+  const userId = req.userId;
+  const menuId = req.params.menuId;
+  try {
+    let menu = await Menu.findById(menuId).populate("dishes").exec();
+    if (!menu) {
+      const err = new Error("Whoops, there was a problem!");
+      err.status = 404;
+      throw err;
+    }
+    res.status(201).json({ menu });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.deleteMenu = async (req, res, next) => {
+  const userId = req.userId;
+  const menuId = req.params.menuId;
+  try {
+    let menu = await Menu.findByIdAndDelete(menuId);
+    if (!menu) {
+      const err = new Error("Whoops, there was a problem!");
+      err.status = 404;
+      throw err;
+    }
+    await Promise.all(
+      menu.dishes.map(async (dish) => await Dish.findByIdAndDelete(dish._id))
+    );
+    res.status(201).json({ deleted: true, menu });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+
+// Dish
+exports.getDish = async (req, res, next) => {
+  const dishId = req.params.dishId;
+  try {
+    const dish = await Dish.findById(dishId);
+    if (!dish) {
+      const err = new Error("Whoops, there was a problem!");
+      err.status = 404;
+      throw err;
+    }
+    res.status(200).json({ dish: dish });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.addDish = async (req, res, next) => {
+  const userId = req.userId;
+  const name = req.body.name;
+  const price = req.body.price;
+  const dishType = req.body.dishType;
+  const description = req.body.description;
+  const menuId = req.body.menuId;
+  let imagePath = req.file !== undefined ? req.file.path : "";
+  imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
+  try {
+    const menu = await Menu.findById(menuId).populate("dishes").exec();
+    if (!menu) {
+      const err = new Error("Whoops, there was a problem!");
+      err.status = 404;
+      throw err;
+    }
+    menu.dishes.map((dish) => {
+      if (dish.name === name) {
+        const err = new Error("Dish with this name already exists!");
+        err.status = 404;
+        throw err;
+      }
+    });
+    menu.depopulate("dishes");
+    const dish = new Dish({
+      name: name,
+      price: price,
+      menu: menu._id,
+      image: imagePath,
+      dishType: dishType,
+      description: description,
+    });
+    const dishSaved = await dish.save();
+    menu.dishes.push(dishSaved._id);
+    await menu.save();
+    res.status(201).json({ registered: true, dish: dishSaved });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.editDish = async (req, res, next) => {
+  const userId = req.userId;
+  const dishId = req.body.dishId;
+  const name = req.body.name;
+  const price = req.body.price;
+  const dishType = req.body.dishType;
+  const description = req.body.description;
+  let imagePath = req.file !== undefined ? req.file.path : "";
+  imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
+
+  try {
+    const dish = await Dish.findById(dishId);
+    if (!dish) {
+      const err = new Error("Whoops, there was en error!");
+      err.status = 404;
+      throw err;
+    }
+    dish.name = name;
+    dish.price = price;
+    dish.dishType = dishType;
+    dish.description = description;
+    imagePath !== "" && (dish.image = imagePath);
+    const dishSaved = await dish.save();
+
+    res.status(201).json({ updated: true, dish: dishSaved });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.deleteDish = async (req, res, next) => {
+  const userId = req.userId;
+  const menuId = req.params.menuId;
+  const dishId = req.params.dishId;
+  try {
+    const dish = await Dish.findById(dishId);
+    if (!dish) {
+      const err = new Error("Whoops, there was en error!");
+      err.status = 404;
+      throw err;
+    }
+    const menu = await Menu.findById(menuId);
+    if (!menu) {
+      const err = new Error("Whoops, there was en error!");
+      err.status = 404;
+      throw err;
+    }
+    if (menu.user.toString() !== userId.toString()) {
+      const err = new Error("You are not authorized for this action!");
+      err.status = 404;
+      throw err;
+    }
+    const dishIndex = menu.dishes.findIndex(
+      (dish) => String(dish) === String(dishId)
+    );
+    if (dishIndex < 0) {
+      const err = new Error("You are not authorized for this action!");
+      err.status = 404;
+      throw err;
+    }
+
+    const dishDeleted = await Dish.findByIdAndDelete(dishId);
+    if (!dishDeleted) {
+      const error = new Error("Whoops, there was an error!");
+      error.status = 404;
+      throw error;
+    }
+    const newDishes = menu.dishes.filter(
+      (dish) => String(dish) !== String(dishId)
+    );
+    menu.dishes = newDishes;
+    await menu.save();
+
+    res.status(201).json({ deleted: true, dish: dishDeleted });
+  } catch (err) {
     next(err);
   }
 };

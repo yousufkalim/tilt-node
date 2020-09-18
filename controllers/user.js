@@ -158,6 +158,9 @@ exports.registerUser = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
+    let referralCode = "0000000".replace(/0/g, function () {
+      return (~~(Math.random() * 16)).toString(16);
+    });
     const hashedPassword = await bcrypt.hash(password, 12);
     const user = new User({
       firstName: firstName,
@@ -165,6 +168,7 @@ exports.registerUser = async (req, res, next) => {
       email: email,
       password: hashedPassword,
       user: {
+        affiliateCode: referralCode,
         company: companyId,
       },
     });
@@ -531,7 +535,7 @@ exports.order = async (req, res, next) => {
         totalPrice: cart.totalPrice,
         paidPrice: totalPrice,
         orderId: orderId,
-        status: "in progress",
+        status: "In progress",
         order: cart.userCarts,
       });
       const historySaved = await history.save();
@@ -545,7 +549,7 @@ exports.order = async (req, res, next) => {
             totalPrice: cart.totalPrice,
             paidPrice: totalPrice,
             orderId: orderId,
-            status: "in progress",
+            status: "In progress",
             order: cart.userCarts,
           },
         ],

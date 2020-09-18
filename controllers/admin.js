@@ -3,7 +3,7 @@ const User = require("../models/user");
 const Package = require("../models/package");
 const Block = require("../models/block");
 
-// Gets
+// Packages
 exports.getAllPackages = async (req, res, next) => {
   try {
     const packages = await Package.find();
@@ -37,8 +37,6 @@ exports.getPackage = async (req, res, next) => {
     next(err);
   }
 };
-
-// Posts
 exports.registerPackage = async (req, res, next) => {
   const name = req.body.name;
   const price = req.body.price;
@@ -107,8 +105,6 @@ exports.editPackage = async (req, res, next) => {
     next(err);
   }
 };
-
-// Others
 exports.deletePackage = async (req, res, next) => {
   const packageId = req.params.packageId;
   try {
@@ -127,7 +123,7 @@ exports.deletePackage = async (req, res, next) => {
   }
 };
 
-// Gets
+// Blocks
 exports.getAllBlocks = async (req, res, next) => {
   try {
     const blocks = await Block.find().populate("restaurants").exec();
@@ -161,8 +157,6 @@ exports.getBlock = async (req, res, next) => {
     next(err);
   }
 };
-
-// Posts
 exports.registerBlock = async (req, res, next) => {
   const name = req.body.name;
   const orderTime = req.body.orderTime;
@@ -223,8 +217,6 @@ exports.editBlock = async (req, res, next) => {
     next(err);
   }
 };
-
-// Others
 exports.deleteBlock = async (req, res, next) => {
   const blockId = req.params.blockId;
   try {
@@ -241,6 +233,7 @@ exports.deleteBlock = async (req, res, next) => {
   }
 };
 
+// Blocks +
 exports.addRestaurantToBlock = async (req, res, next) => {
   const restaurantId = req.body.restaurantId;
   const blockId = req.body.blockId;
@@ -269,7 +262,6 @@ exports.addRestaurantToBlock = async (req, res, next) => {
     next(err);
   }
 };
-
 exports.addCompanyToBlock = async (req, res, next) => {
   const companyId = req.body.companyId;
   const blockId = req.body.blockId;

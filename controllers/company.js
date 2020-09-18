@@ -2,7 +2,7 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 
-// Gets
+// Profile
 exports.getAll = async (req, res, next) => {
   try {
     const companies = await User.find({
@@ -38,8 +38,6 @@ exports.getById = async (req, res, next) => {
     next(err);
   }
 };
-
-// Posts
 exports.registerCompany = async (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -124,8 +122,6 @@ exports.editCompany = async (req, res, next) => {
     next(err);
   }
 };
-
-// Others
 exports.deleteCompany = async (req, res, next) => {
   const userId = req.userId;
   try {

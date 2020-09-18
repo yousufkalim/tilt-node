@@ -8,10 +8,10 @@ const dishSchema = new Schema(
     dishType: { type: String, required: true },
     description: { type: String, required: true },
     image: { type: String },
-    status: { type: String, default: "active" },
-    restaurant: {
+    status: { type: String, default: "Active" },
+    menu: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Menu",
     },
   },
   { timestamps: true }
