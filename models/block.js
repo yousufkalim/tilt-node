@@ -5,6 +5,7 @@ const blockSchema = new Schema(
   {
     name: String,
     orderTime: String,
+    // orderTime => timeLeftToOrder
     pickUpTime: String,
     deliveryTime: String,
     deliveryCost: Number,

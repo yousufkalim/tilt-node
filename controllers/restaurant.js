@@ -6,6 +6,8 @@ const Menu = require("../models/menu");
 const History = require("../models/history");
 const bcrypt = require("bcryptjs");
 
+const { clearFile } = require("../utils/clearFile");
+
 // Ctrl + K + 0 to fold all and Ctrl + K + J to unfold all.
 
 // Profile
@@ -458,6 +460,7 @@ exports.addDish = async (req, res, next) => {
   const price = req.body.price;
   const dishType = req.body.dishType;
   const description = req.body.description;
+  const specials = req.body.specials;
   const menuId = req.body.menuId;
   let imagePath = req.file !== undefined ? req.file.path : "";
   imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
@@ -476,12 +479,19 @@ exports.addDish = async (req, res, next) => {
       }
     });
     menu.depopulate("dishes");
+    const restaurant = await User.findById(userId);
+    if (!restaurant) {
+      const err = new Error("Whoops, there was a problem!");
+      err.status = 404;
+      throw err;
+    }
     const dish = new Dish({
       name: name,
       price: price,
       menu: menu._id,
-      image: imagePath,
+      image: imagePath === "" ? restaurant.restaurant.image : imagePath,
       dishType: dishType,
+      specials: JSON.parse(specials),
       description: description,
     });
     const dishSaved = await dish.save();
@@ -511,6 +521,10 @@ exports.editDish = async (req, res, next) => {
       const err = new Error("Whoops, there was en error!");
       err.status = 404;
       throw err;
+    }
+    let isDishes = dish.image !== "" && dish.image.split("/")[1].split("/")[0];
+    if (isDishes === "dishes" && imagePath !== "") {
+      clearFile(dish.image);
     }
     dish.name = name;
     dish.price = price;
@@ -563,6 +577,11 @@ exports.deleteDish = async (req, res, next) => {
       const error = new Error("Whoops, there was an error!");
       error.status = 404;
       throw error;
+    }
+    let isDishes =
+      dishDeleted.image !== "" && dishDeleted.image.split("/")[1].split("/")[0];
+    if (isDishes === "dishes") {
+      clearFile(dishDeleted.image);
     }
     const newDishes = menu.dishes.filter(
       (dish) => String(dish) !== String(dishId)
