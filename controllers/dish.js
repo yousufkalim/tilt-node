@@ -5,17 +5,16 @@ const User = require("../models/user");
 // Gets
 exports.getAll = async (req, res, next) => {
   try {
+    // find all the dishes with it's restaurant
     const dishes = await Dish.find().populate("restaurant").exec();
     if (!dishes) {
       const err = new Error("Whoops, there was a problem!");
       err.status = 404;
       throw err;
     }
+    // response send
     res.status(200).json({ dishes: dishes });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -30,9 +29,6 @@ exports.getById = async (req, res, next) => {
     }
     res.status(200).json({ dish: dish });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -49,9 +45,6 @@ exports.getAllByRestaurant = async (req, res, next) => {
     }
     res.status(200).json({ dishes: dishes });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };

@@ -13,6 +13,7 @@ const { clearFile } = require("../utils/clearFile");
 // Profile
 exports.getAll = async (req, res, next) => {
   try {
+    // get all the restaurants
     const restaurants = await User.find({ role: "restaurant" });
     if (!restaurants) {
       const err = new Error("Whoops, there was en error!");
@@ -21,9 +22,6 @@ exports.getAll = async (req, res, next) => {
     }
     res.status(200).json({ restaurants: restaurants });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -38,9 +36,6 @@ exports.getById = async (req, res, next) => {
     }
     res.status(200).json({ restaurant: restaurant });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -148,9 +143,6 @@ exports.changePassword = async (req, res, next) => {
     const userSaved = await user.save();
     res.status(201).json({ updated: true, user: userSaved });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -196,9 +188,6 @@ exports.getCart = async (req, res, next) => {
       .exec();
     res.status(200).json({ cart: cart });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -225,9 +214,6 @@ exports.stopOrdering = async (req, res, next) => {
     await cart.save();
     res.status(200).json({ cart: cart });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -282,9 +268,6 @@ exports.completeOrder = async (req, res, next) => {
       });
     }
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -310,9 +293,6 @@ exports.getHistory = async (req, res, next) => {
       res.status(200).json({ history: history.restaurantHistory });
     }
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -332,9 +312,6 @@ exports.getMenuList = async (req, res, next) => {
       res.status(200).json({ menuList: menuList });
     }
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -369,9 +346,6 @@ exports.registerMenu = async (req, res, next) => {
     await restaurant.save();
     res.status(201).json({ registered: true, menu: menuSaved });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -390,9 +364,6 @@ exports.editMenu = async (req, res, next) => {
     const menuSaved = await menu.save();
     res.status(201).json({ updated: true, menu: menuSaved });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -408,9 +379,6 @@ exports.getMenu = async (req, res, next) => {
     }
     res.status(201).json({ menu });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -429,9 +397,6 @@ exports.deleteMenu = async (req, res, next) => {
     );
     res.status(201).json({ deleted: true, menu });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -448,9 +413,6 @@ exports.getDish = async (req, res, next) => {
     }
     res.status(200).json({ dish: dish });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -499,9 +461,6 @@ exports.addDish = async (req, res, next) => {
     await menu.save();
     res.status(201).json({ registered: true, dish: dishSaved });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
@@ -512,6 +471,8 @@ exports.editDish = async (req, res, next) => {
   const price = req.body.price;
   const dishType = req.body.dishType;
   const description = req.body.description;
+  const specials = req.body.specials;
+  const menuId = req.body.menuId;
   let imagePath = req.file !== undefined ? req.file.path : "";
   imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
 
@@ -519,6 +480,17 @@ exports.editDish = async (req, res, next) => {
     const dish = await Dish.findById(dishId);
     if (!dish) {
       const err = new Error("Whoops, there was en error!");
+      err.status = 404;
+      throw err;
+    }
+    const menu = await Menu.findById(menuId);
+    if (!menu) {
+      const err = new Error("Whoops, there was en error!");
+      err.status = 404;
+      throw err;
+    }
+    if (menu.user.toString() !== userId.toString()) {
+      const err = new Error("You are not authorized for this action!");
       err.status = 404;
       throw err;
     }
@@ -530,14 +502,12 @@ exports.editDish = async (req, res, next) => {
     dish.price = price;
     dish.dishType = dishType;
     dish.description = description;
+    dish.specials = JSON.parse(specials);
     imagePath !== "" && (dish.image = imagePath);
     const dishSaved = await dish.save();
 
     res.status(201).json({ updated: true, dish: dishSaved });
   } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
     next(err);
   }
 };
