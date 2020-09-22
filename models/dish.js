@@ -14,6 +14,10 @@ const dishSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Menu",
     },
+    restaurant: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   { timestamps: true }
 );

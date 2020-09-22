@@ -280,6 +280,7 @@ exports.getHistory = async (req, res, next) => {
     })
       .populate({
         path: "restaurantHistory.company",
+        // options: { sort: { position: -1 } },
         populate: {
           path: "block",
         },
@@ -473,6 +474,7 @@ exports.addDish = async (req, res, next) => {
       dishType: dishType,
       specials: JSON.parse(specials),
       description: description,
+      restaurant: userId,
     });
     const dishSaved = await dish.save();
     menu.dishes.push(dishSaved._id);

@@ -224,7 +224,6 @@ exports.editUser = async (req, res, next) => {
     next(err);
   }
 };
-
 exports.deleteUser = async (req, res, next) => {
   const userId = req.userId;
   try {
@@ -244,6 +243,54 @@ exports.deleteUser = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getDishes = async (req, res, next) => {
+  const userId = req.userId;
+  try {
+    const user = await User.findById(userId)
+      .populate({
+        path: "user.company",
+        populate: { path: "block" },
+      })
+      .exec();
+    if (!user) {
+      const err = new Error("No such user exists!");
+      err.status = 404;
+      throw err;
+    }
+    const restaurantsIdsArray = user.user.company.block.restaurants;
+    const dishesArray = [];
+    const restaurantsArray = [];
+    await Promise.all(
+      restaurantsIdsArray.map(async (restaurantId) => {
+        const restaurant = await User.findById(restaurantId)
+          .populate({
+            path: "restaurant.menus",
+            populate: { path: "dishes" },
+          })
+          .exec();
+        restaurantsArray.push(restaurant);
+        restaurant.restaurant.menus.map((menu) =>
+          menu.dishes.map((dish) =>
+            dishesArray.push({
+              ...dish.toObject(),
+              restaurantName: restaurant.firstName,
+            })
+          )
+        );
+      })
+    );
+    res
+      .status(200)
+      .json({ restaurantsArray: restaurantsArray, dishesArray: dishesArray });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+
 exports.addToCart = async (req, res, next) => {
   const userId = req.userId;
   const dishId = req.body.dishId;
