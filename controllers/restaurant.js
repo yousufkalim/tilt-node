@@ -360,6 +360,11 @@ exports.editMenu = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
+    if (menu.user.toString() !== userId.toString()) {
+      const err = new Error("You are not authorized for this action!");
+      err.status = 404;
+      throw err;
+    }
     menu.name = name;
     const menuSaved = await menu.save();
     res.status(201).json({ updated: true, menu: menuSaved });
@@ -386,16 +391,29 @@ exports.deleteMenu = async (req, res, next) => {
   const userId = req.userId;
   const menuId = req.params.menuId;
   try {
-    let menu = await Menu.findByIdAndDelete(menuId);
+    const menu = await Menu.findById(menuId);
     if (!menu) {
+      const err = new Error("Whoops, there was en error!");
+      err.status = 404;
+      throw err;
+    }
+    if (menu.user.toString() !== userId.toString()) {
+      const err = new Error("You are not authorized for this action!");
+      err.status = 404;
+      throw err;
+    }
+    let menuDeleted = await Menu.findByIdAndDelete(menuId);
+    if (!menuDeleted) {
       const err = new Error("Whoops, there was a problem!");
       err.status = 404;
       throw err;
     }
     await Promise.all(
-      menu.dishes.map(async (dish) => await Dish.findByIdAndDelete(dish._id))
+      menuDeleted.dishes.map(
+        async (dish) => await Dish.findByIdAndDelete(dish._id)
+      )
     );
-    res.status(201).json({ deleted: true, menu });
+    res.status(201).json({ deleted: true, menu: menuDeleted });
   } catch (err) {
     next(err);
   }
