@@ -276,11 +276,9 @@ exports.getHistory = async (req, res, next) => {
   try {
     const history = await History.findOne({
       user: userId,
-      // "restaurantHistory.status": { $ne: "In progress" },
     })
       .populate({
         path: "restaurantHistory.company",
-        // options: { sort: { position: -1 } },
         populate: {
           path: "block",
         },
@@ -293,6 +291,19 @@ exports.getHistory = async (req, res, next) => {
     } else {
       res.status(200).json({ history: history.restaurantHistory });
     }
+    // collection.find().sort({datefield: 1})
+    // collection.find().sort([['datefield', 1]])
+    // collection.find({}, {sort: {datefield: 1}})
+    // collection.find({}, {sort: [['datefield', 1]]})
+    // .populate({
+    //   path: "restaurantHistory.company",
+    //   options: { sort: { position: -1 } },
+    //   populate: {
+    //     path: "block",
+    //   },
+    // })
+    // 'asc' / 'ascending' => 1
+    // 'desc' / 'descending' => -1
   } catch (err) {
     next(err);
   }

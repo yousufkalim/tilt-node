@@ -1,7 +1,170 @@
+const bcrypt = require("bcryptjs");
+
 // Import Models
 const User = require("../models/user");
+const Company = require("../models/company");
 const Package = require("../models/package");
 const Block = require("../models/block");
+
+// Profile
+exports.registerAdmin = async (req, res, next) => {
+  const firstName = req.body.firstName;
+  const lastName = req.body.lastName;
+  const email = req.body.email;
+  const password = req.body.password;
+  const secret_code = req.body.secret_code;
+  try {
+    if (secret_code !== "secretcodeforadmin") {
+      const err = new Error("Not authorized!");
+      err.status = 404;
+      throw err;
+    }
+    const userCheck = await User.findOne({ email: email });
+    if (userCheck) {
+      const err = new Error("Email already exists!");
+      err.status = 404;
+      throw err;
+    }
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const user = new User({
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      password: hashedPassword,
+      role: "admin",
+    });
+    const userSaved = await user.save();
+
+    res.status(200).json({ registered: true, user: userSaved });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+
+// Company
+exports.getAllCompanies = async (req, res, next) => {
+  try {
+    // find the company doc
+    const companies = await Company.find();
+    if (!companies) {
+      const err = new Error("Whoops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
+    // response sending
+    res.status(200).json({ companies: companies });
+  } catch (err) {
+    next(err);
+  }
+};
+exports.getCompany = async (req, res, next) => {
+  // package id from params
+  const companyId = req.params.companyId;
+  try {
+    // find a single company by id
+    const company = await Company.findById(companyId);
+    if (!company) {
+      const err = new Error("No such company found!");
+      err.status = 404;
+      throw err;
+    }
+    // response sending
+    res.status(200).json({ company: company });
+  } catch (err) {
+    next(err);
+  }
+};
+exports.registerCompany = async (req, res, next) => {
+  // req body values
+  const name = req.body.name;
+  const deliveryPlace = req.body.deliveryPlace;
+
+  try {
+    // check if the package exists already
+    const companyCheck = await Company.findOne({ name: name });
+    if (companyCheck) {
+      const error = new Error("Company with this name already exists!");
+      error.status = 404;
+      throw error;
+    }
+    // create a company doc
+    const company = new Company({
+      name: name,
+      deliveryPlace: deliveryPlace,
+    });
+    // save the company to the db
+    const companySaved = await company.save();
+    // response sending
+    res.status(201).json({
+      registered: true,
+      company: companySaved,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+exports.editCompany = async (req, res, next) => {
+  // company id from params
+  const companyId = req.params.companyId;
+  // req body values
+  const name = req.body.name;
+  const deliveryPlace = req.body.deliveryPlace;
+  try {
+    // find the package to edit by id
+    const company = await Company.findById(companyId);
+    if (!company) {
+      const err = new Error("No such company found!");
+      err.status = 404;
+      throw err;
+    }
+    // update the new values
+    company.name = name;
+    company.deliveryPlace = deliveryPlace;
+    // saving the updated doc
+    const companySaved = await company.save();
+    // response sending
+    res.status(201).json({
+      updated: true,
+      company: companySaved,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+exports.deleteCompany = async (req, res, next) => {
+  // req body values
+  const userId = req.userId;
+  const companyId = req.params.companyId;
+  try {
+    // find the company
+    const company = await Company.findByIdAndDelete(companyId);
+    if (!company) {
+      const error = new Error("Whoops, there was an error!");
+      error.status = 404;
+      throw error;
+    }
+    // find the users associated with that company
+    const users = await User.find({ "user.company": companyId });
+    // change status of every user to company (needs company to be functional)
+    await Promise.all(
+      users.map(async (userIn) => {
+        const statusUser = await User.findById(userIn._id);
+        statusUser.status = "company";
+        await statusUser.save();
+      })
+    );
+    // response send
+    res.status(201).json({
+      deleted: true,
+      company,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
 // Packages
 exports.getAllPackages = async (req, res, next) => {

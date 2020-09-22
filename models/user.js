@@ -36,8 +36,8 @@ const UserSchema = new Schema(
     },
     user: {
       affiliateCode: { type: String },
-      referrals: { type: Number, default: 0 },
-      credits: { type: Number, default: 0 },
+      referrals: { type: Number },
+      credits: { type: Number },
       package: {
         type: Schema.Types.ObjectId,
         ref: "Package",
@@ -46,8 +46,10 @@ const UserSchema = new Schema(
         type: Schema.Types.ObjectId,
         ref: "Cart",
       },
-      company: this,
-      // company: [UserSchema]
+      company: {
+        type: Schema.Types.ObjectId,
+        ref: "Company",
+      },
     },
     restaurant: {
       image: { type: String },
@@ -60,8 +62,12 @@ const UserSchema = new Schema(
         },
       ],
     },
-    company: {
-      deliveryPlace: String,
+    deliveryPerson: {
+      bank: {
+        account: Number,
+        name: String,
+        code: String,
+      },
     },
   },
   { timestamps: true }
@@ -109,3 +115,13 @@ module.exports = mongoose.model("User", UserSchema);
 //                     })
 //             }
 //         })
+
+// company: this
+// company: [UserSchema]
+
+// person.anything = { x: [3, 4, { y: "changed" }] };
+// person.markModified('anything');
+// person.save(); // Mongoose will save changes to `anything`
+
+// let x = {a: 1, b: 2, c: 3, z:26};
+// let {b, ...y} = x;

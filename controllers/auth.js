@@ -15,6 +15,7 @@ exports.login = async (req, res, next) => {
       email: email,
       status: { $ne: "deleted" },
     })
+      .populate("block")
       .populate("user.package")
       .populate({
         path: "user.company",
