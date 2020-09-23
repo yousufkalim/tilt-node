@@ -35,9 +35,9 @@ const HistorySchema = new Schema(
       {
         company: {
           type: Schema.Types.ObjectId,
-          ref: "User",
+          ref: "Company",
         },
-        status: { type: String, default: "in progress" },
+        status: { type: String, default: "In progress" },
         stopped: { type: Boolean, default: false },
         orderId: { type: String },
         deliveredAt: { type: Date },

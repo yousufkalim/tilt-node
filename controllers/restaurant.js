@@ -65,7 +65,7 @@ exports.registerRestaurant = async (req, res, next) => {
       firstName: name,
       email: email,
       password: hashedPassword,
-      status: "pending",
+      status: "active",
       role: "restaurant",
       address: {
         street: JSON.parse(address).street,
@@ -207,7 +207,8 @@ exports.stopOrdering = async (req, res, next) => {
       .exec();
 
     const companyIndex = cart.restaurantCarts.findIndex(
-      (company) => company.company._id.toString() === companyId.toString()
+      (companyOrder) =>
+        companyOrder.company._id.toString() === companyId.toString()
     );
 
     cart.restaurantCarts[companyIndex].stopped = true;
@@ -227,7 +228,7 @@ exports.completeOrder = async (req, res, next) => {
       .exec();
 
     const companyIndex = cart.restaurantCarts.findIndex(
-      (company) => company.company.toString() === companyId.toString()
+      (companyOrder) => companyOrder.company.toString() === companyId.toString()
     );
 
     const companyCart = cart.restaurantCarts[companyIndex];
@@ -385,7 +386,6 @@ exports.editMenu = async (req, res, next) => {
   }
 };
 exports.getMenu = async (req, res, next) => {
-  const userId = req.userId;
   const menuId = req.params.menuId;
   try {
     let menu = await Menu.findById(menuId).populate("dishes").exec();

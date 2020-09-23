@@ -325,7 +325,7 @@ exports.getBlock = async (req, res, next) => {
 exports.registerBlock = async (req, res, next) => {
   // req body values
   const name = req.body.name;
-  const orderTime = req.body.orderTime;
+  const timeForOrder = req.body.timeForOrder;
   const pickUpTime = req.body.pickUpTime;
   const deliveryTime = req.body.deliveryTime;
   const deliveryCost = req.body.deliveryCost;
@@ -341,7 +341,7 @@ exports.registerBlock = async (req, res, next) => {
     // create a new block doc
     const block = new Block({
       name: name,
-      orderTime: orderTime,
+      timeForOrder: timeForOrder,
       pickUpTime: pickUpTime,
       deliveryTime: deliveryTime,
       deliveryCost: deliveryCost,
@@ -359,7 +359,7 @@ exports.editBlock = async (req, res, next) => {
   const blockId = req.params.blockId;
   // req body values
   const name = req.body.name;
-  const orderTime = req.body.orderTime;
+  const timeForOrder = req.body.timeForOrder;
   const pickUpTime = req.body.pickUpTime;
   const deliveryTime = req.body.deliveryTime;
   const deliveryCost = req.body.deliveryCost;
@@ -373,7 +373,7 @@ exports.editBlock = async (req, res, next) => {
     }
     // update with the new values
     block.name = name;
-    block.orderTime = orderTime;
+    block.timeForOrder = timeForOrder;
     block.pickUpTime = pickUpTime;
     block.deliveryTime = deliveryTime;
     block.deliveryCost = deliveryCost;
@@ -444,7 +444,7 @@ exports.addCompanyToBlock = async (req, res, next) => {
 
   try {
     // find the company to add
-    const company = await User.findById(companyId);
+    const company = await Company.findById(companyId);
     if (!company) {
       const err = new Error("No such company exists!!");
       err.status = 404;

@@ -5,7 +5,7 @@ const adminController = require("../controllers/admin");
 const isAuth = require("../utils/isAuth");
 
 // GET
-router.get("/company", isAuth, adminController.getAllCompanies);
+router.get("/company", adminController.getAllCompanies);
 router.get("/company/get/:companyId", isAuth, adminController.getCompany);
 router.get("/package", isAuth, adminController.getAllPackages);
 router.get("/package/get/:packageId", isAuth, adminController.getPackage);

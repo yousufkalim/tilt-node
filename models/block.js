@@ -4,8 +4,7 @@ const Schema = mongoose.Schema;
 const blockSchema = new Schema(
   {
     name: String,
-    orderTime: String,
-    // orderTime => timeLeftToOrder
+    timeForOrder: String,
     pickUpTime: String,
     deliveryTime: String,
     deliveryCost: Number,

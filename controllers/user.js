@@ -158,7 +158,7 @@ exports.registerUser = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    let referralCode = "0000000".replace(/0/g, function () {
+    const affiliateCode = "0000000".replace(/0/g, function () {
       return (~~(Math.random() * 16)).toString(16);
     });
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -168,7 +168,7 @@ exports.registerUser = async (req, res, next) => {
       email: email,
       password: hashedPassword,
       user: {
-        affiliateCode: referralCode,
+        affiliateCode: affiliateCode,
         company: companyId,
       },
     });
