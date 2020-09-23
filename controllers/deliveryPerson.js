@@ -196,8 +196,15 @@ exports.getDeliveries = async (req, res, next) => {
     await Promise.all(
       restaurantsIds.map(async (restaurantId) => {
         const restaurantCart = await History.findOne({ user: restaurantId })
-          .populate("user")
+          .populate({
+            path: "user",
+            populate: {
+              path: "block",
+            },
+          })
           .populate("restaurantHistory.company")
+          .populate("restaurantHistory.carts.id")
+          .populate("restaurantHistory.carts.dishes.id")
           .exec();
         const restaurantCartToAdd = [];
         restaurantCart.restaurantHistory.map((restaurantHist) => {
@@ -212,34 +219,89 @@ exports.getDeliveries = async (req, res, next) => {
           });
         });
         deliveryCartToSend.push({
-          restaurant: {
-            historyId: restaurantCart._id,
-            user: restaurantCart.user,
-            history: restaurantCartToAdd,
-          },
+          historyId: restaurantCart._id,
+          restaurant: restaurantCart.user,
+          history: restaurantCartToAdd,
         });
       })
     );
 
-    res.status(200).json({ deliveryCart: deliveryCartToSend });
+    res.status(200).json({ deliveryCart: deliveryCartToSend, companiesIds });
   } catch (err) {
     next(err);
   }
 };
 exports.pickDelivery = async (req, res, next) => {
-  // let userId = req.userId;
+  let userId = req.userId;
   const restaurantId = req.body.restaurantId;
-  const companyId = req.body.companyId;
+  const companiesIds1 = req.body.companiesIds;
   try {
-    const restaurantHistory = await History.findOne({ user: restaurantId });
-    const indexCompany = restaurantHistory.restaurantHistory.findIndex(
-      (restaurantHist) => {
-        restaurantHist.company.toString() === companyId.toString();
-      }
+    const restaurantCart1 = await History.findOne({ user: restaurantId });
+    const newHistory = [];
+
+    //  working even without this new Array and pushing into it the elements
+    // map is storing the new values when status is changed to Picked
+    restaurantCart1.restaurantHistory.map((history) => {
+      companiesIds1.map((companyId) => {
+        if (history.company.toString() === companyId.toString()) {
+          history.status = "Picked";
+        }
+      });
+      newHistory.push(history);
+    });
+    restaurantCart1.restaurantHistory = newHistory;
+    await restaurantCart1.save();
+    //
+    const user = await User.findById(userId).populate("block").exec();
+    if (!user) {
+      const err = new Error("Whoops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
+    if (!user.block) {
+      const err = new Error("Contact admin to assign a block to you!");
+      err.status = 404;
+      throw err;
+    }
+    const restaurantsIds = user.block.restaurants;
+    const companiesIds = user.block.companies;
+
+    const deliveryCartToSend = [];
+
+    await Promise.all(
+      restaurantsIds.map(async (restaurantId) => {
+        const restaurantCart = await History.findOne({ user: restaurantId })
+          .populate({
+            path: "user",
+            populate: {
+              path: "block",
+            },
+          })
+          .populate("restaurantHistory.company")
+          .populate("restaurantHistory.carts.id")
+          .populate("restaurantHistory.carts.dishes.id")
+          .exec();
+        const restaurantCartToAdd = [];
+        restaurantCart.restaurantHistory.map((restaurantHist) => {
+          companiesIds.map((companyId) => {
+            if (
+              restaurantHist.company._id.toString() === companyId.toString() &&
+              (restaurantHist.status === "Cooked" ||
+                restaurantHist.status === "Picked")
+            ) {
+              restaurantCartToAdd.push(restaurantHist);
+            }
+          });
+        });
+        deliveryCartToSend.push({
+          historyId: restaurantCart._id,
+          restaurant: restaurantCart.user,
+          history: restaurantCartToAdd,
+        });
+      })
     );
-    restaurantHistory.restaurantHistory[indexCompany].status === "Picked";
-    const toSend = await restaurantHistory.save();
-    res.status(200).json({ deliveryCart: toSend });
+
+    res.status(200).json({ deliveryCart: deliveryCartToSend, companiesIds });
   } catch (err) {
     next(err);
   }
