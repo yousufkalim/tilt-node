@@ -23,6 +23,11 @@ router.post(
   adminController.addRestaurantToBlock
 );
 router.post("/block/addCompany", isAuth, adminController.addCompanyToBlock);
+router.post(
+  "/block/addDeliveryPerson",
+  isAuth,
+  adminController.addDeliveryPerson
+);
 
 // PUT
 router.put("/company/edit/:companyId", isAuth, adminController.editCompany);

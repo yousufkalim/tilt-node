@@ -470,3 +470,34 @@ exports.addCompanyToBlock = async (req, res, next) => {
     next(err);
   }
 };
+exports.addDeliveryPerson = async (req, res, next) => {
+  // req body values
+  const deliveryPersonId = req.body.deliveryPersonId;
+  const blockId = req.body.blockId;
+
+  try {
+    // find the user to add
+    const user = await User.findById(deliveryPersonId);
+    if (!user) {
+      const err = new Error("No such user exists!!");
+      err.status = 404;
+      throw err;
+    }
+    // find the block to add
+    const block = await Block.findById(blockId);
+    if (!block) {
+      const err = new Error("No such block exists!!");
+      err.status = 404;
+      throw err;
+    }
+    // add the user to the block
+    user.block = block._id;
+    block.deliveryPerson = user._id;
+    const userSaved = await user.save();
+    const blockSaved = await block.save();
+    // response sending
+    res.status(201).json({ added: true, user: userSaved, block: blockSaved });
+  } catch (err) {
+    next(err);
+  }
+};

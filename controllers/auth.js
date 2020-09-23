@@ -38,7 +38,10 @@ exports.login = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    if (user.role === "restaurant" && !user.block) {
+    if (
+      (user.role === "restaurant" || user.role === "delivery") &&
+      !user.block
+    ) {
       const err = new Error("Contact admin to assign a block to you!");
       err.status = 402;
       throw err;

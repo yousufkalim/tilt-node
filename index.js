@@ -10,7 +10,7 @@ const helmet = require("helmet"); // headers
 // Routes Imports
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
-const deliveryRoutes = require("./routes/delivery");
+const deliveryRoutes = require("./routes/deliveryPerson");
 const restaurantRoutes = require("./routes/restaurant");
 const dishRoutes = require("./routes/dish");
 const userRoutes = require("./routes/user");
@@ -48,7 +48,7 @@ app.use("/data", express.static(path.join(__dirname, "data")));
 // Routes
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
-app.use("/delivery", deliveryRoutes);
+app.use("/deliveryuser", deliveryRoutes);
 app.use("/restaurant", restaurantRoutes);
 app.use("/dish", dishRoutes);
 app.use("/user", userRoutes);

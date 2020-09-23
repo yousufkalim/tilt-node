@@ -64,7 +64,7 @@ const UserSchema = new Schema(
     },
     deliveryPerson: {
       bank: {
-        account: Number,
+        account: String,
         name: String,
         code: String,
       },

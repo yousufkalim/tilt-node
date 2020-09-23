@@ -21,7 +21,7 @@ const blockSchema = new Schema(
     companies: [
       {
         type: Schema.Types.ObjectId,
-        ref: "User",
+        ref: "Company",
       },
     ],
   },

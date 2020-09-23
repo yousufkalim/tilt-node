@@ -14,7 +14,9 @@ const { clearFile } = require("../utils/clearFile");
 exports.getAll = async (req, res, next) => {
   try {
     // get all the restaurants
-    const restaurants = await User.find({ role: "restaurant" });
+    const restaurants = await User.find({ role: "restaurant" })
+      .populate("block")
+      .exec();
     if (!restaurants) {
       const err = new Error("Whoops, there was en error!");
       err.status = 404;
