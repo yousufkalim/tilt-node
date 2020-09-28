@@ -191,8 +191,8 @@ exports.getDeliveries = async (req, res, next) => {
     const restaurantsIds = user.block.restaurants;
     const companiesIds = user.block.companies;
 
-    const deliveryCartToSend = [];
-
+    const cookedArrayToSend = [];
+    const pickedArrayToSend = [];
     await Promise.all(
       restaurantsIds.map(async (restaurantId) => {
         const restaurantCart = await History.findOne({ user: restaurantId })
@@ -206,27 +206,48 @@ exports.getDeliveries = async (req, res, next) => {
           .populate("restaurantHistory.carts.id")
           .populate("restaurantHistory.carts.dishes.id")
           .exec();
-        const restaurantCartToAdd = [];
+        if (!restaurantCart) {
+          const err = new Error("Whooops, there was an error!");
+          err.status = 404;
+          throw err;
+        }
+        const cookedArray = [];
+        const pickedArray = [];
         restaurantCart.restaurantHistory.map((restaurantHist) => {
           companiesIds.map((companyId) => {
             if (
-              restaurantHist.company._id.toString() === companyId.toString() &&
-              (restaurantHist.status === "Cooked" ||
-                restaurantHist.status === "Picked")
+              restaurantHist.company._id.toString() === companyId.toString()
             ) {
-              restaurantCartToAdd.push(restaurantHist);
+              if (restaurantHist.status === "Cooked") {
+                cookedArray.push(restaurantHist);
+              }
+              if (restaurantHist.status === "Picked") {
+                pickedArray.push(restaurantHist);
+              }
             }
           });
         });
-        deliveryCartToSend.push({
-          historyId: restaurantCart._id,
-          restaurant: restaurantCart.user,
-          history: restaurantCartToAdd,
-        });
+        if (cookedArray.length > 0) {
+          cookedArrayToSend.push({
+            historyId: restaurantCart._id,
+            restaurant: restaurantCart.user,
+            history: cookedArray,
+          });
+        }
+        if (pickedArray.length > 0) {
+          pickedArrayToSend.push({
+            historyId: restaurantCart._id,
+            restaurant: restaurantCart.user,
+            history: pickedArray,
+          });
+        }
       })
     );
-
-    res.status(200).json({ deliveryCart: deliveryCartToSend, companiesIds });
+    res.status(201).json({
+      cookedCart: cookedArrayToSend,
+      pickedCart: pickedArrayToSend,
+      companiesIds,
+    });
   } catch (err) {
     next(err);
   }
@@ -237,13 +258,21 @@ exports.pickDelivery = async (req, res, next) => {
   const companiesIds1 = req.body.companiesIds;
   try {
     const restaurantCart1 = await History.findOne({ user: restaurantId });
+    if (!restaurantCart1) {
+      const err = new Error("Whooops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
     const newHistory = [];
 
-    //  working even without this new Array and pushing into it the elements
+    // working even without this new Array and pushing into it the elements
     // map is storing the new values when status is changed to Picked
     restaurantCart1.restaurantHistory.map((history) => {
       companiesIds1.map((companyId) => {
-        if (history.company.toString() === companyId.toString()) {
+        if (
+          history.company.toString() === companyId.toString() &&
+          history.status === "Cooked"
+        ) {
           history.status = "Picked";
         }
       });
@@ -266,8 +295,8 @@ exports.pickDelivery = async (req, res, next) => {
     const restaurantsIds = user.block.restaurants;
     const companiesIds = user.block.companies;
 
-    const deliveryCartToSend = [];
-
+    const cookedArrayToSend = [];
+    const pickedArrayToSend = [];
     await Promise.all(
       restaurantsIds.map(async (restaurantId) => {
         const restaurantCart = await History.findOne({ user: restaurantId })
@@ -281,71 +310,201 @@ exports.pickDelivery = async (req, res, next) => {
           .populate("restaurantHistory.carts.id")
           .populate("restaurantHistory.carts.dishes.id")
           .exec();
-        const restaurantCartToAdd = [];
+        if (!restaurantCart) {
+          const err = new Error("Whooops, there was an error!");
+          err.status = 404;
+          throw err;
+        }
+        const cookedArray = [];
+        const pickedArray = [];
         restaurantCart.restaurantHistory.map((restaurantHist) => {
           companiesIds.map((companyId) => {
             if (
-              restaurantHist.company._id.toString() === companyId.toString() &&
-              (restaurantHist.status === "Cooked" ||
-                restaurantHist.status === "Picked")
+              restaurantHist.company._id.toString() === companyId.toString()
             ) {
-              restaurantCartToAdd.push(restaurantHist);
+              if (restaurantHist.status === "Cooked") {
+                cookedArray.push(restaurantHist);
+              }
+              if (restaurantHist.status === "Picked") {
+                pickedArray.push(restaurantHist);
+              }
             }
           });
         });
-        deliveryCartToSend.push({
-          historyId: restaurantCart._id,
-          restaurant: restaurantCart.user,
-          history: restaurantCartToAdd,
-        });
+        if (cookedArray.length > 0) {
+          cookedArrayToSend.push({
+            historyId: restaurantCart._id,
+            restaurant: restaurantCart.user,
+            history: cookedArray,
+          });
+        }
+        if (pickedArray.length > 0) {
+          pickedArrayToSend.push({
+            historyId: restaurantCart._id,
+            restaurant: restaurantCart.user,
+            history: pickedArray,
+          });
+        }
       })
     );
 
-    res.status(200).json({ deliveryCart: deliveryCartToSend, companiesIds });
+    res.status(201).json({
+      cookedCart: cookedArrayToSend,
+      pickedCart: pickedArrayToSend,
+      companiesIds,
+    });
   } catch (err) {
     next(err);
   }
 };
 exports.deliverDelivery = async (req, res, next) => {
   let userId = req.userId;
-  const dishId = req.body.dishId;
-  const dishPrice = req.body.dishPrice;
+  const restaurantId = req.body.restaurantId;
+  const companyId = req.body.companyId;
   try {
-    const cart = await Cart.findOne({ user: userId });
-    const dish = await Dish.findById(dishId);
-    if (!cart) {
-      const error = new Error("Whoops, no cart found!");
-      error.status = 404;
-      throw error;
+    // find the restaurant history doc
+    let restaurantCart1 = await History.findOne({ user: restaurantId });
+    if (!restaurantCart1) {
+      const err = new Error("Whooops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
+    let newHistory = [];
+    // change status of the orders of a company
+    restaurantCart1.restaurantHistory.map((history) => {
+      if (
+        history.company.toString() === companyId.toString() &&
+        history.status === "Picked"
+      ) {
+        history.status = "Completed";
+      }
+      newHistory.push(history);
+    });
+    // save restaurant history doc
+    restaurantCart1.restaurantHistory = newHistory;
+    let savedRestaurantCart1 = await restaurantCart1.save();
+
+    // Creating / Adding to  Delivery Person History
+    let deliveryPersonHistory = await History.findOne({ user: userId });
+    // history doc found
+    if (deliveryPersonHistory) {
+      // history doc found - create new
+      savedRestaurantCart1.restaurantHistory.map(async (history) => {
+        if (history.company.toString() === companyId.toString()) {
+          deliveryPersonHistory.deliveryPersonHistory.push({
+            restaurant: savedRestaurantCart1.user._id,
+            ...history.toObject(),
+          });
+        }
+      });
+      await deliveryPersonHistory.save();
+    } else {
+      // history doc not found - create new
+      const newDeliveryPersonHistory = new History({
+        user: userId,
+        deliveryPersonHistory: [],
+      });
+      restaurantCart1.restaurantHistory.map(async (history) => {
+        if (history.company.toString() === companyId.toString()) {
+          newDeliveryPersonHistory.deliveryPersonHistory.push({
+            restaurant: restaurantCart1.user._id,
+            ...history.toObject(),
+          });
+        }
+      });
+      await newDeliveryPersonHistory.save();
     }
 
-    let restaurantCartIndex = cart.userCarts.findIndex(
-      (element) => element.restaurant.toString() === dish.restaurant.toString()
+    // Changing the status on user end
+    await Promise.all(
+      savedRestaurantCart1.restaurantHistory.map((companyCart) => {
+        if (companyCart.company.toString() === companyId.toString()) {
+          companyCart.carts.map(async (companyUserCart) => {
+            let userToHistory = await History.findOne({
+              user: companyUserCart.id,
+            });
+            let userToHistoryOrderHistory = userToHistory.orderHistory;
+            userToHistoryOrderHistory.map(
+              (userOrderHistory) =>
+                userOrderHistory.orderId.toString() ===
+                  companyUserCart.orderId.toString() &&
+                (userOrderHistory.status = "Completed")
+            );
+            userToHistory.orderHistory = userToHistoryOrderHistory;
+            await userToHistory.save();
+          });
+        }
+      })
     );
-    if (restaurantCartIndex < 0) {
-      const error = new Error("No such dish, found!");
-      error.status = 404;
-      throw error;
+
+    // Functioning on response
+    const user = await User.findById(userId).populate("block").exec();
+    if (!user) {
+      const err = new Error("Whoops, there was an error!");
+      err.status = 404;
+      throw err;
     }
-    let dishIndex = cart.userCarts[restaurantCartIndex].dishes.findIndex(
-      (dish) => String(dish.id) === String(dishId)
+    if (!user.block) {
+      const err = new Error("Contact admin to assign a block to you!");
+      err.status = 404;
+      throw err;
+    }
+    const restaurantsIds = user.block.restaurants;
+    const companiesIds = user.block.companies;
+
+    const cookedArrayToSend = [];
+    const pickedArrayToSend = [];
+    await Promise.all(
+      restaurantsIds.map(async (restaurantId) => {
+        const restaurantCart = await History.findOne({ user: restaurantId })
+          .populate({
+            path: "user",
+            populate: {
+              path: "block",
+            },
+          })
+          .populate("restaurantHistory.company")
+          .populate("restaurantHistory.carts.id")
+          .populate("restaurantHistory.carts.dishes.id")
+          .exec();
+        const cookedArray = [];
+        const pickedArray = [];
+        restaurantCart.restaurantHistory.map((restaurantHist) => {
+          companiesIds.map((companyId) => {
+            if (
+              restaurantHist.company._id.toString() === companyId.toString()
+            ) {
+              if (restaurantHist.status === "Cooked") {
+                cookedArray.push(restaurantHist);
+              }
+              if (restaurantHist.status === "Picked") {
+                pickedArray.push(restaurantHist);
+              }
+            }
+          });
+        });
+        if (cookedArray.length > 0) {
+          cookedArrayToSend.push({
+            historyId: restaurantCart._id,
+            restaurant: restaurantCart.user,
+            history: cookedArray,
+          });
+        }
+        if (pickedArray.length > 0) {
+          pickedArrayToSend.push({
+            historyId: restaurantCart._id,
+            restaurant: restaurantCart.user,
+            history: pickedArray,
+          });
+        }
+      })
     );
-    if (dishIndex < 0) {
-      const error = new Error("No such dish found!");
-      error.status = 404;
-      throw error;
-    }
-    cart.totalPrice -=
-      +dishPrice * +cart.userCarts[restaurantCartIndex].dishes[dishIndex].count;
-    cart.userCarts[restaurantCartIndex].dishes = cart.userCarts[
-      restaurantCartIndex
-    ].dishes.filter((dish) => String(dish.id) !== String(dishId));
-    const cartSaved = await cart.save();
-    const cartToSend = await Cart.findById(cartSaved._id)
-      .populate("userCarts.restaurant")
-      .populate("userCarts.dishes.id")
-      .exec();
-    res.status(201).json({ removed: true, cart: cartToSend });
+
+    res.status(201).json({
+      cookedCart: cookedArrayToSend,
+      pickedCart: pickedArrayToSend,
+      companiesIds,
+    });
   } catch (err) {
     next(err);
   }
@@ -353,10 +512,16 @@ exports.deliverDelivery = async (req, res, next) => {
 exports.getHistory = async (req, res, next) => {
   let userId = req.userId;
   try {
+    // find the history and references
     const history = await History.findOne({ user: userId })
       .populate("user")
-      .populate("orderHistory.order.restaurant")
-      .populate("orderHistory.order.dishes.id")
+      .populate("deliveryPersonHistory.restaurant")
+      .populate({
+        path: "deliveryPersonHistory.company",
+        populate: { path: "block" },
+      })
+      .populate("deliveryPersonHistory.carts.id")
+      .populate("deliveryPersonHistory.carts.dishes.id")
       .exec();
     if (!history) {
       res.status(200).json({ history: "" });
