@@ -3,14 +3,8 @@ const Schema = mongoose.Schema;
 
 const discountSchema = new Schema(
   {
-    leastCartValue: Number,
-    discounts: [
-      {
-        id: { type: String },
-        name: { type: String },
-        off: { type: String },
-      },
-    ],
+    leastCartValue: { type: Number, default: 20 },
+    referralDiscount: { type: Number, default: 2 },
   },
   { timestamps: true }
 );

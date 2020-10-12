@@ -5,6 +5,7 @@ const User = require("../models/user");
 const Company = require("../models/company");
 const Package = require("../models/package");
 const Block = require("../models/block");
+const Discounts = require("../models/discounts");
 
 // Profile
 exports.registerAdmin = async (req, res, next) => {
@@ -497,6 +498,58 @@ exports.addDeliveryPerson = async (req, res, next) => {
     const blockSaved = await block.save();
     // response sending
     res.status(201).json({ added: true, user: userSaved, block: blockSaved });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.editLeastCartValue = async (req, res, next) => {
+  const newValue = req.body.newValue;
+  try {
+    const discount = await Discounts.findOne();
+    if (!discount || discount.length === 0) {
+      const discountNew = new Discounts({
+        leastCartValue: newValue,
+      });
+      const discountSaved = await discountNew.save();
+      res.status(201).json({ created: true, discounts: discountSaved });
+    } else {
+      discount.leastCartValue = newValue;
+      const discountSaved = await discount.save();
+      res.status(201).json({ updated: true, discounts: discountSaved });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+exports.editReferralDiscount = async (req, res, next) => {
+  const newValue = req.body.newValue;
+  try {
+    const discount = await Discounts.findOne();
+    if (!discount || discount.length === 0) {
+      const discountNew = new Discounts({
+        referralDiscount: newValue,
+      });
+      const discountSaved = await discountNew.save();
+      res.status(201).json({ created: true, discounts: discountSaved });
+    } else {
+      discount.referralDiscount = newValue;
+      const discountSaved = await discount.save();
+      res.status(201).json({ updated: true, discounts: discountSaved });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+exports.getDiscounts = async (req, res, next) => {
+  try {
+    const discounts = await Discounts.find();
+    if (!discounts) {
+      const err = new Error("Whoops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
+    res.status(200).json({ discounts: discounts });
   } catch (err) {
     next(err);
   }

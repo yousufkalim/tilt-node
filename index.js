@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const morgan = require("morgan"); // logger
 const helmet = require("helmet"); // headers
+const DiscountsModel = require("./models/discounts");
 
 // Routes Imports
 const authRoutes = require("./routes/auth");
@@ -70,8 +71,13 @@ mongoose
     `mongodb+srv://${process.env.MONGO_URI_USERNAME}:${process.env.MONGO_URI_PASSWORD}@cluster0.ecurz.mongodb.net/${process.env.MONGO_URI_DATABASE}?retryWrites=true&w=majority`,
     { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false }
   )
-  .then((result) => {
+  .then(async (result) => {
     app.listen(PORT, () => console.log(`App listening at ${PORT}`));
+    const discount = await DiscountsModel.find();
+    if (!discount || discount.length === 0) {
+      const discountNew = new DiscountsModel();
+      await discountNew.save();
+    }
   })
   .catch((err) => {
     console.log("[App.Mongoose]", err);

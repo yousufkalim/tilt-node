@@ -11,6 +11,7 @@ router.get("/package", isAuth, adminController.getAllPackages);
 router.get("/package/get/:packageId", isAuth, adminController.getPackage);
 router.get("/block", isAuth, adminController.getAllBlocks);
 router.get("/block/get/:blockId", isAuth, adminController.getBlock);
+router.get("/discounts", adminController.getDiscounts);
 
 // POST
 router.post("/", adminController.registerAdmin);
@@ -33,6 +34,8 @@ router.post(
 router.put("/company/edit/:companyId", isAuth, adminController.editCompany);
 router.put("/package/edit/:packageId", isAuth, adminController.editPackage);
 router.put("/block/edit/:blockId", isAuth, adminController.editBlock);
+router.put("/cartvalue", isAuth, adminController.editLeastCartValue);
+router.put("/referral", isAuth, adminController.editReferralDiscount);
 
 // DELETE
 router.delete(

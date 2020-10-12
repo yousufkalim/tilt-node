@@ -8,6 +8,7 @@ const Cart = require("../models/cart");
 const Dish = require("../models/dish");
 const Package = require("../models/package");
 const History = require("../models/history");
+const Discount = require("../models/discounts");
 
 exports.getAll = async (req, res, next) => {
   try {
@@ -406,10 +407,13 @@ exports.getDishes = async (req, res, next) => {
     // pusher.trigger("orderDelivery", "delivered", {
     //   message: "Order is delivered!",
     // });
+    const discounts = await Discount.findOne();
 
-    res
-      .status(200)
-      .json({ restaurantsArray: restaurantsArray, dishesArray: dishesArray });
+    res.status(200).json({
+      restaurantsArray: restaurantsArray,
+      dishesArray: dishesArray,
+      discounts,
+    });
   } catch (err) {
     if (!err.status) {
       err.status = 500;
@@ -688,6 +692,7 @@ exports.order = async (req, res, next) => {
         }
       })
     );
+    const discounts = await Discount.findOne();
 
     let totalPrice =
       cart.totalPrice + cart.user.user.company.block.deliveryCost;
@@ -698,15 +703,14 @@ exports.order = async (req, res, next) => {
       totalPrice -= user.user.package.offPrice;
       user.user.credits -= 1;
     }
-    if (user.user.referrals && user.user.referrals > 0) {
-      let referralOff = 2;
-      totalPrice -= referralOff;
+    if (user.user.referrals && user.user.referrals > 0 && discounts) {
+      totalPrice -= discounts.referralDiscount;
       user.user.referrals -= 1;
     }
 
     const savedUser = await user.save();
     const history = await History.findOne({ user: savedUser._id });
-    const userToSend = await User.findById(savedUser._id)
+    const userToSend = await User.findById(userId)
       .populate("user.package")
       .populate({
         path: "user.company",
@@ -734,14 +738,12 @@ exports.order = async (req, res, next) => {
       });
       const historySaved = await history.save();
       await Cart.findByIdAndDelete(cart._id);
-      res
-        .status(201)
-        .json({
-          ordered: true,
-          history: historySaved,
-          orderId,
-          user: userToSend,
-        });
+      res.status(201).json({
+        ordered: true,
+        history: historySaved,
+        orderId,
+        user: userToSend,
+      });
     } else {
       const newHistory = new History({
         user: cart.user._id,
@@ -757,14 +759,12 @@ exports.order = async (req, res, next) => {
       });
       const historySaved = await newHistory.save();
       await Cart.findByIdAndDelete(cart._id);
-      res
-        .status(201)
-        .json({
-          ordered: true,
-          history: historySaved,
-          orderId,
-          user: userToSend,
-        });
+      res.status(201).json({
+        ordered: true,
+        history: historySaved,
+        orderId,
+        user: userToSend,
+      });
     }
   } catch (err) {
     next(err);
