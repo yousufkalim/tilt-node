@@ -36,12 +36,13 @@ const UserSchema = new Schema(
     },
     user: {
       affiliateCode: { type: String },
-      referrals: { type: Number },
-      credits: { type: Number },
+      referrals: { type: Number, default: 0 },
       package: {
         type: Schema.Types.ObjectId,
         ref: "Package",
       },
+      packageExpiration: { type: Date },
+      credits: { type: Number },
       cart: {
         type: Schema.Types.ObjectId,
         ref: "Cart",

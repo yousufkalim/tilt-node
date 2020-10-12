@@ -22,6 +22,7 @@ router.put("/cart", isAuth, UserController.removeFromCart);
 router.put("/editpassword", isAuth, UserController.changePassword);
 router.put("/creditCard", isAuth, UserController.editCreditCard);
 router.put("/company/:companyId", isAuth, UserController.changeCompany);
+router.put("/package/:packageId", isAuth, UserController.changePackage);
 
 // DELETE
 router.delete("/delete", isAuth, UserController.deleteUser);

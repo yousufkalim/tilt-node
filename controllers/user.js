@@ -1,10 +1,12 @@
 const bcrypt = require("bcryptjs");
 // var Pusher = require("pusher");
+const moment = require("moment");
 
 // Import Models
 const User = require("../models/user");
 const Cart = require("../models/cart");
 const Dish = require("../models/dish");
+const Package = require("../models/package");
 const History = require("../models/history");
 
 exports.getAll = async (req, res, next) => {
@@ -145,6 +147,61 @@ exports.changeCompany = async (req, res, next) => {
     next(err);
   }
 };
+exports.changePackage = async (req, res, next) => {
+  const userId = req.userId;
+  const packageId = req.params.packageId;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      const err = new Error("Whoops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
+    const package = await Package.findById(packageId);
+    if (!package) {
+      const err = new Error("Whoops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
+    user.user.package = packageId;
+    user.user.credits = package.credits;
+    let expirationDate = new Date();
+    expirationDate = expirationDate.setDate(
+      expirationDate.getDate() + package.expiration
+    );
+    user.user.packageExpiration = new Date(expirationDate);
+    await user.save();
+    const user2 = await User.findById(userId)
+      .populate("user.package")
+      .populate({
+        path: "user.company",
+        populate: { path: "block" },
+      })
+      .populate({
+        path: "user.cart",
+        populate: [
+          {
+            path: "userCarts.restaurant",
+          },
+          {
+            path: "userCarts.dishes.id",
+          },
+        ],
+      })
+      .exec();
+    if (!user2) {
+      const err = new Error("Whoops, there was an error!");
+      err.status = 404;
+      throw err;
+    }
+    res.status(201).json({ updated: true, user: user2 });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
 
 exports.registerUser = async (req, res, next) => {
   const firstName = req.body.firstName;
@@ -175,7 +232,6 @@ exports.registerUser = async (req, res, next) => {
       },
     });
     const userSaved = await user.save();
-    console.log(affiliate);
     if (affiliate !== "") {
       const userAffiliate = await User.findOne({
         "user.affiliateCode": affiliate,
@@ -635,10 +691,11 @@ exports.order = async (req, res, next) => {
 
     let totalPrice =
       cart.totalPrice + cart.user.user.company.block.deliveryCost;
-    const user = await User.findById(cart.user._id);
+    const user = await User.findById(cart.user._id)
+      .populate("user.package")
+      .exec();
     if (user.user.credits && user.user.credits > 0) {
-      let offPrice = cart.user.user.package.offPrice;
-      totalPrice -= offPrice;
+      totalPrice -= user.user.package.offPrice;
       user.user.credits -= 1;
     }
     if (user.user.referrals && user.user.referrals > 0) {
@@ -647,7 +704,26 @@ exports.order = async (req, res, next) => {
       user.user.referrals -= 1;
     }
 
-    const history = await History.findOne({ user: userId });
+    const savedUser = await user.save();
+    const history = await History.findOne({ user: savedUser._id });
+    const userToSend = await User.findById(savedUser._id)
+      .populate("user.package")
+      .populate({
+        path: "user.company",
+        populate: { path: "block" },
+      })
+      .populate({
+        path: "user.cart",
+        populate: [
+          {
+            path: "userCarts.restaurant",
+          },
+          {
+            path: "userCarts.dishes.id",
+          },
+        ],
+      })
+      .exec();
     if (history) {
       history.orderHistory.push({
         totalPrice: cart.totalPrice,
@@ -658,7 +734,14 @@ exports.order = async (req, res, next) => {
       });
       const historySaved = await history.save();
       await Cart.findByIdAndDelete(cart._id);
-      res.status(201).json({ ordered: true, history: historySaved, orderId });
+      res
+        .status(201)
+        .json({
+          ordered: true,
+          history: historySaved,
+          orderId,
+          user: userToSend,
+        });
     } else {
       const newHistory = new History({
         user: cart.user._id,
@@ -674,7 +757,14 @@ exports.order = async (req, res, next) => {
       });
       const historySaved = await newHistory.save();
       await Cart.findByIdAndDelete(cart._id);
-      res.status(201).json({ ordered: true, history: historySaved, orderId });
+      res
+        .status(201)
+        .json({
+          ordered: true,
+          history: historySaved,
+          orderId,
+          user: userToSend,
+        });
     }
   } catch (err) {
     next(err);
