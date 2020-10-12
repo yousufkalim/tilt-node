@@ -67,7 +67,7 @@ const PORT = process.env.PORT || 8080;
 // Connecting to Database and listening to server
 mongoose
   .connect(
-    `mongodb+srv://${process.env.MONGO_URI_USERNAME}:${process.env.MONGO_URI_PASSWORD}@node-5ioaz.mongodb.net/${process.env.MONGO_URI_DATABASE}?retryWrites=true&w=majority`,
+    `mongodb+srv://${process.env.MONGO_URI_USERNAME}:${process.env.MONGO_URI_PASSWORD}@cluster0.ecurz.mongodb.net/${process.env.MONGO_URI_DATABASE}?retryWrites=true&w=majority`,
     { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false }
   )
   .then((result) => {

@@ -50,6 +50,13 @@ const UserSchema = new Schema(
         type: Schema.Types.ObjectId,
         ref: "Company",
       },
+      creditCard: {
+        number: String,
+        date: String,
+        year: String,
+        code: String,
+        name: String,
+      },
     },
     restaurant: {
       image: { type: String },

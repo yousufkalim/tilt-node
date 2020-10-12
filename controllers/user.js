@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+// var Pusher = require("pusher");
 
 // Import Models
 const User = require("../models/user");
@@ -151,6 +152,7 @@ exports.registerUser = async (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
   const companyId = req.body.companyId;
+  const affiliate = req.body.affiliate;
   try {
     const userCheck = await User.findOne({ email: email });
     if (userCheck) {
@@ -173,6 +175,18 @@ exports.registerUser = async (req, res, next) => {
       },
     });
     const userSaved = await user.save();
+    console.log(affiliate);
+    if (affiliate !== "") {
+      const userAffiliate = await User.findOne({
+        "user.affiliateCode": affiliate,
+      });
+      if (userAffiliate) {
+        userAffiliate.user.referrals == null
+          ? (userAffiliate.user.referrals = 1)
+          : (userAffiliate.user.referrals += 1);
+        await userAffiliate.save();
+      }
+    }
 
     res.status(200).json({ registered: true, user: userSaved });
   } catch (err) {
@@ -214,6 +228,52 @@ exports.editUser = async (req, res, next) => {
     user.firstName = firstName;
     user.lastName = lastName;
     user.email = email;
+
+    const userSaved = await user.save();
+    res.status(201).json({ updated: true, user: userSaved });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.editCreditCard = async (req, res, next) => {
+  const userId = req.userId;
+  const number = req.body.number;
+  const date = req.body.date;
+  const year = req.body.year;
+  const code = req.body.code;
+  const name = req.body.name;
+  try {
+    const user = await User.findById(userId)
+      .populate("user.package")
+      .populate({
+        path: "user.company",
+        populate: { path: "block" },
+      })
+      .populate({
+        path: "user.cart",
+        populate: [
+          {
+            path: "userCarts.restaurant",
+          },
+          {
+            path: "userCarts.dishes.id",
+          },
+        ],
+      })
+      .exec();
+    if (!user) {
+      const err = new Error("No such user found!");
+      err.status = 404;
+      throw err;
+    }
+    user.user.creditCard.number = number;
+    user.user.creditCard.date = date;
+    user.user.creditCard.year = year;
+    user.user.creditCard.code = code;
+    user.user.creditCard.name = name;
 
     const userSaved = await user.save();
     res.status(201).json({ updated: true, user: userSaved });
@@ -280,6 +340,17 @@ exports.getDishes = async (req, res, next) => {
         );
       })
     );
+    // var pusher = new Pusher({
+    //   appId: "1086980",
+    //   key: "f19bda9d7bdf644259ab",
+    //   secret: "991969f08f951d4548f3",
+    //   cluster: "mt1",
+    //   encrypted: true,
+    // });
+    // pusher.trigger("orderDelivery", "delivered", {
+    //   message: "Order is delivered!",
+    // });
+
     res
       .status(200)
       .json({ restaurantsArray: restaurantsArray, dishesArray: dishesArray });

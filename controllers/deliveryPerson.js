@@ -415,7 +415,7 @@ exports.deliverDelivery = async (req, res, next) => {
       await newDeliveryPersonHistory.save();
     }
 
-    // Changing the status on user end
+    // Changing the status at user end
     await Promise.all(
       savedRestaurantCart1.restaurantHistory.map((companyCart) => {
         if (companyCart.company.toString() === companyId.toString()) {
@@ -431,6 +431,16 @@ exports.deliverDelivery = async (req, res, next) => {
                 (userOrderHistory.status = "Completed")
             );
             userToHistory.orderHistory = userToHistoryOrderHistory;
+            var pusher = new Pusher({
+              appId: "1086980",
+              key: "f19bda9d7bdf644259ab",
+              secret: "991969f08f951d4548f3",
+              cluster: "mt1",
+              encrypted: true,
+            });
+            pusher.trigger("orderDelivery", companyUserCart.id, {
+              message: "Order is delivered!",
+            });
             await userToHistory.save();
           });
         }

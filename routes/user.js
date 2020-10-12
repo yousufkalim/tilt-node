@@ -20,6 +20,7 @@ router.post("/cart", isAuth, UserController.addToCart);
 router.put("/edit", isAuth, UserController.editUser);
 router.put("/cart", isAuth, UserController.removeFromCart);
 router.put("/editpassword", isAuth, UserController.changePassword);
+router.put("/creditCard", isAuth, UserController.editCreditCard);
 router.put("/company/:companyId", isAuth, UserController.changeCompany);
 
 // DELETE
