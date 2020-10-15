@@ -1,6 +1,5 @@
 const bcrypt = require("bcryptjs");
 // var Pusher = require("pusher");
-const moment = require("moment");
 
 // Import Models
 const User = require("../models/user");
@@ -783,6 +782,45 @@ exports.orders = async (req, res, next) => {
     } else {
       res.status(200).json({ history: history });
     }
+  } catch (err) {
+    next(err);
+  }
+};
+
+const stripe = require("stripe")(
+  "STRIPE_TEST_KEY_REDACTED"
+);
+
+exports.paymentHandler = async (req, res, next) => {
+  try {
+    const name = req.body.name;
+    const email = req.body.email;
+    const token = req.body.token;
+    const amount = req.body.amount;
+    const card = req.body.card;
+
+    const customer = await stripe.customers.create({
+      name: name,
+      email: email,
+      source: token,
+    });
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount * 100,
+      currency: "eur",
+      payment_method_types: ["card"],
+      customer: customer.id,
+      payment_method: card.card.cardId,
+      confirm: true,
+    });
+
+    // await stripe.paymentIntents.confirm(paymentIntent.id);
+    // await stripe.paymentIntents.capture(paymentIntent.id);
+    if (paymentIntent.status !== "succeeded") {
+      const error = new Error("There was a problem from payment end.");
+      error.status = 404;
+      throw error;
+    }
+    res.status(201).json({ paymentIntent });
   } catch (err) {
     next(err);
   }

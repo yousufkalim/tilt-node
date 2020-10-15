@@ -15,6 +15,7 @@ router.get("/dishes", isAuth, UserController.getDishes);
 // POST
 router.post("/", UserController.registerUser);
 router.post("/cart", isAuth, UserController.addToCart);
+router.post("/payment", isAuth, UserController.paymentHandler);
 
 // PUT
 router.put("/edit", isAuth, UserController.editUser);
