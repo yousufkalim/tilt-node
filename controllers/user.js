@@ -68,7 +68,19 @@ exports.getProfile = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    res.status(200).json({ user: user });
+    if (
+      user.user.package &&
+      new Date(user.user.packageExpiration) <= new Date()
+    ) {
+      user.user.package = undefined;
+      user.user.credits = undefined;
+      user.user.packageExpiration = undefined;
+      const savedUser = await user.save();
+      res.status(200).json({ user: savedUser });
+    } else {
+      // response send
+      res.status(200).json({ user: user });
+    }
   } catch (err) {
     if (!err.status) {
       err.status = 500;
@@ -705,6 +717,11 @@ exports.order = async (req, res, next) => {
     if (user.user.referrals && user.user.referrals > 0 && discounts) {
       totalPrice -= discounts.referralDiscount;
       user.user.referrals -= 1;
+    }
+    if (user.user.credits === 0) {
+      user.user.package = undefined;
+      user.user.credits = undefined;
+      user.user.packageExpiration = undefined;
     }
 
     const savedUser = await user.save();

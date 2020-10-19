@@ -11,7 +11,7 @@ exports.login = async (req, res, next) => {
 
   try {
     // find the user with data of everything related to him
-    const user = await User.findOne({
+    let user = await User.findOne({
       email: email,
       status: { $ne: "deleted" },
     })
@@ -38,6 +38,7 @@ exports.login = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
+    // Check if the user is assigned a block (for delivery person or restaurant)
     if (
       (user.role === "restaurant" || user.role === "delivery") &&
       !user.block
@@ -58,8 +59,19 @@ exports.login = async (req, res, next) => {
       { userId: user._id, email: user.email },
       process.env.MY_SECRET_KEY
     );
-    // response send
-    res.status(200).json({ loggedIn: true, user: user, token: token });
+    if (
+      user.user.package &&
+      new Date(user.user.packageExpiration) <= new Date()
+    ) {
+      user.user.package = undefined;
+      user.user.credits = undefined;
+      user.user.packageExpiration = undefined;
+      const savedUser = await user.save();
+      res.status(200).json({ loggedIn: true, user: savedUser, token: token });
+    } else {
+      // response send
+      res.status(200).json({ loggedIn: true, user: user, token: token });
+    }
   } catch (err) {
     next(err);
   }
