@@ -416,7 +416,9 @@ exports.getDishes = async (req, res, next) => {
     //   encrypted: true,
     // });
     // pusher.trigger("orderDelivery", "delivered", {
-    //   message: "Order is delivered!",
+    //   title: "Delivered! 📬",
+    //   message: "Your TILT order is delivered.",
+    //   keys: ["1", "2"],
     // });
     const discounts = await Discount.findOne();
 

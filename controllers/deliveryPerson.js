@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+var Pusher = require("pusher");
 
 // Import Models
 const User = require("../models/user");
@@ -424,23 +425,30 @@ exports.deliverDelivery = async (req, res, next) => {
               user: companyUserCart.id,
             });
             let userToHistoryOrderHistory = userToHistory.orderHistory;
-            userToHistoryOrderHistory.map(
-              (userOrderHistory) =>
+            userToHistoryOrderHistory.map((userOrderHistory) => {
+              if (
                 userOrderHistory.orderId.toString() ===
                   companyUserCart.orderId.toString() &&
-                (userOrderHistory.status = "Completed")
-            );
+                userOrderHistory.status !== "Completed"
+              ) {
+                userOrderHistory.status = "Completed";
+                // Notifying the user for order delivery
+                var pusher = new Pusher({
+                  appId: "1086980",
+                  key: "f19bda9d7bdf644259ab",
+                  secret: "991969f08f951d4548f3",
+                  cluster: "mt1",
+                  encrypted: true,
+                });
+                pusher.trigger("orderDelivery", companyUserCart.id, {
+                  title: "Delivered! 📬",
+                  message: "Your TILT order is delivered.",
+                  key: companyUserCart.id,
+                  orderId: companyUserCart.orderId,
+                });
+              }
+            });
             userToHistory.orderHistory = userToHistoryOrderHistory;
-            var pusher = new Pusher({
-              appId: "1086980",
-              key: "f19bda9d7bdf644259ab",
-              secret: "991969f08f951d4548f3",
-              cluster: "mt1",
-              encrypted: true,
-            });
-            pusher.trigger("orderDelivery", companyUserCart.id, {
-              message: "Order is delivered!",
-            });
             await userToHistory.save();
           });
         }
