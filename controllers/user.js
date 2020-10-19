@@ -791,14 +791,28 @@ exports.order = async (req, res, next) => {
 exports.orders = async (req, res, next) => {
   let userId = req.userId;
   try {
-    const history = await History.findOne({ user: userId })
+    // .sort("orderHistory.time")
+    // .sort("-orderHistory.time")
+    // .sort({"orderHistory.time": 1})
+    // .sort({"orderHistory.time": -1})
+    // 'asc' / 'ascending' => 1
+    // 'desc' / 'descending' => -1
+    let history = await History.findOne({ user: userId })
       .populate("user")
       .populate("orderHistory.order.restaurant")
       .populate("orderHistory.order.dishes.id")
       .exec();
+
     if (!history) {
       res.status(200).json({ history: "" });
     } else {
+      let results = history.orderHistory.sort((rowDataA, rowDataB) => {
+        if (new Date(rowDataA.time) <= new Date(rowDataB.time)) return -1;
+        if (new Date(rowDataA.time) > new Date(rowDataB.time)) return 1;
+        return 0;
+      });
+      results = results.reverse(); // descending
+      history.orderHistory = results;
       res.status(200).json({ history: history });
     }
   } catch (err) {

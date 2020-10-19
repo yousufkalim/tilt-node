@@ -292,21 +292,16 @@ exports.getHistory = async (req, res, next) => {
     if (!history) {
       res.status(200).json({ history: [] });
     } else {
-      res.status(200).json({ history: history.restaurantHistory });
+      let results = history.restaurantHistory.sort((rowDataA, rowDataB) => {
+        if (new Date(rowDataA.completedAt) <= new Date(rowDataB.completedAt))
+          return -1;
+        if (new Date(rowDataA.completedAt) > new Date(rowDataB.completedAt))
+          return 1;
+        return 0;
+      });
+      results = results.reverse(); // descending
+      res.status(200).json({ history: results });
     }
-    // collection.find().sort({datefield: 1})
-    // collection.find().sort([['datefield', 1]])
-    // collection.find({}, {sort: {datefield: 1}})
-    // collection.find({}, {sort: [['datefield', 1]]})
-    // .populate({
-    //   path: "restaurantHistory.company",
-    //   options: { sort: { position: -1 } },
-    //   populate: {
-    //     path: "block",
-    //   },
-    // })
-    // 'asc' / 'ascending' => 1
-    // 'desc' / 'descending' => -1
   } catch (err) {
     next(err);
   }

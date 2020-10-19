@@ -531,7 +531,7 @@ exports.getHistory = async (req, res, next) => {
   let userId = req.userId;
   try {
     // find the history and references
-    const history = await History.findOne({ user: userId })
+    let history = await History.findOne({ user: userId })
       .populate("user")
       .populate("deliveryPersonHistory.restaurant")
       .populate({
@@ -544,6 +544,15 @@ exports.getHistory = async (req, res, next) => {
     if (!history) {
       res.status(200).json({ history: "" });
     } else {
+      let results = history.deliveryPersonHistory.sort((rowDataA, rowDataB) => {
+        if (new Date(rowDataA.completedAt) <= new Date(rowDataB.completedAt))
+          return -1;
+        if (new Date(rowDataA.completedAt) > new Date(rowDataB.completedAt))
+          return 1;
+        return 0;
+      });
+      results = results.reverse(); // descending
+      history.deliveryPersonHistory = results;
       res.status(200).json({ history: history });
     }
   } catch (err) {
