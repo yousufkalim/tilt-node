@@ -1,5 +1,4 @@
 const bcrypt = require("bcryptjs");
-// var Pusher = require("pusher");
 
 // Import Models
 const User = require("../models/user");
@@ -403,23 +402,12 @@ exports.getDishes = async (req, res, next) => {
             dishesArray.push({
               ...dish.toObject(),
               restaurantName: restaurant.firstName,
+              restaurantImage: restaurant.restaurant.image,
             })
           )
         );
       })
     );
-    // var pusher = new Pusher({
-    //   appId: "1086980",
-    //   key: "f19bda9d7bdf644259ab",
-    //   secret: "991969f08f951d4548f3",
-    //   cluster: "mt1",
-    //   encrypted: true,
-    // });
-    // pusher.trigger("orderDelivery", "delivered", {
-    //   title: "Delivered! 📬",
-    //   message: "Your TILT order is delivered.",
-    //   keys: ["1", "2"],
-    // });
     const discounts = await Discount.findOne();
 
     res.status(200).json({
