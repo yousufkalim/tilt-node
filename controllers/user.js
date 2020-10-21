@@ -87,6 +87,53 @@ exports.getProfile = async (req, res, next) => {
     next(err);
   }
 };
+exports.getProfileById = async (req, res, next) => {
+  const userId = req.params.id;
+  try {
+    const user = await User.findById(userId)
+      .populate("user.package")
+      .populate({
+        path: "user.company",
+        populate: { path: "block" },
+      })
+      .populate({
+        path: "user.cart",
+        populate: [
+          {
+            path: "userCarts.restaurant",
+          },
+          {
+            path: "userCarts.dishes.id",
+          },
+        ],
+      })
+      .exec();
+    if (!user) {
+      const err = new Error("No such user exists!");
+      err.status = 404;
+      throw err;
+    }
+    if (
+      user.user.package &&
+      new Date(user.user.packageExpiration) <= new Date()
+    ) {
+      user.user.package = undefined;
+      user.user.credits = undefined;
+      user.user.packageExpiration = undefined;
+      const savedUser = await user.save();
+      // response send
+      res.status(200).json({ user: savedUser });
+    } else {
+      // response send
+      res.status(200).json({ user: user });
+    }
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
 exports.changePassword = async (req, res, next) => {
   const userId = req.userId;
   const password = req.body.password;
@@ -264,7 +311,7 @@ exports.registerUser = async (req, res, next) => {
   }
 };
 exports.editUser = async (req, res, next) => {
-  const userId = req.userId;
+  const userId = req.params.id;
   const firstName = req.body.firstName;
   const lastName = req.body.lastName;
   const email = req.body.email;
@@ -352,7 +399,7 @@ exports.editCreditCard = async (req, res, next) => {
   }
 };
 exports.deleteUser = async (req, res, next) => {
-  const userId = req.userId;
+  const userId = req.params.userId;
   try {
     const user = await User.findById(userId);
     if (!user) {

@@ -49,7 +49,7 @@ exports.registerAdmin = async (req, res, next) => {
 exports.getAllCompanies = async (req, res, next) => {
   try {
     // find the company doc
-    const companies = await Company.find();
+    const companies = await Company.find().populate("block", "name");
     if (!companies) {
       const err = new Error("Whoops, there was an error!");
       err.status = 404;
@@ -294,7 +294,11 @@ exports.deletePackage = async (req, res, next) => {
 exports.getAllBlocks = async (req, res, next) => {
   try {
     // get all the blocks and it's restaurants data
-    const blocks = await Block.find().populate("restaurants").exec();
+    const blocks = await Block.find()
+      .populate("restaurants", "firstName")
+      .populate("companies", "name")
+      .populate("deliveryPerson", "firstName")
+      .exec();
     if (!blocks) {
       const err = new Error("Whoops, there was an error!");
       err.status = 404;
@@ -311,7 +315,11 @@ exports.getBlock = async (req, res, next) => {
   const blockId = req.params.blockId;
   try {
     // get a block by id with it's restaurants
-    const block = await Block.findById(blockId).populate("restaurants").exec();
+    const block = await Block.findById(blockId)
+      .populate("restaurants", "firstName")
+      .populate("companies", "name")
+      .populate("deliveryPerson", "firstName")
+      .exec();
     if (!block) {
       const err = new Error("No such block exists!");
       err.status = 404;
@@ -356,31 +364,18 @@ exports.registerBlock = async (req, res, next) => {
   }
 };
 exports.editBlock = async (req, res, next) => {
-  // block id to edit from req params
   const blockId = req.params.blockId;
-  // req body values
-  const name = req.body.name;
-  const timeForOrder = req.body.timeForOrder;
-  const pickUpTime = req.body.pickUpTime;
-  const deliveryTime = req.body.deliveryTime;
-  const deliveryCost = req.body.deliveryCost;
   try {
-    // get a block by id with it's restaurants
-    const block = await Block.findById(blockId);
-    if (!block) {
-      const err = new Error("No such block exists!!");
-      err.status = 404;
-      throw err;
-    }
-    // update with the new values
-    block.name = name;
-    block.timeForOrder = timeForOrder;
-    block.pickUpTime = pickUpTime;
-    block.deliveryTime = deliveryTime;
-    block.deliveryCost = deliveryCost;
-    // save the block
-    const blockSaved = await block.save();
-    // response sending
+    const blockSaved = await Block.findByIdAndUpdate(blockId, {
+      name: req.body.name,
+      timeForOrder: req.body.timeForOrder,
+      pickUpTime: req.body.pickUpTime,
+      deliveryTime: req.body.deliveryTime,
+      deliveryCost: req.body.deliveryCost,
+      companies: req.body.companies,
+      restaurants: req.body.restaurants,
+      deliveryPerson: req.body.deliveryPerson,
+    });
     res.status(201).json({ updated: true, block: blockSaved });
   } catch (err) {
     next(err);

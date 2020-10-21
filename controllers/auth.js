@@ -1,5 +1,9 @@
+const fs = require("fs");
+const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+const handlebars = require("handlebars");
 
 // Import Models
 const User = require("../models/user");
@@ -104,10 +108,51 @@ exports.recover = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    // static password generation
-    const generatePassword = "passwordReset12";
+    var generatedPassword = "";
+    var str =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$";
+
+    for (i = 1; i <= 10; i++) {
+      var char = Math.floor(Math.random() * str.length + 1);
+      generatedPassword += str.charAt(char);
+    }
     // hash the new password
-    const hashedPassword = await bcrypt.hash(generatePassword, 12);
+    const hashedPassword = await bcrypt.hash(generatedPassword, 12);
+
+    // Email Starts
+    const filePath = path.join(__dirname, "../utils/resetPassword.html");
+    const source = fs.readFileSync(filePath, "utf-8").toString();
+    const template = handlebars.compile(source);
+    const replacements = {
+      name: user.firstName + " " + user.lastName,
+      email: email,
+      password: generatedPassword,
+      // action_url: "https://condescending-davinci.netlify.app/",
+    };
+    const htmlToSend = template(replacements);
+    var transporter = nodemailer.createTransport({
+      // host: 'smtp.mailtrap.io',
+      // port: 2525,
+      // auth: {
+      //   user: 'b33edd77e38c85',
+      //   pass: '4f6a254bdb395e',
+      // },
+      service: "Gmail",
+      auth: {
+        user: "ariaylake@gmail.com",
+        pass: "shutdown12",
+      },
+    });
+    const mailOptions = {
+      from: "ariaylake@gmail.com",
+      to: "betarid65@gmail.com",
+      subject: "Tilt-Password Reset Request",
+      // text: url,
+      html: htmlToSend,
+    };
+
+    await transporter.sendMail(mailOptions);
+
     // update the password and save
     user.password = hashedPassword;
     await user.save();
