@@ -228,6 +228,7 @@ exports.changePackage = async (req, res, next) => {
       expirationDate.getDate() + package.expiration
     );
     user.user.packageExpiration = new Date(expirationDate);
+    console.log(user);
     await user.save();
     const user2 = await User.findById(userId)
       .populate("user.package")
@@ -339,10 +340,17 @@ exports.editUser = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
+    if (email !== user.email) {
+      const userCheck = await User.findOne({ email: email });
+      if (userCheck) {
+        const err = new Error("Email already exists!");
+        err.status = 404;
+        throw err;
+      }
+    }
     user.firstName = firstName;
     user.lastName = lastName;
     user.email = email;
-
     const userSaved = await user.save();
     res.status(201).json({ updated: true, user: userSaved });
   } catch (err) {
@@ -438,20 +446,15 @@ exports.getDishes = async (req, res, next) => {
     await Promise.all(
       restaurantsIdsArray.map(async (restaurantId) => {
         const restaurant = await User.findById(restaurantId)
-          .populate({
-            path: "restaurant.menus",
-            populate: { path: "dishes" },
-          })
+          .populate("restaurant.dishes")
           .exec();
         restaurantsArray.push(restaurant);
-        restaurant.restaurant.menus.map((menu) =>
-          menu.dishes.map((dish) =>
-            dishesArray.push({
-              ...dish.toObject(),
-              restaurantName: restaurant.firstName,
-              restaurantImage: restaurant.restaurant.image,
-            })
-          )
+        restaurant.restaurant.dishes.map((dish) =>
+          dishesArray.push({
+            ...dish.toObject(),
+            restaurantName: restaurant.firstName,
+            restaurantImage: restaurant.restaurant.image,
+          })
         );
       })
     );

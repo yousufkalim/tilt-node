@@ -47,8 +47,7 @@ router.get("/", isAuth, restaurantController.getAll);
 router.get("/get", isAuth, restaurantController.getById);
 router.get("/cart", isAuth, restaurantController.getCart);
 router.get("/history", isAuth, restaurantController.getHistory);
-router.get("/menu", isAuth, restaurantController.getMenuList);
-router.get("/menu/get/:menuId", isAuth, restaurantController.getMenu);
+router.get("/dishes", isAuth, restaurantController.getDishes);
 router.get("/dish/:dishId", isAuth, restaurantController.getDish);
 
 // POST
@@ -57,7 +56,6 @@ router.post(
   uploadRes.single("image"),
   restaurantController.registerRestaurant
 );
-router.post("/menu", isAuth, restaurantController.registerMenu);
 router.post(
   "/dish",
   isAuth,
@@ -79,7 +77,6 @@ router.put(
   isAuth,
   restaurantController.completeOrder
 );
-router.put("/menu", isAuth, restaurantController.editMenu);
 router.put(
   "/dish",
   isAuth,
@@ -89,7 +86,6 @@ router.put(
 
 // DELETE
 router.delete("/delete", isAuth, restaurantController.deleteRestaurant);
-router.delete("/menu/:menuId", isAuth, restaurantController.deleteMenu);
-router.delete("/dish/:menuId/:dishId", isAuth, restaurantController.deleteDish);
+router.delete("/dish/:dishId", isAuth, restaurantController.deleteDish);
 
 module.exports = router;

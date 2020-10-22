@@ -15,7 +15,7 @@ exports.registerAdmin = async (req, res, next) => {
   const password = req.body.password;
   const secret_code = req.body.secret_code;
   try {
-    if (secret_code !== "secretcodeforadmin") {
+    if (secret_code !== process.env.ADMIN_SECRET) {
       const err = new Error("Not authorized!");
       err.status = 404;
       throw err;

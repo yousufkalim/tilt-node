@@ -142,6 +142,14 @@ exports.editProfile = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
+    if (email !== user.email) {
+      const userCheck = await User.findOne({ email: email });
+      if (userCheck) {
+        const err = new Error("Email already exists!");
+        err.status = 404;
+        throw err;
+      }
+    }
     user.firstName = firstName;
     user.lastName = lastName;
     user.email = email;
@@ -207,40 +215,38 @@ exports.getDeliveries = async (req, res, next) => {
           .populate("restaurantHistory.carts.id")
           .populate("restaurantHistory.carts.dishes.id")
           .exec();
-        if (!restaurantCart) {
-          const err = new Error("Whooops, there was an error!");
-          err.status = 404;
-          throw err;
-        }
-        const cookedArray = [];
-        const pickedArray = [];
-        restaurantCart.restaurantHistory.map((restaurantHist) => {
-          companiesIds.map((companyId) => {
-            if (
-              restaurantHist.company._id.toString() === companyId.toString()
-            ) {
-              if (restaurantHist.status === "Cooked") {
-                cookedArray.push(restaurantHist);
+        console.log("restaurantCart", restaurantId, restaurantCart);
+        if (restaurantCart) {
+          const cookedArray = [];
+          const pickedArray = [];
+          restaurantCart.restaurantHistory.map((restaurantHist) => {
+            companiesIds.map((companyId) => {
+              if (
+                restaurantHist.company._id.toString() === companyId.toString()
+              ) {
+                if (restaurantHist.status === "Cooked") {
+                  cookedArray.push(restaurantHist);
+                }
+                if (restaurantHist.status === "Picked") {
+                  pickedArray.push(restaurantHist);
+                }
               }
-              if (restaurantHist.status === "Picked") {
-                pickedArray.push(restaurantHist);
-              }
-            }
+            });
           });
-        });
-        if (cookedArray.length > 0) {
-          cookedArrayToSend.push({
-            historyId: restaurantCart._id,
-            restaurant: restaurantCart.user,
-            history: cookedArray,
-          });
-        }
-        if (pickedArray.length > 0) {
-          pickedArrayToSend.push({
-            historyId: restaurantCart._id,
-            restaurant: restaurantCart.user,
-            history: pickedArray,
-          });
+          if (cookedArray.length > 0) {
+            cookedArrayToSend.push({
+              historyId: restaurantCart._id,
+              restaurant: restaurantCart.user,
+              history: cookedArray,
+            });
+          }
+          if (pickedArray.length > 0) {
+            pickedArrayToSend.push({
+              historyId: restaurantCart._id,
+              restaurant: restaurantCart.user,
+              history: pickedArray,
+            });
+          }
         }
       })
     );
@@ -311,40 +317,37 @@ exports.pickDelivery = async (req, res, next) => {
           .populate("restaurantHistory.carts.id")
           .populate("restaurantHistory.carts.dishes.id")
           .exec();
-        if (!restaurantCart) {
-          const err = new Error("Whooops, there was an error!");
-          err.status = 404;
-          throw err;
-        }
-        const cookedArray = [];
-        const pickedArray = [];
-        restaurantCart.restaurantHistory.map((restaurantHist) => {
-          companiesIds.map((companyId) => {
-            if (
-              restaurantHist.company._id.toString() === companyId.toString()
-            ) {
-              if (restaurantHist.status === "Cooked") {
-                cookedArray.push(restaurantHist);
+        if (restaurantCart) {
+          const cookedArray = [];
+          const pickedArray = [];
+          restaurantCart.restaurantHistory.map((restaurantHist) => {
+            companiesIds.map((companyId) => {
+              if (
+                restaurantHist.company._id.toString() === companyId.toString()
+              ) {
+                if (restaurantHist.status === "Cooked") {
+                  cookedArray.push(restaurantHist);
+                }
+                if (restaurantHist.status === "Picked") {
+                  pickedArray.push(restaurantHist);
+                }
               }
-              if (restaurantHist.status === "Picked") {
-                pickedArray.push(restaurantHist);
-              }
-            }
+            });
           });
-        });
-        if (cookedArray.length > 0) {
-          cookedArrayToSend.push({
-            historyId: restaurantCart._id,
-            restaurant: restaurantCart.user,
-            history: cookedArray,
-          });
-        }
-        if (pickedArray.length > 0) {
-          pickedArrayToSend.push({
-            historyId: restaurantCart._id,
-            restaurant: restaurantCart.user,
-            history: pickedArray,
-          });
+          if (cookedArray.length > 0) {
+            cookedArrayToSend.push({
+              historyId: restaurantCart._id,
+              restaurant: restaurantCart.user,
+              history: cookedArray,
+            });
+          }
+          if (pickedArray.length > 0) {
+            pickedArrayToSend.push({
+              historyId: restaurantCart._id,
+              restaurant: restaurantCart.user,
+              history: pickedArray,
+            });
+          }
         }
       })
     );
@@ -424,32 +427,34 @@ exports.deliverDelivery = async (req, res, next) => {
             let userToHistory = await History.findOne({
               user: companyUserCart.id,
             });
-            let userToHistoryOrderHistory = userToHistory.orderHistory;
-            userToHistoryOrderHistory.map((userOrderHistory) => {
-              if (
-                userOrderHistory.orderId.toString() ===
-                  companyUserCart.orderId.toString() &&
-                userOrderHistory.status !== "Completed"
-              ) {
-                userOrderHistory.status = "Completed";
-                // Notifying the user for order delivery
-                var pusher = new Pusher({
-                  appId: "1086980",
-                  key: "f19bda9d7bdf644259ab",
-                  secret: "991969f08f951d4548f3",
-                  cluster: "mt1",
-                  encrypted: true,
-                });
-                pusher.trigger("orderDelivery", companyUserCart.id, {
-                  title: "Delivered! 📬",
-                  message: "Your TILT order is delivered.",
-                  key: companyUserCart.id,
-                  orderId: companyUserCart.orderId,
-                });
-              }
-            });
-            userToHistory.orderHistory = userToHistoryOrderHistory;
-            await userToHistory.save();
+            if (userToHistory) {
+              let userToHistoryOrderHistory = userToHistory.orderHistory;
+              userToHistoryOrderHistory.map((userOrderHistory) => {
+                if (
+                  userOrderHistory.orderId.toString() ===
+                    companyUserCart.orderId.toString() &&
+                  userOrderHistory.status !== "Completed"
+                ) {
+                  userOrderHistory.status = "Completed";
+                  // Notifying the user for order delivery
+                  var pusher = new Pusher({
+                    appId: "1086980",
+                    key: "f19bda9d7bdf644259ab",
+                    secret: "991969f08f951d4548f3",
+                    cluster: "mt1",
+                    encrypted: true,
+                  });
+                  pusher.trigger("orderDelivery", companyUserCart.id, {
+                    title: "Delivered! 📬",
+                    message: "Your TILT order is delivered.",
+                    key: companyUserCart.id,
+                    orderId: companyUserCart.orderId,
+                  });
+                }
+              });
+              userToHistory.orderHistory = userToHistoryOrderHistory;
+              await userToHistory.save();
+            }
           });
         }
       })
@@ -487,33 +492,35 @@ exports.deliverDelivery = async (req, res, next) => {
           .exec();
         const cookedArray = [];
         const pickedArray = [];
-        restaurantCart.restaurantHistory.map((restaurantHist) => {
-          companiesIds.map((companyId) => {
-            if (
-              restaurantHist.company._id.toString() === companyId.toString()
-            ) {
-              if (restaurantHist.status === "Cooked") {
-                cookedArray.push(restaurantHist);
+        if (restaurantCart) {
+          restaurantCart.restaurantHistory.map((restaurantHist) => {
+            companiesIds.map((companyId) => {
+              if (
+                restaurantHist.company._id.toString() === companyId.toString()
+              ) {
+                if (restaurantHist.status === "Cooked") {
+                  cookedArray.push(restaurantHist);
+                }
+                if (restaurantHist.status === "Picked") {
+                  pickedArray.push(restaurantHist);
+                }
               }
-              if (restaurantHist.status === "Picked") {
-                pickedArray.push(restaurantHist);
-              }
-            }
+            });
           });
-        });
-        if (cookedArray.length > 0) {
-          cookedArrayToSend.push({
-            historyId: restaurantCart._id,
-            restaurant: restaurantCart.user,
-            history: cookedArray,
-          });
-        }
-        if (pickedArray.length > 0) {
-          pickedArrayToSend.push({
-            historyId: restaurantCart._id,
-            restaurant: restaurantCart.user,
-            history: pickedArray,
-          });
+          if (cookedArray.length > 0) {
+            cookedArrayToSend.push({
+              historyId: restaurantCart._id,
+              restaurant: restaurantCart.user,
+              history: cookedArray,
+            });
+          }
+          if (pickedArray.length > 0) {
+            pickedArrayToSend.push({
+              historyId: restaurantCart._id,
+              restaurant: restaurantCart.user,
+              history: pickedArray,
+            });
+          }
         }
       })
     );

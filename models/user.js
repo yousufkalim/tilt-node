@@ -63,10 +63,10 @@ const UserSchema = new Schema(
       image: { type: String },
       pickupPlace: { type: String },
       deliveryCost: { type: String },
-      menus: [
+      dishes: [
         {
           type: Schema.Types.ObjectId,
-          ref: "Menu",
+          ref: "Dish",
         },
       ],
     },
