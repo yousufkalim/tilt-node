@@ -28,6 +28,7 @@ router.put("/package/:packageId", isAuth, UserController.changePackage);
 
 // DELETE
 router.delete("/delete/:userId", isAuth, UserController.deleteUser);
+router.delete("/creditCard", isAuth, UserController.deleteCreditCard);
 
 module.exports = router;
 

@@ -61,7 +61,7 @@ exports.login = async (req, res, next) => {
     // generate a jwt token
     var token = jwt.sign(
       { userId: user._id, email: user.email },
-      process.env.MY_SECRET_KEY
+      "verykeysecurehereused"
     );
     if (
       user.user.package &&

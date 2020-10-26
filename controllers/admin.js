@@ -15,7 +15,7 @@ exports.registerAdmin = async (req, res, next) => {
   const password = req.body.password;
   const secret_code = req.body.secret_code;
   try {
-    if (secret_code !== process.env.ADMIN_SECRET) {
+    if (secret_code !== "secretcodeforadmin") {
       const err = new Error("Not authorized!");
       err.status = 404;
       throw err;
@@ -365,22 +365,22 @@ exports.registerBlock = async (req, res, next) => {
     const blockSaved = await block.save();
 
     // Adding Block ID to company
-    companies.map(async id => {
-      var company = await Company.findByIdAndUpdate(id,{
-        block : blockSaved._id
-      })
-    })
+    companies.map(async (id) => {
+      var company = await Company.findByIdAndUpdate(id, {
+        block: blockSaved._id,
+      });
+    });
 
-     // Adding Block ID to Restaurant
-     restaurants.map(async id => {
-      var restaurant = await User.findByIdAndUpdate(id,{
-        block : blockSaved._id
-      })
-    })
+    // Adding Block ID to Restaurant
+    restaurants.map(async (id) => {
+      var restaurant = await User.findByIdAndUpdate(id, {
+        block: blockSaved._id,
+      });
+    });
 
-    await User.findByIdAndUpdate(deliveryPerson,{
-      block : blockSaved._id
-    })
+    await User.findByIdAndUpdate(deliveryPerson, {
+      block: blockSaved._id,
+    });
 
     // response sending
     res.status(201).json({ registered: true, block: blockSaved });
@@ -391,7 +391,7 @@ exports.registerBlock = async (req, res, next) => {
 exports.editBlock = async (req, res, next) => {
   const companies = req.body.companies;
   const restaurants = req.body.restaurants;
-  const deliveryPerson = req.body.deliveryPerson
+  const deliveryPerson = req.body.deliveryPerson;
   const blockId = req.params.blockId;
   try {
     const blockSaved = await Block.findByIdAndUpdate(blockId, {
@@ -405,24 +405,24 @@ exports.editBlock = async (req, res, next) => {
       deliveryPerson: req.body.deliveryPerson,
     });
 
-      // Adding Block ID to company
-      companies.map(async id => {
-        var company = await Company.findByIdAndUpdate(id,{
-          block : blockId
-        })
-      })
+    // Adding Block ID to company
+    companies.map(async (id) => {
+      var company = await Company.findByIdAndUpdate(id, {
+        block: blockId,
+      });
+    });
 
-      // Adding Block ID to Restaurant
-     restaurants.map(async id => {
-      var restaurant = await User.findByIdAndUpdate(id,{
-        block : blockId
-      })
-    })
-      // Adding block id in delivery person
+    // Adding Block ID to Restaurant
+    restaurants.map(async (id) => {
+      var restaurant = await User.findByIdAndUpdate(id, {
+        block: blockId,
+      });
+    });
+    // Adding block id in delivery person
 
-    await User.findByIdAndUpdate(deliveryPerson,{
-      block : blockId
-    })
+    await User.findByIdAndUpdate(deliveryPerson, {
+      block: blockId,
+    });
 
     res.status(201).json({ updated: true, block: blockSaved });
   } catch (err) {
@@ -555,7 +555,7 @@ exports.editDiscounts = async (req, res, next) => {
     if (!discount || discount.length === 0) {
       const discountNew = new Discounts({
         leastCartValue: leastCart,
-        referralDiscount : referralDiscount      
+        referralDiscount: referralDiscount,
       });
       const discountSaved = await discountNew.save();
       res.status(201).json({ created: true, discounts: discountSaved });

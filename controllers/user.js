@@ -406,6 +406,47 @@ exports.editCreditCard = async (req, res, next) => {
     next(err);
   }
 };
+exports.deleteCreditCard = async (req, res, next) => {
+  const userId = req.userId;
+  try {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        "user.creditCard": undefined,
+      },
+      { new: true }
+    )
+      .populate("user.package")
+      .populate({
+        path: "user.company",
+        populate: { path: "block" },
+      })
+      .populate({
+        path: "user.cart",
+        populate: [
+          {
+            path: "userCarts.restaurant",
+          },
+          {
+            path: "userCarts.dishes.id",
+          },
+        ],
+      })
+      .exec();
+    if (!user) {
+      const err = new Error("No such user found!");
+      err.status = 404;
+      throw err;
+    }
+    console.log(user);
+    res.status(201).json({ updated: true, user });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
 exports.deleteUser = async (req, res, next) => {
   const userId = req.params.userId;
   try {

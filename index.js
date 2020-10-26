@@ -68,7 +68,7 @@ const PORT = process.env.PORT || 8080;
 // Connecting to Database and listening to server
 mongoose
   .connect(
-    process.env.CONNECTION_STRING,
+    "mongodb://REDACTED:REDACTED@node.5ioaz.mongodb.net/tilt?retryWrites=true&w=majority",
     { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false }
   )
   .then(async (result) => {
