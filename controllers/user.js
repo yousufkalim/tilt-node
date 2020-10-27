@@ -7,6 +7,7 @@ const Dish = require("../models/dish");
 const Package = require("../models/package");
 const History = require("../models/history");
 const Discount = require("../models/discounts");
+const Company = require("../models/company");
 
 exports.getAll = async (req, res, next) => {
   try {
@@ -505,6 +506,46 @@ exports.getDishes = async (req, res, next) => {
       restaurantsArray: restaurantsArray,
       dishesArray: dishesArray,
       discounts,
+    });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.getDishesWithoutAuth = async (req, res, next) => {
+  const companyId = req.params.companyId;
+  try {
+    const company = await Company.findById(companyId).populate("block").exec();
+    if (!company) {
+      const err = new Error("No such company exists!");
+      err.status = 404;
+      throw err;
+    }
+    const restaurantsIdsArray = company.block.restaurants;
+    const dishesArray = [];
+    const restaurantsArray = [];
+    await Promise.all(
+      restaurantsIdsArray.map(async (restaurantId) => {
+        const restaurant = await User.findById(restaurantId)
+          .populate("restaurant.dishes")
+          .exec();
+        restaurantsArray.push(restaurant);
+        restaurant.restaurant.dishes.map((dish) =>
+          dishesArray.push({
+            ...dish.toObject(),
+            restaurantName: restaurant.firstName,
+            restaurantImage: restaurant.restaurant.image,
+          })
+        );
+      })
+    );
+
+    res.status(200).json({
+      restaurantsArray: restaurantsArray,
+      dishesArray: dishesArray,
+      company,
     });
   } catch (err) {
     if (!err.status) {

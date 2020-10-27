@@ -12,6 +12,7 @@ router.get("/cart", isAuth, UserController.getCart);
 router.get("/order", isAuth, UserController.order);
 router.get("/orders", isAuth, UserController.orders);
 router.get("/dishes", isAuth, UserController.getDishes);
+router.get("/dishlist/:companyId", UserController.getDishesWithoutAuth);
 
 // POST
 router.post("/", UserController.registerUser);
