@@ -169,7 +169,7 @@ exports.changePassword = async (req, res, next) => {
   }
 };
 exports.deleteRestaurant = async (req, res, next) => {
-  const userId = req.userId;
+  const userId = req.params.userId;
   try {
     const user = await User.findById(userId);
     if (!user) {
