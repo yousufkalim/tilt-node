@@ -215,7 +215,6 @@ exports.getDeliveries = async (req, res, next) => {
           .populate("restaurantHistory.carts.id")
           .populate("restaurantHistory.carts.dishes.id")
           .exec();
-        console.log("restaurantCart", restaurantId, restaurantCart);
         if (restaurantCart) {
           const cookedArray = [];
           const pickedArray = [];

@@ -1,3 +1,7 @@
+const imagemin = require("imagemin");
+// const imageminJpegtran = require("imagemin-jpegtran");
+const imageminPngquant = require("imagemin-pngquant");
+const imageminMozjpeg = require("imagemin-mozjpeg");
 // Import Models
 const User = require("../models/user");
 const Dish = require("../models/dish");
@@ -50,10 +54,29 @@ exports.registerRestaurant = async (req, res, next) => {
   let imagePath = req.file.path;
   imagePath = imagePath.replace(/\\/g, "/");
   try {
+    let files;
+    if (imagePath !== "") {
+      files = await imagemin([imagePath], {
+        destination: "data/restaurants",
+        plugins: [
+          imageminMozjpeg({ quality: 30 }),
+          imageminPngquant({
+            quality: [0.3, 0.3],
+          }),
+        ],
+      });
+    }
+
+    // 471 is 27.705882352941% of 1700.
+    // 111 is 20.255474452555% of 548.
+    // 787 is 21.861111111111% of 3600
+    // 1500 is 25% of 6000
+    // 256 is 37.702503681885% of 679. png
+
     const userCheck = await User.findOne({ email });
     if (userCheck) {
       if (imagePath !== "") {
-        clearFile(imagePath);
+        clearFile(files[0].destinationPath);
       }
       const error = new Error("Email already exists!");
       error.status = 404;
@@ -62,7 +85,7 @@ exports.registerRestaurant = async (req, res, next) => {
     const restaurantCheck = await User.findOne({ firstName: name });
     if (restaurantCheck) {
       if (imagePath !== "") {
-        clearFile(imagePath);
+        clearFile(files[0].destinationPath);
       }
       const error = new Error("Restaurant with this name already exists!");
       error.status = 404;
@@ -83,7 +106,7 @@ exports.registerRestaurant = async (req, res, next) => {
         long: 0,
       },
       restaurant: {
-        image: imagePath,
+        image: files[0].destinationPath,
         pickupPlace: pickupPlace,
       },
     });
@@ -106,10 +129,22 @@ exports.editRestaurant = async (req, res, next) => {
   let imagePath = req.file !== undefined ? req.file.path : "";
   imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
   try {
+    let files;
+    if (imagePath !== "") {
+      files = await imagemin([imagePath], {
+        destination: "data/restaurants",
+        plugins: [
+          imageminMozjpeg({ quality: 30 }),
+          imageminPngquant({
+            quality: [0.3, 0.3],
+          }),
+        ],
+      });
+    }
     const user = await User.findById(userId);
     if (!user) {
       if (imagePath !== "") {
-        clearFile(imagePath);
+        clearFile(files[0].destinationPath);
       }
       const error = new Error("Whoops, there was an error!");
       error.status = 404;
@@ -119,7 +154,7 @@ exports.editRestaurant = async (req, res, next) => {
       const userCheck = await User.findOne({ email: email });
       if (userCheck) {
         if (imagePath !== "") {
-          clearFile(imagePath);
+          clearFile(files[0].destinationPath);
         }
         const err = new Error("Email already exists!");
         err.status = 404;
@@ -133,7 +168,7 @@ exports.editRestaurant = async (req, res, next) => {
     user.address.city = JSON.parse(address).city;
     user.address.zip = JSON.parse(address).zip;
     user.restaurant.pickupPlace = pickupPlace;
-    imagePath !== "" && (user.restaurant.image = imagePath);
+    imagePath !== "" && (user.restaurant.image = files[0].destinationPath);
     const restaurantSaved = await user.save();
     res.status(201).json({
       updated: true,
@@ -347,7 +382,7 @@ exports.getDishes = async (req, res, next) => {
     });
     results = results.reverse(); // descending
     restaurant.restaurant.dishes = results;
-    res.status(200).json({ dishes: user.restaurant.dishes });
+    res.status(200).json({ dishes: restaurant.restaurant.dishes });
   } catch (err) {
     next(err);
   }
@@ -376,10 +411,22 @@ exports.addDish = async (req, res, next) => {
   let imagePath = req.file !== undefined ? req.file.path : "";
   imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
   try {
+    let files;
+    if (imagePath !== "") {
+      files = await imagemin([imagePath], {
+        destination: "data/dishes",
+        plugins: [
+          imageminMozjpeg({ quality: 30 }),
+          imageminPngquant({
+            quality: [0.3, 0.3],
+          }),
+        ],
+      });
+    }
     const restaurant = await User.findById(userId).populate("dishes").exec();
     if (!restaurant) {
       if (imagePath !== "") {
-        clearFile(imagePath);
+        clearFile(files[0].destinationPath);
       }
       const err = new Error("Whoops, there was a problem!");
       err.status = 404;
@@ -388,7 +435,7 @@ exports.addDish = async (req, res, next) => {
     restaurant.restaurant.dishes.map((dish) => {
       if (dish.name === name) {
         if (imagePath !== "") {
-          clearFile(imagePath);
+          clearFile(files[0].destinationPath);
         }
         const err = new Error("Dish with this name already exists!");
         err.status = 404;
@@ -399,7 +446,10 @@ exports.addDish = async (req, res, next) => {
     const dish = new Dish({
       name: name,
       price: price,
-      image: imagePath === "" ? restaurant.restaurant.image : imagePath,
+      image:
+        imagePath === ""
+          ? restaurant.restaurant.image
+          : files[0].destinationPath,
       dishType: dishType,
       specials: JSON.parse(specials),
       description: description,
@@ -425,10 +475,22 @@ exports.editDish = async (req, res, next) => {
   imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
 
   try {
+    let files;
+    if (imagePath !== "") {
+      files = await imagemin([imagePath], {
+        destination: "data/dishes",
+        plugins: [
+          imageminMozjpeg({ quality: 30 }),
+          imageminPngquant({
+            quality: [0.3, 0.3],
+          }),
+        ],
+      });
+    }
     const dish = await Dish.findById(dishId);
     if (!dish) {
       if (imagePath !== "") {
-        clearFile(imagePath);
+        clearFile(files[0].destinationPath);
       }
       const err = new Error("Whoops, there was en error!");
       err.status = 404;
@@ -436,7 +498,7 @@ exports.editDish = async (req, res, next) => {
     }
     if (dish.restaurant.toString() !== userId.toString()) {
       if (imagePath !== "") {
-        clearFile(imagePath);
+        clearFile(files[0].destinationPath);
       }
       const err = new Error("You are not authorized for this action!");
       err.status = 404;
@@ -451,7 +513,7 @@ exports.editDish = async (req, res, next) => {
     dish.dishType = dishType;
     dish.description = description;
     dish.specials = JSON.parse(specials);
-    imagePath !== "" && (dish.image = imagePath);
+    imagePath !== "" && (dish.image = files[0].destinationPath);
     const dishSaved = await dish.save();
 
     res.status(201).json({ updated: true, dish: dishSaved });

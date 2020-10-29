@@ -229,7 +229,6 @@ exports.changePackage = async (req, res, next) => {
       expirationDate.getDate() + package.expiration
     );
     user.user.packageExpiration = new Date(expirationDate);
-    console.log(user);
     await user.save();
     const user2 = await User.findById(userId)
       .populate("user.package")
@@ -439,7 +438,6 @@ exports.deleteCreditCard = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    console.log(user);
     res.status(201).json({ updated: true, user });
   } catch (err) {
     if (!err.status) {
