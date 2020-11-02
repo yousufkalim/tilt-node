@@ -174,6 +174,7 @@ exports.changeCompany = async (req, res, next) => {
       throw err;
     }
     user.user.company = companyId;
+    user.status = "active";
     await user.save();
     const user2 = await User.findById(userId)
       .populate("user.package")
