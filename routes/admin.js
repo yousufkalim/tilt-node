@@ -34,8 +34,8 @@ router.post(
 router.put("/company/edit/:companyId", isAuth, adminController.editCompany);
 router.put("/package/edit/:packageId", isAuth, adminController.editPackage);
 router.put("/block/edit/:blockId", isAuth, adminController.editBlock);
-router.put("/cartvalue", isAuth, adminController.editLeastCartValue);
-router.put("/referral", isAuth, adminController.editReferralDiscount);
+router.put("/editDiscounts", isAuth, adminController.editDiscounts);
+// router.put("/referral", isAuth, adminController.editReferralDiscount);
 
 // DELETE
 router.delete(

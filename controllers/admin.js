@@ -338,6 +338,9 @@ exports.registerBlock = async (req, res, next) => {
   const pickUpTime = req.body.pickUpTime;
   const deliveryTime = req.body.deliveryTime;
   const deliveryCost = req.body.deliveryCost;
+  const restaurants = req.body.restaurants;
+  const companies = req.body.companies;
+  const deliveryPerson = req.body.deliveryPerson;
 
   try {
     // check if a block exists of same name
@@ -354,9 +357,31 @@ exports.registerBlock = async (req, res, next) => {
       pickUpTime: pickUpTime,
       deliveryTime: deliveryTime,
       deliveryCost: deliveryCost,
+      companies: req.body.companies,
+      restaurants: req.body.restaurants,
+      deliveryPerson: req.body.deliveryPerson,
     });
     // save the block
     const blockSaved = await block.save();
+
+    // Adding Block ID to company
+    companies.map(async id => {
+      var company = await Company.findByIdAndUpdate(id,{
+        block : blockSaved._id
+      })
+    })
+
+     // Adding Block ID to Restaurant
+     restaurants.map(async id => {
+      var restaurant = await User.findByIdAndUpdate(id,{
+        block : blockSaved._id
+      })
+    })
+
+    await User.findByIdAndUpdate(deliveryPerson,{
+      block : blockSaved._id
+    })
+
     // response sending
     res.status(201).json({ registered: true, block: blockSaved });
   } catch (err) {
@@ -364,6 +389,9 @@ exports.registerBlock = async (req, res, next) => {
   }
 };
 exports.editBlock = async (req, res, next) => {
+  const companies = req.body.companies;
+  const restaurants = req.body.restaurants;
+  const deliveryPerson = req.body.deliveryPerson
   const blockId = req.params.blockId;
   try {
     const blockSaved = await Block.findByIdAndUpdate(blockId, {
@@ -376,6 +404,26 @@ exports.editBlock = async (req, res, next) => {
       restaurants: req.body.restaurants,
       deliveryPerson: req.body.deliveryPerson,
     });
+
+      // Adding Block ID to company
+      companies.map(async id => {
+        var company = await Company.findByIdAndUpdate(id,{
+          block : blockId
+        })
+      })
+
+      // Adding Block ID to Restaurant
+     restaurants.map(async id => {
+      var restaurant = await User.findByIdAndUpdate(id,{
+        block : blockId
+      })
+    })
+      // Adding block id in delivery person
+
+    await User.findByIdAndUpdate(deliveryPerson,{
+      block : blockId
+    })
+
     res.status(201).json({ updated: true, block: blockSaved });
   } catch (err) {
     next(err);
@@ -386,7 +434,7 @@ exports.deleteBlock = async (req, res, next) => {
   const blockId = req.params.blockId;
   try {
     // find the block and dekete it by id
-    const block = await Block.findByIdAndDelete(blockId);
+    const block = await Block.findByIdAndDelete(blockId); 
     if (!block) {
       const error = new Error("No such block exists!");
       error.status = 404;
@@ -498,18 +546,22 @@ exports.addDeliveryPerson = async (req, res, next) => {
   }
 };
 
-exports.editLeastCartValue = async (req, res, next) => {
-  const newValue = req.body.newValue;
+exports.editDiscounts = async (req, res, next) => {
+  const leastCart = req.body.leastCartValue;
+  const referralDiscount = req.body.referralDiscount;
+
   try {
     const discount = await Discounts.findOne();
     if (!discount || discount.length === 0) {
       const discountNew = new Discounts({
-        leastCartValue: newValue,
+        leastCartValue: leastCart,
+        referralDiscount : referralDiscount      
       });
       const discountSaved = await discountNew.save();
       res.status(201).json({ created: true, discounts: discountSaved });
     } else {
-      discount.leastCartValue = newValue;
+      discount.leastCartValue = leastCart;
+      discount.referralDiscount = referralDiscount;
       const discountSaved = await discount.save();
       res.status(201).json({ updated: true, discounts: discountSaved });
     }
@@ -517,25 +569,25 @@ exports.editLeastCartValue = async (req, res, next) => {
     next(err);
   }
 };
-exports.editReferralDiscount = async (req, res, next) => {
-  const newValue = req.body.newValue;
-  try {
-    const discount = await Discounts.findOne();
-    if (!discount || discount.length === 0) {
-      const discountNew = new Discounts({
-        referralDiscount: newValue,
-      });
-      const discountSaved = await discountNew.save();
-      res.status(201).json({ created: true, discounts: discountSaved });
-    } else {
-      discount.referralDiscount = newValue;
-      const discountSaved = await discount.save();
-      res.status(201).json({ updated: true, discounts: discountSaved });
-    }
-  } catch (err) {
-    next(err);
-  }
-};
+// exports.editReferralDiscount = async (req, res, next) => {
+//   const newValue = req.body.newValue;
+//   try {
+//     const discount = await Discounts.findOne();
+//     if (!discount || discount.length === 0) {
+//       const discountNew = new Discounts({
+//         referralDiscount: newValue,
+//       });
+//       const discountSaved = await discountNew.save();
+//       res.status(201).json({ created: true, discounts: discountSaved });
+//     } else {
+//       discount.referralDiscount = newValue;
+//       const discountSaved = await discount.save();
+//       res.status(201).json({ updated: true, discounts: discountSaved });
+//     }
+//   } catch (err) {
+//     next(err);
+//   }
+// };
 exports.getDiscounts = async (req, res, next) => {
   try {
     const discounts = await Discounts.find();
