@@ -10,10 +10,6 @@ const dishSchema = new Schema(
     specials: { type: Array },
     image: { type: String },
     status: { type: String, default: "Active" },
-    menu: {
-      type: Schema.Types.ObjectId,
-      ref: "Menu",
-    },
     restaurant: {
       type: Schema.Types.ObjectId,
       ref: "User",

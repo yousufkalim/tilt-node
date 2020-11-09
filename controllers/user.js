@@ -7,6 +7,7 @@ const Dish = require("../models/dish");
 const Package = require("../models/package");
 const History = require("../models/history");
 const Discount = require("../models/discounts");
+const Company = require("../models/company");
 
 exports.getAll = async (req, res, next) => {
   try {
@@ -173,6 +174,7 @@ exports.changeCompany = async (req, res, next) => {
       throw err;
     }
     user.user.company = companyId;
+    user.status = "active";
     await user.save();
     const user2 = await User.findById(userId)
       .populate("user.package")
@@ -339,10 +341,17 @@ exports.editUser = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
+    if (email !== user.email) {
+      const userCheck = await User.findOne({ email: email });
+      if (userCheck) {
+        const err = new Error("Email already exists!");
+        err.status = 404;
+        throw err;
+      }
+    }
     user.firstName = firstName;
     user.lastName = lastName;
     user.email = email;
-
     const userSaved = await user.save();
     res.status(201).json({ updated: true, user: userSaved });
   } catch (err) {
@@ -398,6 +407,46 @@ exports.editCreditCard = async (req, res, next) => {
     next(err);
   }
 };
+exports.deleteCreditCard = async (req, res, next) => {
+  const userId = req.userId;
+  try {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        "user.creditCard": undefined,
+      },
+      { new: true }
+    )
+      .populate("user.package")
+      .populate({
+        path: "user.company",
+        populate: { path: "block" },
+      })
+      .populate({
+        path: "user.cart",
+        populate: [
+          {
+            path: "userCarts.restaurant",
+          },
+          {
+            path: "userCarts.dishes.id",
+          },
+        ],
+      })
+      .exec();
+    if (!user) {
+      const err = new Error("No such user found!");
+      err.status = 404;
+      throw err;
+    }
+    res.status(201).json({ updated: true, user });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
 exports.deleteUser = async (req, res, next) => {
   const userId = req.params.userId;
   try {
@@ -438,20 +487,15 @@ exports.getDishes = async (req, res, next) => {
     await Promise.all(
       restaurantsIdsArray.map(async (restaurantId) => {
         const restaurant = await User.findById(restaurantId)
-          .populate({
-            path: "restaurant.menus",
-            populate: { path: "dishes" },
-          })
+          .populate("restaurant.dishes")
           .exec();
         restaurantsArray.push(restaurant);
-        restaurant.restaurant.menus.map((menu) =>
-          menu.dishes.map((dish) =>
-            dishesArray.push({
-              ...dish.toObject(),
-              restaurantName: restaurant.firstName,
-              restaurantImage: restaurant.restaurant.image,
-            })
-          )
+        restaurant.restaurant.dishes.map((dish) =>
+          dishesArray.push({
+            ...dish.toObject(),
+            restaurantName: restaurant.firstName,
+            restaurantImage: restaurant.restaurant.image,
+          })
         );
       })
     );
@@ -461,6 +505,46 @@ exports.getDishes = async (req, res, next) => {
       restaurantsArray: restaurantsArray,
       dishesArray: dishesArray,
       discounts,
+    });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.getDishesWithoutAuth = async (req, res, next) => {
+  const companyId = req.params.companyId;
+  try {
+    const company = await Company.findById(companyId).populate("block").exec();
+    if (!company) {
+      const err = new Error("No such company exists!");
+      err.status = 404;
+      throw err;
+    }
+    const restaurantsIdsArray = company.block.restaurants;
+    const dishesArray = [];
+    const restaurantsArray = [];
+    await Promise.all(
+      restaurantsIdsArray.map(async (restaurantId) => {
+        const restaurant = await User.findById(restaurantId)
+          .populate("restaurant.dishes")
+          .exec();
+        restaurantsArray.push(restaurant);
+        restaurant.restaurant.dishes.map((dish) =>
+          dishesArray.push({
+            ...dish.toObject(),
+            restaurantName: restaurant.firstName,
+            restaurantImage: restaurant.restaurant.image,
+          })
+        );
+      })
+    );
+
+    res.status(200).json({
+      restaurantsArray: restaurantsArray,
+      dishesArray: dishesArray,
+      company,
     });
   } catch (err) {
     if (!err.status) {

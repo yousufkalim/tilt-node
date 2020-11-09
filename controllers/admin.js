@@ -365,6 +365,7 @@ exports.registerBlock = async (req, res, next) => {
     const blockSaved = await block.save();
 
     // Adding Block ID to company
+<<<<<<< HEAD
     companies.map(async id => {
       var company = await Company.findByIdAndUpdate(id,{
         block : blockSaved._id
@@ -381,6 +382,24 @@ exports.registerBlock = async (req, res, next) => {
     await User.findByIdAndUpdate(deliveryPerson,{
       block : blockSaved._id
     })
+=======
+    companies.map(async (id) => {
+      var company = await Company.findByIdAndUpdate(id, {
+        block: blockSaved._id,
+      });
+    });
+
+    // Adding Block ID to Restaurant
+    restaurants.map(async (id) => {
+      var restaurant = await User.findByIdAndUpdate(id, {
+        block: blockSaved._id,
+      });
+    });
+
+    await User.findByIdAndUpdate(deliveryPerson, {
+      block: blockSaved._id,
+    });
+>>>>>>> 2c7af6c288732730df52f8460777d77d4afc1c13
 
     // response sending
     res.status(201).json({ registered: true, block: blockSaved });
@@ -391,7 +410,11 @@ exports.registerBlock = async (req, res, next) => {
 exports.editBlock = async (req, res, next) => {
   const companies = req.body.companies;
   const restaurants = req.body.restaurants;
+<<<<<<< HEAD
   const deliveryPerson = req.body.deliveryPerson
+=======
+  const deliveryPerson = req.body.deliveryPerson;
+>>>>>>> 2c7af6c288732730df52f8460777d77d4afc1c13
   const blockId = req.params.blockId;
   try {
     const blockSaved = await Block.findByIdAndUpdate(blockId, {
@@ -405,6 +428,7 @@ exports.editBlock = async (req, res, next) => {
       deliveryPerson: req.body.deliveryPerson,
     });
 
+<<<<<<< HEAD
       // Adding Block ID to company
       companies.map(async id => {
         var company = await Company.findByIdAndUpdate(id,{
@@ -423,6 +447,26 @@ exports.editBlock = async (req, res, next) => {
     await User.findByIdAndUpdate(deliveryPerson,{
       block : blockId
     })
+=======
+    // Adding Block ID to company
+    companies.map(async (id) => {
+      var company = await Company.findByIdAndUpdate(id, {
+        block: blockId,
+      });
+    });
+
+    // Adding Block ID to Restaurant
+    restaurants.map(async (id) => {
+      var restaurant = await User.findByIdAndUpdate(id, {
+        block: blockId,
+      });
+    });
+    // Adding block id in delivery person
+
+    await User.findByIdAndUpdate(deliveryPerson, {
+      block: blockId,
+    });
+>>>>>>> 2c7af6c288732730df52f8460777d77d4afc1c13
 
     res.status(201).json({ updated: true, block: blockSaved });
   } catch (err) {
@@ -555,7 +599,11 @@ exports.editDiscounts = async (req, res, next) => {
     if (!discount || discount.length === 0) {
       const discountNew = new Discounts({
         leastCartValue: leastCart,
+<<<<<<< HEAD
         referralDiscount : referralDiscount      
+=======
+        referralDiscount: referralDiscount,
+>>>>>>> 2c7af6c288732730df52f8460777d77d4afc1c13
       });
       const discountSaved = await discountNew.save();
       res.status(201).json({ created: true, discounts: discountSaved });

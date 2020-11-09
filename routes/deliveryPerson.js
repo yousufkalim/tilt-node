@@ -21,6 +21,10 @@ router.put("/deliver", isAuth, deliveryPersonController.deliverDelivery);
 router.put("/editpassword", isAuth, deliveryPersonController.changePassword);
 
 // DELETE
-router.delete("/delete", isAuth, deliveryPersonController.deleteProfile);
+router.delete(
+  "/delete/:userId",
+  isAuth,
+  deliveryPersonController.deleteProfile
+);
 
 module.exports = router;

@@ -21,6 +21,7 @@ exports.getAll = async (req, res, next) => {
 exports.getById = async (req, res, next) => {
   const dishId = req.params.dishId;
   try {
+    // find the dish with it's restaurant
     const dish = await Dish.findById(dishId).populate("restaurant").exec();
     if (!dish) {
       const err = new Error("Whoops, there was a problem!");
@@ -35,6 +36,7 @@ exports.getById = async (req, res, next) => {
 exports.getAllByRestaurant = async (req, res, next) => {
   const restaurantId = req.params.restaurantId;
   try {
+    // find all the dish of a restaurant
     const dishes = await Dish.find({ restaurant: restaurantId })
       .populate("restaurant")
       .exec();
