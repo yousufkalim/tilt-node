@@ -365,24 +365,6 @@ exports.registerBlock = async (req, res, next) => {
     const blockSaved = await block.save();
 
     // Adding Block ID to company
-<<<<<<< HEAD
-    companies.map(async id => {
-      var company = await Company.findByIdAndUpdate(id,{
-        block : blockSaved._id
-      })
-    })
-
-     // Adding Block ID to Restaurant
-     restaurants.map(async id => {
-      var restaurant = await User.findByIdAndUpdate(id,{
-        block : blockSaved._id
-      })
-    })
-
-    await User.findByIdAndUpdate(deliveryPerson,{
-      block : blockSaved._id
-    })
-=======
     companies.map(async (id) => {
       var company = await Company.findByIdAndUpdate(id, {
         block: blockSaved._id,
@@ -399,7 +381,6 @@ exports.registerBlock = async (req, res, next) => {
     await User.findByIdAndUpdate(deliveryPerson, {
       block: blockSaved._id,
     });
->>>>>>> 2c7af6c288732730df52f8460777d77d4afc1c13
 
     // response sending
     res.status(201).json({ registered: true, block: blockSaved });
@@ -410,11 +391,7 @@ exports.registerBlock = async (req, res, next) => {
 exports.editBlock = async (req, res, next) => {
   const companies = req.body.companies;
   const restaurants = req.body.restaurants;
-<<<<<<< HEAD
-  const deliveryPerson = req.body.deliveryPerson
-=======
   const deliveryPerson = req.body.deliveryPerson;
->>>>>>> 2c7af6c288732730df52f8460777d77d4afc1c13
   const blockId = req.params.blockId;
   try {
     const blockSaved = await Block.findByIdAndUpdate(blockId, {
@@ -428,26 +405,45 @@ exports.editBlock = async (req, res, next) => {
       deliveryPerson: req.body.deliveryPerson,
     });
 
-<<<<<<< HEAD
-      // Adding Block ID to company
-      companies.map(async id => {
-        var company = await Company.findByIdAndUpdate(id,{
-          block : blockId
+    // Removing BlockId from deleted Company //
+    const oldCompaniesID = [];
+    const oldCompanies = await Company.find({block : blockId});
+
+    oldCompanies.map(val =>{
+    oldCompaniesID.push(val.id)
+    })
+
+    const array3 = oldCompaniesID.filter(function(id) { return companies.indexOf(id) == -1; });
+    array3.map(async val => {
+     await Company.findByIdAndUpdate(val, {$unset: {'block' :1}})
+    })
+
+     // Removing BlockId from deleted Resturant //
+     const oldResturantsID = [];
+     const oldResturants = await User.find({role : "restaurant", block : blockId})
+     oldResturants.map(val =>{
+     oldResturantsID.push(val.id)
+     })
+     const arr3 = oldResturantsID.filter(function(id) { return restaurants.indexOf(id) == -1; });
+     arr3.map(async val => {
+      await User.findByIdAndUpdate(val, {$unset: {'block' :1}})
+     })
+
+       // Removing BlockId from deleted Delivery Person //
+       const oldDeliveryPersonID = [];
+       const oldDeliveryPerson = await User.find({role : "delivery", block : blockId})
+       oldDeliveryPerson.map(val =>{
+        oldDeliveryPersonID.push(val.id)
         })
-      })
+        oldDeliveryPersonID.map(async val => {
+          if(val !== deliveryPerson){
+          await User.findByIdAndUpdate(val, {$unset: {'block' :1}})
+          }
+        })
+        
+       
+ 
 
-      // Adding Block ID to Restaurant
-     restaurants.map(async id => {
-      var restaurant = await User.findByIdAndUpdate(id,{
-        block : blockId
-      })
-    })
-      // Adding block id in delivery person
-
-    await User.findByIdAndUpdate(deliveryPerson,{
-      block : blockId
-    })
-=======
     // Adding Block ID to company
     companies.map(async (id) => {
       var company = await Company.findByIdAndUpdate(id, {
@@ -466,7 +462,6 @@ exports.editBlock = async (req, res, next) => {
     await User.findByIdAndUpdate(deliveryPerson, {
       block: blockId,
     });
->>>>>>> 2c7af6c288732730df52f8460777d77d4afc1c13
 
     res.status(201).json({ updated: true, block: blockSaved });
   } catch (err) {
@@ -599,11 +594,7 @@ exports.editDiscounts = async (req, res, next) => {
     if (!discount || discount.length === 0) {
       const discountNew = new Discounts({
         leastCartValue: leastCart,
-<<<<<<< HEAD
-        referralDiscount : referralDiscount      
-=======
         referralDiscount: referralDiscount,
->>>>>>> 2c7af6c288732730df52f8460777d77d4afc1c13
       });
       const discountSaved = await discountNew.save();
       res.status(201).json({ created: true, discounts: discountSaved });
