@@ -68,7 +68,7 @@ const PORT = process.env.PORT || 8080;
 // Connecting to Database and listening to server
 mongoose
   .connect(
-    "mongodb://REDACTED:REDACTED@node.5ioaz.mongodb.net/tilt?retryWrites=true&w=majority",
+    "mongodb://REDACTED:REDACTED@cluster0.ecurz.mongodb.net/tilt?retryWrites=true&w=majority",
     { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false }
   )
   .then(async (result) => {
@@ -82,5 +82,3 @@ mongoose
   .catch((err) => {
     console.log("[App.Mongoose]", err);
   });
-
-// `mongodb://REDACTED:REDACTED@cluster0.ecurz.mongodb.net/tilt?retryWrites=true&w=majority`

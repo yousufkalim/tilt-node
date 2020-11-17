@@ -7,3 +7,4 @@ data/restaurants/*.png
 data/restaurants/*.jpg
 data/restaurants/*.jpeg
 *.lock
+*.log

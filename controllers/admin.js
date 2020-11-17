@@ -359,7 +359,7 @@ exports.registerBlock = async (req, res, next) => {
       deliveryCost: deliveryCost,
       companies: req.body.companies,
       restaurants: req.body.restaurants,
-      deliveryPerson: req.body.deliveryPerson,
+      deliveryPerson: req.body.deliveryPerson || "",
     });
     // save the block
     const blockSaved = await block.save();
@@ -403,6 +403,52 @@ exports.editBlock = async (req, res, next) => {
       companies: req.body.companies,
       restaurants: req.body.restaurants,
       deliveryPerson: req.body.deliveryPerson,
+    });
+
+    // Removing BlockId from deleted Company //
+    const oldCompaniesID = [];
+    const oldCompanies = await Company.find({ block: blockId });
+
+    oldCompanies.map((val) => {
+      oldCompaniesID.push(val.id);
+    });
+
+    const array3 = oldCompaniesID.filter(function (id) {
+      return companies.indexOf(id) == -1;
+    });
+    array3.map(async (val) => {
+      await Company.findByIdAndUpdate(val, { $unset: { block: 1 } });
+    });
+
+    // Removing BlockId from deleted Resturant //
+    const oldResturantsID = [];
+    const oldResturants = await User.find({
+      role: "restaurant",
+      block: blockId,
+    });
+    oldResturants.map((val) => {
+      oldResturantsID.push(val.id);
+    });
+    const arr3 = oldResturantsID.filter(function (id) {
+      return restaurants.indexOf(id) == -1;
+    });
+    arr3.map(async (val) => {
+      await User.findByIdAndUpdate(val, { $unset: { block: 1 } });
+    });
+
+    // Removing BlockId from deleted Delivery Person //
+    const oldDeliveryPersonID = [];
+    const oldDeliveryPerson = await User.find({
+      role: "delivery",
+      block: blockId,
+    });
+    oldDeliveryPerson.map((val) => {
+      oldDeliveryPersonID.push(val.id);
+    });
+    oldDeliveryPersonID.map(async (val) => {
+      if (val !== deliveryPerson) {
+        await User.findByIdAndUpdate(val, { $unset: { block: 1 } });
+      }
     });
 
     // Adding Block ID to company
@@ -569,6 +615,25 @@ exports.editDiscounts = async (req, res, next) => {
     next(err);
   }
 };
+// exports.editReferralDiscount = async (req, res, next) => {
+//   const newValue = req.body.newValue;
+//   try {
+//     const discount = await Discounts.findOne();
+//     if (!discount || discount.length === 0) {
+//       const discountNew = new Discounts({
+//         referralDiscount: newValue,
+//       });
+//       const discountSaved = await discountNew.save();
+//       res.status(201).json({ created: true, discounts: discountSaved });
+//     } else {
+//       discount.referralDiscount = newValue;
+//       const discountSaved = await discount.save();
+//       res.status(201).json({ updated: true, discounts: discountSaved });
+//     }
+//   } catch (err) {
+//     next(err);
+//   }
+// };
 exports.getDiscounts = async (req, res, next) => {
   try {
     const discounts = await Discounts.find();
