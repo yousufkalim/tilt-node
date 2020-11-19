@@ -11,6 +11,7 @@ const blockSchema = new Schema(
     deliveryPerson: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      required : false
     },
     restaurants: [
       {
