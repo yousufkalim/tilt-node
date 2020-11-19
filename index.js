@@ -82,5 +82,3 @@ mongoose
   .catch((err) => {
     console.log("[App.Mongoose]", err);
   });
-
-// `mongodb://REDACTED:REDACTED@cluster0.ecurz.mongodb.net/tilt?retryWrites=true&w=majority`
