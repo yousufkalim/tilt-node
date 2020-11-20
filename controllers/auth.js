@@ -145,7 +145,7 @@ exports.recover = async (req, res, next) => {
     });
     const mailOptions = {
       from: "ariaylake@gmail.com",
-      to: "betarid65@gmail.com",
+      to: email,
       subject: "Tilt-Password Reset Request",
       // text: url,
       html: htmlToSend,

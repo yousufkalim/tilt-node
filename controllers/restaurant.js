@@ -1,5 +1,5 @@
+const bcrypt = require("bcryptjs");
 const imagemin = require("imagemin");
-// const imageminJpegtran = require("imagemin-jpegtran");
 const imageminPngquant = require("imagemin-pngquant");
 const imageminMozjpeg = require("imagemin-mozjpeg");
 // Import Models
@@ -7,7 +7,7 @@ const User = require("../models/user");
 const Dish = require("../models/dish");
 const Cart = require("../models/cart");
 const History = require("../models/history");
-const bcrypt = require("bcryptjs");
+const Block = require("../models/block");
 
 const { clearFile } = require("../utils/clearFile");
 
@@ -212,11 +212,32 @@ exports.deleteRestaurant = async (req, res, next) => {
       error.status = 404;
       throw error;
     }
+    await Promise.all(
+      user.restaurant.dishes.map(async (dishId) => {
+        let dishDeleted = await Dish.findByIdAndDelete(dishId);
+        if (dishDeleted && dishDeleted.image) {
+          let isDishes = dishDeleted.image.split("/")[1].split("/")[0];
+          if (isDishes === "dishes") {
+            clearFile(dishDeleted.image);
+          }
+        }
+      })
+    );
+    let blockId = user.block;
     user.status = "deleted";
+    user.block = undefined;
+    user.restaurant.dishes = [];
     const restaurantSaved = await user.save();
-    restaurantSaved.restaurant.dishes.map(async (dishId) => {
-      await Dish.findByIdAndDelete(dishId);
-    });
+    let block = await Block.findById(blockId);
+    if (block) {
+      let restaurants = block.restaurants;
+      restaurants = restaurants.filter(
+        (rest) => String(rest) !== String(restaurantSaved._id)
+      );
+      block.restaurants = restaurants;
+      await block.save();
+    }
+
     res.status(201).json({
       deleted: true,
       restaurant: restaurantSaved,
