@@ -350,22 +350,8 @@ exports.registerBlock = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    if(!deliveryPerson){
-      console.log("hello1");
-       // create a new block doc
-    const block = new Block({
-      name: name,
-      timeForOrder: timeForOrder,
-      pickUpTime: pickUpTime,
-      deliveryTime: deliveryTime,
-      deliveryCost: deliveryCost,
-      companies: req.body.companies,
-      restaurants: req.body.restaurants,
-    });
-    // save the block
-    var blockSaved = await block.save();
-    } else {
-      console.log("hello2");
+    if (!deliveryPerson) {
+      // create a new block doc
       const block = new Block({
         name: name,
         timeForOrder: timeForOrder,
@@ -374,38 +360,47 @@ exports.registerBlock = async (req, res, next) => {
         deliveryCost: deliveryCost,
         companies: req.body.companies,
         restaurants: req.body.restaurants,
-        deliveryPerson : req.body.deliveryPerson
+      });
+      // save the block
+      var blockSaved = await block.save();
+    } else {
+      const block = new Block({
+        name: name,
+        timeForOrder: timeForOrder,
+        pickUpTime: pickUpTime,
+        deliveryTime: deliveryTime,
+        deliveryCost: deliveryCost,
+        companies: req.body.companies,
+        restaurants: req.body.restaurants,
+        deliveryPerson: req.body.deliveryPerson,
       });
       // save the block
       var blockSaved = await block.save();
     }
-   
 
     // Adding Block ID to company
-    if(companies){
+    if (companies) {
       companies.map(async (id) => {
         var company = await Company.findByIdAndUpdate(id, {
           block: blockSaved._id,
         });
       });
     }
-    
 
     // Adding Block ID to Restaurant
-    if(restaurants){
+    if (restaurants) {
       restaurants.map(async (id) => {
         var restaurant = await User.findByIdAndUpdate(id, {
           block: blockSaved._id,
         });
       });
     }
-    
-    if(deliveryPerson){
+
+    if (deliveryPerson) {
       await User.findByIdAndUpdate(deliveryPerson, {
         block: blockSaved._id,
       });
     }
-    
 
     // response sending
     res.status(201).json({ registered: true, block: blockSaved });
@@ -433,70 +428,76 @@ exports.editBlock = async (req, res, next) => {
     // Removing BlockId from deleted Company //
     const oldCompaniesID = [];
     // Storing already existed companies in OldCompanies from DataBase //
-    const oldCompanies = await Company.find({block : blockId});
-    if(oldCompanies){
-      oldCompanies.map(val =>{
-        oldCompaniesID.push(val.id)
-      })
-
-    // Comparing Old companies array with new requested companies array //
-      const array3 = oldCompaniesID.filter ( function (id) { 
-        return companies.indexOf(id) == -1; 
+    const oldCompanies = await Company.find({ block: blockId });
+    if (oldCompanies) {
+      oldCompanies.map((val) => {
+        oldCompaniesID.push(val.id);
       });
-      array3.map(async val => {
-        await Company.findByIdAndUpdate(val, 
-          {$unset: {'block' :1}}
-        )
-      // find the users associated with that company
-      const users = await User.find({ "user.company": val });
-      // change status of every user to company (needs company to be functional)
-      await Promise.all(
-        users.map(async (userIn) => {
-          const statusUser = await User.findById(userIn._id);
-          statusUser.status = "company";
-          await statusUser.save();
-        })
-      )
-    })
-  }
-    
-     // Removing BlockId from deleted Resturant //
-     const oldResturantsID = [];
+
+      // Comparing Old companies array with new requested companies array //
+      const array3 = oldCompaniesID.filter(function (id) {
+        return companies.indexOf(id) == -1;
+      });
+      array3.map(async (val) => {
+        await Company.findByIdAndUpdate(val, { $unset: { block: 1 } });
+        // find the users associated with that company
+        const users = await User.find({ "user.company": val });
+        // change status of every user to company (needs company to be functional)
+        await Promise.all(
+          users.map(async (userIn) => {
+            const statusUser = await User.findById(userIn._id);
+            statusUser.status = "company";
+            await statusUser.save();
+          })
+        );
+      });
+    }
+
+    // Removing BlockId from deleted Resturant //
+    const oldResturantsID = [];
     // Storing already existed Restaurants in OldCompanies from DataBase //
 
-     const oldResturants = await User.find({role : "restaurant", block : blockId})
-     if(oldResturants){
-      oldResturants.map( val => {
-        oldResturantsID.push(val.id)
-      })
-    // Comparing Old restaurants array with new requested restaurants array //
+    const oldResturants = await User.find({
+      role: "restaurant",
+      block: blockId,
+    });
+    if (oldResturants) {
+      oldResturants.map((val) => {
+        oldResturantsID.push(val.id);
+      });
+      // Comparing Old restaurants array with new requested restaurants array //
 
-        const arr3 = oldResturantsID.filter(function(id) { return restaurants.indexOf(id) == -1; });
-        arr3.map(async val => {
-         await User.findByIdAndUpdate(val, {$unset: {'block' :1}})
-        })
-     }
+      const arr3 = oldResturantsID.filter(function (id) {
+        return restaurants.indexOf(id) == -1;
+      });
+      arr3.map(async (val) => {
+        await User.findByIdAndUpdate(val, { $unset: { block: 1 } });
+      });
+    }
 
     // Removing BlockId from deleted Delivery Person //
-       const oldDeliveryPersonID = [];
+    const oldDeliveryPersonID = [];
     // Storing already existed Restaurants in OldCompanies from DataBase //
 
-       const oldDeliveryPerson = await User.find({role : "delivery", block : blockId})
-     if(oldDeliveryPerson){
-        oldDeliveryPerson.map( val => {
-          oldDeliveryPersonID.push(val.id)
-      })
-    // Comparing Old restaurants array with new requested restaurants array //
+    const oldDeliveryPerson = await User.find({
+      role: "delivery",
+      block: blockId,
+    });
+    if (oldDeliveryPerson) {
+      oldDeliveryPerson.map((val) => {
+        oldDeliveryPersonID.push(val.id);
+      });
+      // Comparing Old restaurants array with new requested restaurants array //
 
-      oldDeliveryPersonID.map(async val => {
-        if(val !== deliveryPerson){
-          await User.findByIdAndUpdate(val, {$unset: {'block' :1}})
+      oldDeliveryPersonID.map(async (val) => {
+        if (val !== deliveryPerson) {
+          await User.findByIdAndUpdate(val, { $unset: { block: 1 } });
         }
-      })
-   }
-       
+      });
+    }
+
     // Adding Block ID to company
-    if(companies){
+    if (companies) {
       companies.map(async (id) => {
         var company = await Company.findByIdAndUpdate(id, {
           block: blockId,
@@ -505,21 +506,21 @@ exports.editBlock = async (req, res, next) => {
     }
 
     // Adding Block ID to Restaurant
-    if(restaurants){
+    if (restaurants) {
       restaurants.map(async (id) => {
         var restaurant = await User.findByIdAndUpdate(id, {
           block: blockId,
         });
       });
     }
-    
+
     // Adding block id in delivery person
-    if(deliveryPerson){
+    if (deliveryPerson) {
       await User.findByIdAndUpdate(deliveryPerson, {
         block: blockId,
       });
     }
-    
+
     res.status(201).json({ updated: true, block: blockSaved });
   } catch (err) {
     next(err);
@@ -530,45 +531,45 @@ exports.deleteBlock = async (req, res, next) => {
   const blockId = req.params.blockId;
   try {
     // find the block and dekete it by id
-    const block = await Block.findByIdAndDelete(blockId); 
+    const block = await Block.findByIdAndDelete(blockId);
     if (!block) {
       const error = new Error("No such block exists!");
       error.status = 404;
       throw error;
     } else {
       const companies = block.companies;
-      if(companies){
-        companies.map(async item => {
+      if (companies) {
+        companies.map(async (item) => {
           await Company.findByIdAndUpdate(item, {
-            $unset: {'block' : 1}
-        })
-      // find the users associated with that company
-      const users = await User.find({ "user.company": item });
-      // change status of every user to company (needs company to be functional)
-      await Promise.all(
-        users.map(async (userIn) => {
-          const statusUser = await User.findById(userIn._id);
-          statusUser.status = "company";
-          await statusUser.save();
-        })
-      )
-    });
-  }
-    const restaurants = block.restaurants;
-      if(restaurants){
-        restaurants.map(async item => {
+            $unset: { block: 1 },
+          });
+          // find the users associated with that company
+          const users = await User.find({ "user.company": item });
+          // change status of every user to company (needs company to be functional)
+          await Promise.all(
+            users.map(async (userIn) => {
+              const statusUser = await User.findById(userIn._id);
+              statusUser.status = "company";
+              await statusUser.save();
+            })
+          );
+        });
+      }
+      const restaurants = block.restaurants;
+      if (restaurants) {
+        restaurants.map(async (item) => {
           await User.findByIdAndUpdate(item, {
-            $unset: {'block' : 1}
-        })
-      });
-    }
-    const deliveryPerson = block.deliveryPerson;
-      if(deliveryPerson){
+            $unset: { block: 1 },
+          });
+        });
+      }
+      const deliveryPerson = block.deliveryPerson;
+      if (deliveryPerson) {
         await User.findByIdAndUpdate(deliveryPerson, {
-          $unset: {'block' : 1}
-      }) 
+          $unset: { block: 1 },
+        });
+      }
     }
-  }
     // response sending
     res.status(201).json({ deleted: true, block: block });
   } catch (err) {
@@ -698,25 +699,6 @@ exports.editDiscounts = async (req, res, next) => {
     next(err);
   }
 };
-// exports.editReferralDiscount = async (req, res, next) => {
-//   const newValue = req.body.newValue;
-//   try {
-//     const discount = await Discounts.findOne();
-//     if (!discount || discount.length === 0) {
-//       const discountNew = new Discounts({
-//         referralDiscount: newValue,
-//       });
-//       const discountSaved = await discountNew.save();
-//       res.status(201).json({ created: true, discounts: discountSaved });
-//     } else {
-//       discount.referralDiscount = newValue;
-//       const discountSaved = await discount.save();
-//       res.status(201).json({ updated: true, discounts: discountSaved });
-//     }
-//   } catch (err) {
-//     next(err);
-//   }
-// };
 exports.getDiscounts = async (req, res, next) => {
   try {
     const discounts = await Discounts.find();
