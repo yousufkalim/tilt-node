@@ -332,11 +332,25 @@ exports.getBlock = async (req, res, next) => {
   }
 };
 exports.registerBlock = async (req, res, next) => {
+  let orderTime = req.body.timeForOrder;
+  let timeforPickup = req.body.pickUpTime;
+  let timeforDelivery = req.body.deliveryTime
+
+  orderTime = orderTime.split(":")
+  orderTime = orderTime[0] + "h" + orderTime[1] + "m";
+
+  timeforPickup = timeforPickup.split(":")
+  timeforPickup = timeforPickup[0] + "h" + timeforPickup[1] + "m";
+
+  timeforDelivery = timeforDelivery.split(":")
+  timeforDelivery = timeforDelivery[0] + "h" + timeforDelivery[1] + "m";
+
+
   // req body values
   const name = req.body.name;
-  const timeForOrder = req.body.timeForOrder;
-  const pickUpTime = req.body.pickUpTime;
-  const deliveryTime = req.body.deliveryTime;
+  const timeForOrder = orderTime;
+  const pickUpTime = timeforPickup;
+  const deliveryTime = timeforDelivery;
   const deliveryCost = req.body.deliveryCost;
   const restaurants = req.body.restaurants;
   const companies = req.body.companies;
@@ -409,6 +423,19 @@ exports.registerBlock = async (req, res, next) => {
   }
 };
 exports.editBlock = async (req, res, next) => {
+  let orderTime = req.body.timeForOrder;
+  let timeforPickup = req.body.pickUpTime;
+  let timeforDelivery = req.body.deliveryTime
+
+  orderTime = orderTime.split(":")
+  orderTime = orderTime[0] + "h" + orderTime[1] + "m";
+
+  timeforPickup = timeforPickup.split(":")
+  timeforPickup = timeforPickup[0] + "h" + timeforPickup[1] + "m";
+
+  timeforDelivery = timeforDelivery.split(":")
+  timeforDelivery = timeforDelivery[0] + "h" + timeforDelivery[1] + "m";
+
   const companies = req.body.companies;
   const restaurants = req.body.restaurants;
   const deliveryPerson = req.body.deliveryPerson;
@@ -417,9 +444,9 @@ exports.editBlock = async (req, res, next) => {
     if(!deliveryPerson){
       var blockSaved = await Block.findByIdAndUpdate(blockId, {
         name: req.body.name,
-        timeForOrder: req.body.timeForOrder,
-        pickUpTime: req.body.pickUpTime,
-        deliveryTime: req.body.deliveryTime,
+        timeForOrder: orderTime,
+        pickUpTime: timeforPickup,
+        deliveryTime: timeforDelivery,
         deliveryCost: req.body.deliveryCost,
         companies: req.body.companies,
         restaurants: req.body.restaurants,
@@ -427,9 +454,9 @@ exports.editBlock = async (req, res, next) => {
     } else {
       var blockSaved = await Block.findByIdAndUpdate(blockId, {
         name: req.body.name,
-        timeForOrder: req.body.timeForOrder,
-        pickUpTime: req.body.pickUpTime,
-        deliveryTime: req.body.deliveryTime,
+        timeForOrder: orderTime,
+        pickUpTime: timeforPickup,
+        deliveryTime: timeforDelivery,
         deliveryCost: req.body.deliveryCost,
         companies: req.body.companies,
         restaurants: req.body.restaurants,
