@@ -351,7 +351,6 @@ exports.registerBlock = async (req, res, next) => {
       throw err;
     }
     if(!deliveryPerson){
-      console.log("hello1");
        // create a new block doc
     const block = new Block({
       name: name,
@@ -365,7 +364,6 @@ exports.registerBlock = async (req, res, next) => {
     // save the block
     var blockSaved = await block.save();
     } else {
-      console.log("hello2");
       const block = new Block({
         name: name,
         timeForOrder: timeForOrder,
@@ -419,16 +417,29 @@ exports.editBlock = async (req, res, next) => {
   const deliveryPerson = req.body.deliveryPerson;
   const blockId = req.params.blockId;
   try {
-    const blockSaved = await Block.findByIdAndUpdate(blockId, {
-      name: req.body.name,
-      timeForOrder: req.body.timeForOrder,
-      pickUpTime: req.body.pickUpTime,
-      deliveryTime: req.body.deliveryTime,
-      deliveryCost: req.body.deliveryCost,
-      companies: req.body.companies,
-      restaurants: req.body.restaurants,
-      deliveryPerson: req.body.deliveryPerson,
-    });
+    if(!deliveryPerson){
+      var blockSaved = await Block.findByIdAndUpdate(blockId, {
+        name: req.body.name,
+        timeForOrder: req.body.timeForOrder,
+        pickUpTime: req.body.pickUpTime,
+        deliveryTime: req.body.deliveryTime,
+        deliveryCost: req.body.deliveryCost,
+        companies: req.body.companies,
+        restaurants: req.body.restaurants,
+      });
+    } else {
+      var blockSaved = await Block.findByIdAndUpdate(blockId, {
+        name: req.body.name,
+        timeForOrder: req.body.timeForOrder,
+        pickUpTime: req.body.pickUpTime,
+        deliveryTime: req.body.deliveryTime,
+        deliveryCost: req.body.deliveryCost,
+        companies: req.body.companies,
+        restaurants: req.body.restaurants,
+        deliveryPerson: req.body.deliveryPerson,
+      });
+    }
+   
 
     // Removing BlockId from deleted Company //
     const oldCompaniesID = [];
