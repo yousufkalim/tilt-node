@@ -15,7 +15,7 @@ exports.getAll = async (req, res, next) => {
       .populate("user.package")
       .populate({
         path: "user.company",
-        populate: { path: "block" },
+        populate: { path: "company" },
       })
       .populate({
         path: "user.cart",

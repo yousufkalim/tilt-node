@@ -3,6 +3,7 @@ var Pusher = require("pusher");
 
 // Import Models
 const User = require("../models/user");
+const Block = require("../models/block")
 const History = require("../models/history");
 
 exports.getAll = async (req, res, next) => {
@@ -174,6 +175,10 @@ exports.deleteProfile = async (req, res, next) => {
     }
     user.status = "deleted";
     const userSaved = await user.save();
+    const blockID = user.block;
+    await Block.findByIdAndUpdate(blockID,{
+      $unset: { deliveryPerson: 1 } 
+    })
     res.status(201).json({
       deleted: true,
       user: userSaved,
