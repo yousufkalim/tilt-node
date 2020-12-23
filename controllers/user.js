@@ -8,7 +8,7 @@ const Package = require("../models/package");
 const History = require("../models/history");
 const Discount = require("../models/discounts");
 const Company = require("../models/company");
-
+const Texts = require("../utils/Messages");
 exports.getAll = async (req, res, next) => {
   try {
     const users = await User.find({ role: "user" })
@@ -30,7 +30,7 @@ exports.getAll = async (req, res, next) => {
       })
       .exec();
     if (!users) {
-      const err = new Error("Whoops, there was en error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -64,7 +64,7 @@ exports.getProfile = async (req, res, next) => {
       })
       .exec();
     if (!user) {
-      const err = new Error("No such user exists!");
+      const err = new Error(Texts.not_user);
       err.status = 404;
       throw err;
     }
@@ -110,7 +110,7 @@ exports.getProfileById = async (req, res, next) => {
       })
       .exec();
     if (!user) {
-      const err = new Error("No such user exists!");
+      const err = new Error(Texts.not_user);
       err.status = 404;
       throw err;
     }
@@ -141,13 +141,13 @@ exports.changePassword = async (req, res, next) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
     const checkPassword = bcrypt.compareSync(password, user.password);
     if (checkPassword) {
-      const err = new Error("Change your password to a new one!");
+      const err = new Error(Texts.password_change);
       err.status = 402;
       throw err;
     }
@@ -169,7 +169,7 @@ exports.changeCompany = async (req, res, next) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -195,7 +195,7 @@ exports.changeCompany = async (req, res, next) => {
       })
       .exec();
     if (!user2) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -213,13 +213,13 @@ exports.changePackage = async (req, res, next) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
     const package = await Package.findById(packageId);
     if (!package) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -250,7 +250,7 @@ exports.changePackage = async (req, res, next) => {
       })
       .exec();
     if (!user2) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -273,7 +273,7 @@ exports.registerUser = async (req, res, next) => {
   try {
     const userCheck = await User.findOne({ email: email });
     if (userCheck) {
-      const err = new Error("Email already exists!");
+      const err = new Error(Texts.already_Email);
       err.status = 404;
       throw err;
     }
@@ -337,14 +337,14 @@ exports.editUser = async (req, res, next) => {
       })
       .exec();
     if (!user) {
-      const err = new Error("No such user found!");
+      const err = new Error(Texts.not_user);
       err.status = 404;
       throw err;
     }
     if (email !== user.email) {
       const userCheck = await User.findOne({ email: email });
       if (userCheck) {
-        const err = new Error("Email already exists!");
+        const err = new Error(Texts.already_Email);
         err.status = 404;
         throw err;
       }
@@ -388,7 +388,7 @@ exports.editCreditCard = async (req, res, next) => {
       })
       .exec();
     if (!user) {
-      const err = new Error("No such user found!");
+      const err = new Error(Texts.not_user);
       err.status = 404;
       throw err;
     }
@@ -435,7 +435,7 @@ exports.deleteCreditCard = async (req, res, next) => {
       })
       .exec();
     if (!user) {
-      const err = new Error("No such user found!");
+      const err = new Error(Texts.not_user);
       err.status = 404;
       throw err;
     }
@@ -452,7 +452,7 @@ exports.deleteUser = async (req, res, next) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      const err = new Error("No such user found!");
+      const err = new Error(Texts.not_user);
       err.status = 404;
       throw err;
     }
@@ -477,7 +477,7 @@ exports.getDishes = async (req, res, next) => {
       })
       .exec();
     if (!user) {
-      const err = new Error("No such user exists!");
+      const err = new Error(Texts.not_user);
       err.status = 404;
       throw err;
     }
@@ -518,7 +518,7 @@ exports.getDishesWithoutAuth = async (req, res, next) => {
   try {
     const company = await Company.findById(companyId).populate("block").exec();
     if (!company) {
-      const err = new Error("No such company exists!");
+      const err = new Error(Texts.not_company);
       err.status = 404;
       throw err;
     }
@@ -655,7 +655,7 @@ exports.removeFromCart = async (req, res, next) => {
     const cart = await Cart.findOne({ user: userId });
     const dish = await Dish.findById(dishId);
     if (!cart) {
-      const error = new Error("Whoops, no cart found!");
+      const error = new Error(Texts.Opps);
       error.status = 404;
       throw error;
     }
@@ -664,7 +664,7 @@ exports.removeFromCart = async (req, res, next) => {
       (element) => element.restaurant.toString() === dish.restaurant.toString()
     );
     if (restaurantCartIndex < 0) {
-      const error = new Error("No such dish, found!");
+      const error = new Error(Texts.not_dish);
       error.status = 404;
       throw error;
     }
@@ -672,7 +672,7 @@ exports.removeFromCart = async (req, res, next) => {
       (dish) => String(dish.id) === String(dishId)
     );
     if (dishIndex < 0) {
-      const error = new Error("No such dish found!");
+      const error = new Error(Texts.not_dish);
       error.status = 404;
       throw error;
     }
@@ -699,7 +699,7 @@ exports.getCart = async (req, res, next) => {
       .populate("userCarts.dishes.id")
       .exec();
     if (!cart) {
-      const error = new Error("Whoops, no cart found!");
+      const error = new Error(Texts.Opps);
       error.status = 404;
       throw error;
     }
@@ -724,7 +724,7 @@ exports.order = async (req, res, next) => {
       })
       .exec();
     if (!cart || cart.totalPrice <= 0) {
-      const error = new Error("Whoops, no cart found!");
+      const error = new Error(Texts.not_cart);
       error.status = 404;
       throw error;
     }
@@ -780,9 +780,7 @@ exports.order = async (req, res, next) => {
             } else {
               // company found
               if (restaurantCart.restaurantCarts[companyIndex].stopped) {
-                const error = new Error(
-                  "Whoops, restaurant restricted more orders !"
-                );
+                const error = new Error(Texts.restricted_resturent);
                 error.status = 404;
                 throw error;
               }
@@ -910,12 +908,6 @@ exports.order = async (req, res, next) => {
 exports.orders = async (req, res, next) => {
   let userId = req.userId;
   try {
-    // .sort("orderHistory.time")
-    // .sort("-orderHistory.time")
-    // .sort({"orderHistory.time": 1})
-    // .sort({"orderHistory.time": -1})
-    // 'asc' / 'ascending' => 1
-    // 'desc' / 'descending' => -1
     let history = await History.findOne({ user: userId })
       .populate("user")
       .populate("orderHistory.order.restaurant")
@@ -939,9 +931,7 @@ exports.orders = async (req, res, next) => {
   }
 };
 
-const stripe = require("stripe")(
-  "STRIPE_TEST_KEY_REDACTED"
-);
+const stripe = require("stripe")(process.env.STRIPE_URI);
 
 exports.paymentHandler = async (req, res, next) => {
   try {
@@ -985,7 +975,7 @@ exports.paymentHandler = async (req, res, next) => {
     // await stripe.paymentIntents.confirm(paymentIntent.id);
     // await stripe.paymentIntents.capture(paymentIntent.id);
     if (paymentIntent.status !== "succeeded") {
-      const error = new Error("There was a problem from payment end.");
+      const error = new Error(Texts.payment_Error);
       error.status = 404;
       throw error;
     }

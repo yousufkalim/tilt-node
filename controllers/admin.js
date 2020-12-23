@@ -6,7 +6,8 @@ const Company = require("../models/company");
 const Package = require("../models/package");
 const Block = require("../models/block");
 const Discounts = require("../models/discounts");
-
+const Texts = require("../utils/Messages");
+const validaion = require("../utils/Validations");
 // Profile
 exports.registerAdmin = async (req, res, next) => {
   const firstName = req.body.firstName;
@@ -16,24 +17,27 @@ exports.registerAdmin = async (req, res, next) => {
   const secret_code = req.body.secret_code;
   try {
     if (secret_code !== "secretcodeforadmin") {
-      const err = new Error("Not authorized!");
+      const err = new Error(Texts.not_Authorize);
       err.status = 404;
       throw err;
     }
     const userCheck = await User.findOne({ email: email });
     if (userCheck) {
-      const err = new Error("Email already exists!");
+      const err = new Error(Texts.already_Email);
       err.status = 404;
       throw err;
     }
     const hashedPassword = await bcrypt.hash(password, 12);
-    const user = new User({
+    const input = {
       firstName: firstName,
       lastName: lastName,
       email: email,
       password: hashedPassword,
       role: "admin",
-    });
+    };
+    const value = await validaion.admin_Register(input);
+    const user = new User(value);
+
     const userSaved = await user.save();
 
     res.status(200).json({ registered: true, user: userSaved });
@@ -51,7 +55,7 @@ exports.getAllCompanies = async (req, res, next) => {
     // find the company doc
     const companies = await Company.find().populate("block", "name");
     if (!companies) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -68,7 +72,7 @@ exports.getCompany = async (req, res, next) => {
     // find a single company by id
     const company = await Company.findById(companyId);
     if (!company) {
-      const err = new Error("No such company found!");
+      const err = new Error(Texts.not_Exists);
       err.status = 404;
       throw err;
     }
@@ -87,15 +91,17 @@ exports.registerCompany = async (req, res, next) => {
     // check if the package exists already
     const companyCheck = await Company.findOne({ name: name });
     if (companyCheck) {
-      const error = new Error("Company with this name already exists!");
+      const error = new Error(Texts.already_company);
       error.status = 404;
       throw error;
     }
     // create a company doc
-    const company = new Company({
+    const input = {
       name: name,
       deliveryPlace: deliveryPlace,
-    });
+    };
+    const value = await validaion.register_Company(input);
+    const company = new Company(value);
     // save the company to the db
     const companySaved = await company.save();
     // response sending
@@ -117,13 +123,19 @@ exports.editCompany = async (req, res, next) => {
     // find the package to edit by id
     const company = await Company.findById(companyId);
     if (!company) {
-      const err = new Error("No such company found!");
+      const err = new Error(Texts.not_Exists);
       err.status = 404;
       throw err;
     }
+    const input = {
+      name,
+      deliveryPlace,
+    };
+    const value = await validaion.edit_company(input);
+
     // update the new values
-    company.name = name;
-    company.deliveryPlace = deliveryPlace;
+    company.name = value.name;
+    company.deliveryPlace = value.deliveryPlace;
     // saving the updated doc
     const companySaved = await company.save();
     // response sending
@@ -143,7 +155,7 @@ exports.deleteCompany = async (req, res, next) => {
     // find the company
     const company = await Company.findByIdAndDelete(companyId);
     if (!company) {
-      const error = new Error("Whoops, there was an error!");
+      const error = new Error(Texts.Opps);
       error.status = 404;
       throw error;
     }
@@ -173,7 +185,7 @@ exports.getAllPackages = async (req, res, next) => {
     // find the package doc
     const packages = await Package.find();
     if (!packages) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -190,7 +202,7 @@ exports.getPackage = async (req, res, next) => {
     // find a single package by id
     const package = await Package.findById(packageId);
     if (!package) {
-      const err = new Error("No such package found!");
+      const err = new Error(Texts.not_package);
       err.status = 404;
       throw err;
     }
@@ -212,18 +224,21 @@ exports.registerPackage = async (req, res, next) => {
     // check if the package exists already
     const packageCheck = await Package.findOne({ name: name });
     if (packageCheck) {
-      const error = new Error("Package with this name already exists!");
+      const error = new Error(Texts.already_package);
       error.status = 404;
       throw error;
     }
     // create a package doc
-    const package = new Package({
+    const input = {
       offPrice: offPrice,
       name: name,
       price: price,
       credits: credits,
       expiration: expiration,
-    });
+    };
+    const value = await validaion.register_package(input);
+
+    const package = new Package(value);
     // save the package to the db
     const packageSaved = await package.save();
     // response sending
@@ -248,16 +263,24 @@ exports.editPackage = async (req, res, next) => {
     // find the package to edit by id
     const package = await Package.findById(packageId);
     if (!package) {
-      const err = new Error("No such package found!");
+      const err = new Error(Texts.not_package);
       err.status = 404;
       throw err;
     }
+    const input = {
+      name,
+      price,
+      offPrice,
+      credits,
+      expiration,
+    };
+    const value = await validaion.edit_package(input);
     // update the new values
-    package.name = name;
-    package.price = price;
-    package.offPrice = offPrice;
-    package.credits = credits;
-    package.expiration = expiration;
+    package.name = value.name;
+    package.price = value.price;
+    package.offPrice = value.offPrice;
+    package.credits = value.credits;
+    package.expiration = value.expiration;
     // saving the updated doc
     const packageSaved = await package.save();
     // response sending
@@ -276,7 +299,7 @@ exports.deletePackage = async (req, res, next) => {
     // search and delete a package by id
     const package = await Package.findByIdAndDelete(packageId);
     if (!package) {
-      const error = new Error("No such package found!");
+      const error = new Error(Texts.not_package);
       error.status = 404;
       throw error;
     }
@@ -300,7 +323,7 @@ exports.getAllBlocks = async (req, res, next) => {
       .populate("deliveryPerson", "firstName")
       .exec();
     if (!blocks) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -321,7 +344,7 @@ exports.getBlock = async (req, res, next) => {
       .populate("deliveryPerson", "firstName")
       .exec();
     if (!block) {
-      const err = new Error("No such block exists!");
+      const err = new Error(Texts.not_block);
       err.status = 404;
       throw err;
     }
@@ -334,17 +357,16 @@ exports.getBlock = async (req, res, next) => {
 exports.registerBlock = async (req, res, next) => {
   let orderTime = req.body.timeForOrder;
   let timeforPickup = req.body.pickUpTime;
-  let timeforDelivery = req.body.deliveryTime
+  let timeforDelivery = req.body.deliveryTime;
 
-  orderTime = orderTime.split(":")
+  orderTime = orderTime.split(":");
   orderTime = orderTime[0] + "h" + orderTime[1] + "m";
 
-  timeforPickup = timeforPickup.split(":")
+  timeforPickup = timeforPickup.split(":");
   timeforPickup = timeforPickup[0] + "h" + timeforPickup[1] + "m";
 
-  timeforDelivery = timeforDelivery.split(":")
+  timeforDelivery = timeforDelivery.split(":");
   timeforDelivery = timeforDelivery[0] + "h" + timeforDelivery[1] + "m";
-
 
   // req body values
   const name = req.body.name;
@@ -360,13 +382,13 @@ exports.registerBlock = async (req, res, next) => {
     // check if a block exists of same name
     const blockCheck = await Block.findOne({ name: name });
     if (blockCheck) {
-      const err = new Error("Block already exists with that name!");
+      const err = new Error(Texts.already_block);
       err.status = 404;
       throw err;
     }
     if (!deliveryPerson) {
       // create a new block doc
-      const block = new Block({
+      const input = {
         name: name,
         timeForOrder: timeForOrder,
         pickUpTime: pickUpTime,
@@ -374,7 +396,9 @@ exports.registerBlock = async (req, res, next) => {
         deliveryCost: deliveryCost,
         companies: req.body.companies,
         restaurants: req.body.restaurants,
-      });
+      };
+      const value = await validaion.register_block(input);
+      const block = new Block(value);
       // save the block
       var blockSaved = await block.save();
     } else {
@@ -425,15 +449,15 @@ exports.registerBlock = async (req, res, next) => {
 exports.editBlock = async (req, res, next) => {
   let orderTime = req.body.timeForOrder;
   let timeforPickup = req.body.pickUpTime;
-  let timeforDelivery = req.body.deliveryTime
+  let timeforDelivery = req.body.deliveryTime;
 
-  orderTime = orderTime.split(":")
+  orderTime = orderTime.split(":");
   orderTime = orderTime[0] + "h" + orderTime[1] + "m";
 
-  timeforPickup = timeforPickup.split(":")
+  timeforPickup = timeforPickup.split(":");
   timeforPickup = timeforPickup[0] + "h" + timeforPickup[1] + "m";
 
-  timeforDelivery = timeforDelivery.split(":")
+  timeforDelivery = timeforDelivery.split(":");
   timeforDelivery = timeforDelivery[0] + "h" + timeforDelivery[1] + "m";
 
   const companies = req.body.companies;
@@ -441,8 +465,8 @@ exports.editBlock = async (req, res, next) => {
   const deliveryPerson = req.body.deliveryPerson;
   const blockId = req.params.blockId;
   try {
-    if(!deliveryPerson){
-      var blockSaved = await Block.findByIdAndUpdate(blockId, {
+    if (!deliveryPerson) {
+      const input = {
         name: req.body.name,
         timeForOrder: orderTime,
         pickUpTime: timeforPickup,
@@ -450,9 +474,13 @@ exports.editBlock = async (req, res, next) => {
         deliveryCost: req.body.deliveryCost,
         companies: req.body.companies,
         restaurants: req.body.restaurants,
-      });
+      };
+
+      const value = await validaion.edit_block(input);
+
+      var blockSaved = await Block.findByIdAndUpdate(blockId, value);
     } else {
-      var blockSaved = await Block.findByIdAndUpdate(blockId, {
+      const input = {
         name: req.body.name,
         timeForOrder: orderTime,
         pickUpTime: timeforPickup,
@@ -461,9 +489,10 @@ exports.editBlock = async (req, res, next) => {
         companies: req.body.companies,
         restaurants: req.body.restaurants,
         deliveryPerson: req.body.deliveryPerson,
-      });
+      };
+      const value = await validaion.edit_block(input);
+      var blockSaved = await Block.findByIdAndUpdate(blockId, value);
     }
-   
 
     // Removing BlockId from deleted Company //
     const oldCompaniesID = [];
@@ -573,7 +602,7 @@ exports.deleteBlock = async (req, res, next) => {
     // find the block and dekete it by id
     const block = await Block.findByIdAndDelete(blockId);
     if (!block) {
-      const error = new Error("No such block exists!");
+      const error = new Error(Texts.not_block);
       error.status = 404;
       throw error;
     } else {
@@ -627,14 +656,14 @@ exports.addRestaurantToBlock = async (req, res, next) => {
     // find the restaurant to add
     const restaurant = await User.findById(restaurantId);
     if (!restaurant) {
-      const err = new Error("No such restaurant exists!!");
+      const err = new Error(Texts.not_resturent);
       err.status = 404;
       throw err;
     }
     // find the block to add
     const block = await Block.findById(blockId);
     if (!block) {
-      const err = new Error("No such block exists!!");
+      const err = new Error(Texts.not_block);
       err.status = 404;
       throw err;
     }
@@ -660,14 +689,14 @@ exports.addCompanyToBlock = async (req, res, next) => {
     // find the company to add
     const company = await Company.findById(companyId);
     if (!company) {
-      const err = new Error("No such company exists!!");
+      const err = new Error(Texts.not_company);
       err.status = 404;
       throw err;
     }
     // find the block to add
     const block = await Block.findById(blockId);
     if (!block) {
-      const err = new Error("No such block exists!!");
+      const err = new Error(Texts.not_block);
       err.status = 404;
       throw err;
     }
@@ -693,14 +722,14 @@ exports.addDeliveryPerson = async (req, res, next) => {
     // find the user to add
     const user = await User.findById(deliveryPersonId);
     if (!user) {
-      const err = new Error("No such user exists!!");
+      const err = new Error(Texts.not_user);
       err.status = 404;
       throw err;
     }
     // find the block to add
     const block = await Block.findById(blockId);
     if (!block) {
-      const err = new Error("No such block exists!!");
+      const err = new Error(Texts.not_block);
       err.status = 404;
       throw err;
     }
@@ -723,10 +752,12 @@ exports.editDiscounts = async (req, res, next) => {
   try {
     const discount = await Discounts.findOne();
     if (!discount || discount.length === 0) {
-      const discountNew = new Discounts({
+      const input = {
         leastCartValue: leastCart,
         referralDiscount: referralDiscount,
-      });
+      };
+      const value = await validaion.edit_discount(input);
+      const discountNew = new Discounts(value);
       const discountSaved = await discountNew.save();
       res.status(201).json({ created: true, discounts: discountSaved });
     } else {
@@ -743,7 +774,7 @@ exports.getDiscounts = async (req, res, next) => {
   try {
     const discounts = await Discounts.find();
     if (!discounts) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
