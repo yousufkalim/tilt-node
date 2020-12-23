@@ -1,14 +1,14 @@
 // Import Models
 const Dish = require("../models/dish");
 const User = require("../models/user");
-
+const Texts = require("../utils/Messages");
 // Gets
 exports.getAll = async (req, res, next) => {
   try {
     // find all the dishes with it's restaurant
     const dishes = await Dish.find().populate("restaurant").exec();
     if (!dishes) {
-      const err = new Error("Whoops, there was a problem!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -24,7 +24,7 @@ exports.getById = async (req, res, next) => {
     // find the dish with it's restaurant
     const dish = await Dish.findById(dishId).populate("restaurant").exec();
     if (!dish) {
-      const err = new Error("Whoops, there was a problem!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -41,7 +41,7 @@ exports.getAllByRestaurant = async (req, res, next) => {
       .populate("restaurant")
       .exec();
     if (!dishes) {
-      const err = new Error("Whoops, there was a problem!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }

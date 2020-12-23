@@ -8,7 +8,7 @@ const Dish = require("../models/dish");
 const Cart = require("../models/cart");
 const History = require("../models/history");
 const Block = require("../models/block");
-
+const Texts = require("../utils/Messages");
 const { clearFile } = require("../utils/clearFile");
 
 // Profile
@@ -22,7 +22,7 @@ exports.getAll = async (req, res, next) => {
       })
       .exec();
     if (!restaurants) {
-      const err = new Error("Whoops, there was en error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -36,7 +36,7 @@ exports.getById = async (req, res, next) => {
   try {
     const restaurant = await User.findById(userId);
     if (!restaurant) {
-      const err = new Error("Whoops, there was en error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -78,7 +78,7 @@ exports.registerRestaurant = async (req, res, next) => {
       if (imagePath !== "") {
         clearFile(files[0].destinationPath);
       }
-      const error = new Error("Email already exists!");
+      const error = new Error(Texts.already_Email);
       error.status = 404;
       throw error;
     }
@@ -87,7 +87,7 @@ exports.registerRestaurant = async (req, res, next) => {
       if (imagePath !== "") {
         clearFile(files[0].destinationPath);
       }
-      const error = new Error("Restaurant with this name already exists!");
+      const error = new Error(Texts.already_resturent);
       error.status = 404;
       throw error;
     }
@@ -146,7 +146,7 @@ exports.editRestaurant = async (req, res, next) => {
       if (imagePath !== "") {
         clearFile(files[0].destinationPath);
       }
-      const error = new Error("Whoops, there was an error!");
+      const error = new Error(Texts.Opps);
       error.status = 404;
       throw error;
     }
@@ -156,7 +156,7 @@ exports.editRestaurant = async (req, res, next) => {
         if (imagePath !== "") {
           clearFile(files[0].destinationPath);
         }
-        const err = new Error("Email already exists!");
+        const err = new Error(Texts.already_Email);
         err.status = 404;
         throw err;
       }
@@ -184,13 +184,13 @@ exports.changePassword = async (req, res, next) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
     const checkPassword = bcrypt.compareSync(password, user.password);
     if (checkPassword) {
-      const err = new Error("Change your password to a new one!");
+      const err = new Error(Texts.password_change);
       err.status = 402;
       throw err;
     }
@@ -208,7 +208,7 @@ exports.deleteRestaurant = async (req, res, next) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      const error = new Error("Whoops, there was an error!");
+      const error = new Error(Texts.Opps);
       error.status = 404;
       throw error;
     }
@@ -391,7 +391,7 @@ exports.getDishes = async (req, res, next) => {
       .populate("restaurant.dishes")
       .exec();
     if (!restaurant) {
-      const err = new Error("Whoops, there was a problem!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -413,7 +413,7 @@ exports.getDish = async (req, res, next) => {
   try {
     const dish = await Dish.findById(dishId);
     if (!dish) {
-      const err = new Error("Whoops, there was a problem!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -449,7 +449,7 @@ exports.addDish = async (req, res, next) => {
       if (imagePath !== "") {
         clearFile(files[0].destinationPath);
       }
-      const err = new Error("Whoops, there was a problem!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -458,7 +458,7 @@ exports.addDish = async (req, res, next) => {
         if (imagePath !== "") {
           clearFile(files[0].destinationPath);
         }
-        const err = new Error("Dish with this name already exists!");
+        const err = new Error(Texts.already_dish);
         err.status = 404;
         throw err;
       }
@@ -513,7 +513,7 @@ exports.editDish = async (req, res, next) => {
       if (imagePath !== "") {
         clearFile(files[0].destinationPath);
       }
-      const err = new Error("Whoops, there was en error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -521,7 +521,7 @@ exports.editDish = async (req, res, next) => {
       if (imagePath !== "") {
         clearFile(files[0].destinationPath);
       }
-      const err = new Error("You are not authorized for this action!");
+      const err = new Error(Texts.not_Authorize);
       err.status = 404;
       throw err;
     }
@@ -548,18 +548,18 @@ exports.deleteDish = async (req, res, next) => {
   try {
     const restaurant = await User.findById(userId);
     if (!restaurant) {
-      const err = new Error("Whoops, there was en error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
     const dish = await Dish.findById(dishId);
     if (!dish) {
-      const err = new Error("Whoops, there was en error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
     if (dish.restaurant.toString() !== userId.toString()) {
-      const err = new Error("You are not authorized for this action!");
+      const err = new Error(Texts.not_Authorize);
       err.status = 404;
       throw err;
     }
@@ -567,14 +567,14 @@ exports.deleteDish = async (req, res, next) => {
       (dish) => String(dish) === String(dishId)
     );
     if (dishIndex < 0) {
-      const err = new Error("You are not authorized for this action!");
+      const err = new Error(Texts.not_Authorize);
       err.status = 404;
       throw err;
     }
 
     const dishDeleted = await Dish.findByIdAndDelete(dishId);
     if (!dishDeleted) {
-      const error = new Error("Whoops, there was an error!");
+      const error = new Error(Texts.Opps);
       error.status = 404;
       throw error;
     }

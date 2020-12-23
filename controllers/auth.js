@@ -1,13 +1,10 @@
-const fs = require("fs");
-const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
-const handlebars = require("handlebars");
 
+const Email = require("../utils/Email");
 // Import Models
 const User = require("../models/user");
-
+const Texts = require("../utils/Messages");
 exports.login = async (req, res, next) => {
   // req body values
   const email = req.body.email;
@@ -38,7 +35,7 @@ exports.login = async (req, res, next) => {
       })
       .exec();
     if (!user) {
-      const err = new Error("The combination is incorrect, please try again!");
+      const err = new Error(Texts.not_Email_Password);
       err.status = 404;
       throw err;
     }
@@ -47,14 +44,14 @@ exports.login = async (req, res, next) => {
       (user.role === "restaurant" || user.role === "delivery") &&
       !user.block
     ) {
-      const err = new Error("Contact admin to assign a block to you!");
+      const err = new Error(Texts.contact_admin);
       err.status = 402;
       throw err;
     }
     // check password to login
     const checkPassword = bcrypt.compareSync(password, user.password);
     if (!checkPassword) {
-      const err = new Error("The combination is incorrect, please try again!");
+      const err = new Error(Texts.not_Email_Password);
       err.status = 402;
       throw err;
     }
@@ -104,8 +101,8 @@ exports.recover = async (req, res, next) => {
     // find the user
     const user = await User.findOne({ email });
     if (!user) {
-      const err = new Error("Whoops, no user found with this email!");
-      err.status = 404;
+      const err = new Error(texts.not_Found);
+      err.status = 400;
       throw err;
     }
     var generatedPassword = "";
@@ -116,42 +113,9 @@ exports.recover = async (req, res, next) => {
       var char = Math.floor(Math.random() * str.length + 1);
       generatedPassword += str.charAt(char);
     }
+    Email(user, email, generatedPassword);
     // hash the new password
     const hashedPassword = await bcrypt.hash(generatedPassword, 12);
-
-    // Email Starts
-    const filePath = path.join(__dirname, "../utils/resetPassword.html");
-    const source = fs.readFileSync(filePath, "utf-8").toString();
-    const template = handlebars.compile(source);
-    const replacements = {
-      name: user.firstName + " " + user.lastName,
-      email: email,
-      password: generatedPassword,
-      // action_url: "https://condescending-davinci.netlify.app/",
-    };
-    const htmlToSend = template(replacements);
-    var transporter = nodemailer.createTransport({
-      // host: 'smtp.mailtrap.io',
-      // port: 2525,
-      // auth: {
-      //   user: 'b33edd77e38c85',
-      //   pass: '4f6a254bdb395e',
-      // },
-      service: "Gmail",
-      auth: {
-        user: "ariaylake@gmail.com",
-        pass: "shutdown12",
-      },
-    });
-    const mailOptions = {
-      from: "ariaylake@gmail.com",
-      to: email,
-      subject: "Tilt-Password Reset Request",
-      // text: url,
-      html: htmlToSend,
-    };
-
-    await transporter.sendMail(mailOptions);
 
     // update the password and save
     user.password = hashedPassword;

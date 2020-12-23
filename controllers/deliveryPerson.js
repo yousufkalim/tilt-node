@@ -3,16 +3,16 @@ var Pusher = require("pusher");
 
 // Import Models
 const User = require("../models/user");
-const Block = require("../models/block")
+const Block = require("../models/block");
 const History = require("../models/history");
-
+const Texts = require("../utils/Messages");
 exports.getAll = async (req, res, next) => {
   try {
     const users = await User.find({ role: "delivery" })
       .populate("block")
       .exec();
     if (!users) {
-      const err = new Error("No such user exists!");
+      const err = new Error(Texts.not_user);
       err.status = 404;
       throw err;
     }
@@ -29,7 +29,7 @@ exports.getProfile = async (req, res, next) => {
   try {
     const user = await User.findById(userId).populate("block").exec();
     if (!user) {
-      const err = new Error("No such user exists!");
+      const err = new Error(Texts.not_user);
       err.status = 404;
       throw err;
     }
@@ -47,13 +47,13 @@ exports.changePassword = async (req, res, next) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
     const checkPassword = bcrypt.compareSync(password, user.password);
     if (checkPassword) {
-      const err = new Error("Change your password to a new one!");
+      const err = new Error(Texts.password_change);
       err.status = 402;
       throw err;
     }
@@ -77,7 +77,7 @@ exports.registerUser = async (req, res, next) => {
   try {
     const userCheck = await User.findOne({ email: email });
     if (userCheck) {
-      const err = new Error("Email already exists!");
+      const err = new Error(Texts.already_Email);
       err.status = 404;
       throw err;
     }
@@ -114,7 +114,7 @@ exports.editBank = async (req, res, next) => {
   try {
     const user = await User.findById(userId).populate("block").exec();
     if (!user) {
-      const err = new Error("No such user found!");
+      const err = new Error(Texts.not_user);
       err.status = 404;
       throw err;
     }
@@ -139,14 +139,14 @@ exports.editProfile = async (req, res, next) => {
   try {
     const user = await User.findById(userId).populate("block").exec();
     if (!user) {
-      const err = new Error("No such user found!");
+      const err = new Error(Texts.not_user);
       err.status = 404;
       throw err;
     }
     if (email !== user.email) {
       const userCheck = await User.findOne({ email: email });
       if (userCheck) {
-        const err = new Error("Email already exists!");
+        const err = new Error(Texts.already_Email);
         err.status = 404;
         throw err;
       }
@@ -169,16 +169,16 @@ exports.deleteProfile = async (req, res, next) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      const err = new Error("No such user found!");
+      const err = new Error(Texts.not_user);
       err.status = 404;
       throw err;
     }
     user.status = "deleted";
     const userSaved = await user.save();
     const blockID = user.block;
-    await Block.findByIdAndUpdate(blockID,{
-      $unset: { deliveryPerson: 1 } 
-    })
+    await Block.findByIdAndUpdate(blockID, {
+      $unset: { deliveryPerson: 1 },
+    });
     res.status(201).json({
       deleted: true,
       user: userSaved,
@@ -193,12 +193,12 @@ exports.getDeliveries = async (req, res, next) => {
   try {
     const user = await User.findById(userId).populate("block").exec();
     if (!user) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
     if (!user.block) {
-      const err = new Error("Contact admin to assign a block to you!");
+      const err = new Error(Texts.contact_admin);
       err.status = 404;
       throw err;
     }
@@ -270,7 +270,7 @@ exports.pickDelivery = async (req, res, next) => {
   try {
     const restaurantCart1 = await History.findOne({ user: restaurantId });
     if (!restaurantCart1) {
-      const err = new Error("Whooops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -294,12 +294,12 @@ exports.pickDelivery = async (req, res, next) => {
     //
     const user = await User.findById(userId).populate("block").exec();
     if (!user) {
-      const err = new Error("Whoops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
     if (!user.block) {
-      const err = new Error("Contact admin to assign a block to you!");
+      const err = new Error(Texts.contact_admin);
       err.status = 404;
       throw err;
     }
@@ -373,7 +373,7 @@ exports.deliverDelivery = async (req, res, next) => {
     // find the restaurant history doc
     let restaurantCart1 = await History.findOne({ user: restaurantId });
     if (!restaurantCart1) {
-      const err = new Error("Whooops, there was an error!");
+      const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
@@ -442,15 +442,15 @@ exports.deliverDelivery = async (req, res, next) => {
                   userOrderHistory.status = "Completed";
                   // Notifying the user for order delivery
                   var pusher = new Pusher({
-                    appId: "1086980",
-                    key: "f19bda9d7bdf644259ab",
-                    secret: "991969f08f951d4548f3",
-                    cluster: "mt1",
+                    appId: process.env.PUSHER_APP_ID,
+                    key: process.env.PUSHER_KEY,
+                    secret: process.env.PUSHER_SECRET,
+                    cluster: process.env.PUSHER_CLUSTER,
                     encrypted: true,
                   });
                   pusher.trigger("orderDelivery", companyUserCart.id, {
                     title: "Delivered! 📬",
-                    message: "Your TILT order is delivered.",
+                    message: Texts.message_delivered,
                     key: companyUserCart.id,
                     orderId: companyUserCart.orderId,
                   });

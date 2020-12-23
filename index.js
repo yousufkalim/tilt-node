@@ -1,3 +1,4 @@
+require("dotenv").config();
 const path = require("path");
 const fs = require("fs");
 const express = require("express");
@@ -67,10 +68,11 @@ const PORT = process.env.PORT || 5001;
 
 // Connecting to Database and listening to server
 mongoose
-  .connect(
-    "mongodb://REDACTED:REDACTED@cluster0.ecurz.mongodb.net/tilt?retryWrites=true&w=majority",
-    { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false }
-  )
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+  })
   .then(async (result) => {
     app.listen(PORT, () => console.log(`App listening at ${PORT}`));
     const discount = await DiscountsModel.find();
