@@ -102,7 +102,7 @@ exports.recover = async (req, res, next) => {
     // find the user
     const user = await User.findOne({ email });
     if (!user) {
-      const err = new Error(texts.not_Found);
+      const err = new Error(Texts.not_Found);
       err.status = 400;
       throw err;
     }

@@ -100,7 +100,7 @@ exports.registerRestaurant = async (req, res, next) => {
         long: 0,
       },
       restaurant: {
-        image: files[0].destinationPath,
+        image: files[0].destinationPath.replace(/\\/g, "/"),
         pickupPlace: pickupPlace,
       },
     });
@@ -162,7 +162,8 @@ exports.editRestaurant = async (req, res, next) => {
     user.address.city = JSON.parse(address).city;
     user.address.zip = JSON.parse(address).zip;
     user.restaurant.pickupPlace = pickupPlace;
-    imagePath !== "" && (user.restaurant.image = files[0].destinationPath);
+    imagePath !== "" &&
+      (user.restaurant.image = files[0].destinationPath.replace(/\\/g, "/"));
     const restaurantSaved = await user.save();
     res.status(201).json({
       updated: true,
@@ -464,7 +465,7 @@ exports.addDish = async (req, res, next) => {
       image:
         imagePath === ""
           ? restaurant.restaurant.image
-          : files[0].destinationPath,
+          : files[0].destinationPath.replace(/\\/g, "/"),
       dishType: dishType,
       specials: JSON.parse(specials),
       description: description,
@@ -528,7 +529,8 @@ exports.editDish = async (req, res, next) => {
     dish.dishType = dishType;
     dish.description = description;
     dish.specials = JSON.parse(specials);
-    imagePath !== "" && (dish.image = files[0].destinationPath);
+    imagePath !== "" &&
+      (dish.image = files[0].destinationPath.replace(/\\/g, "/"));
     const dishSaved = await dish.save();
 
     res.status(201).json({ updated: true, dish: dishSaved });
