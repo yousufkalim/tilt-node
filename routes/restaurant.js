@@ -46,8 +46,8 @@ var uploadDish = multer({
 router.get("/", isAuth, restaurantController.getAll);
 router.get("/get", isAuth, restaurantController.getById);
 router.get("/cart", isAuth, restaurantController.getCart);
-router.get("/history", isAuth, restaurantController.getHistory);
 router.get("/dishes", isAuth, restaurantController.getDishes);
+router.get("/history", isAuth, restaurantController.getHistory);
 router.get("/dish/:dishId", isAuth, restaurantController.getDish);
 
 // POST
@@ -70,6 +70,7 @@ router.put(
   uploadRes.single("image"),
   restaurantController.editRestaurant
 );
+router.put("/edit-bank", isAuth, restaurantController.editBank);
 router.put("/editpassword", isAuth, restaurantController.changePassword);
 router.put("/cart/stop/:companyId", isAuth, restaurantController.stopOrdering);
 router.put(

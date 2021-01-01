@@ -2,6 +2,8 @@ const bcrypt = require("bcryptjs");
 const imagemin = require("imagemin");
 const imageminPngquant = require("imagemin-pngquant");
 const imageminMozjpeg = require("imagemin-mozjpeg");
+const Stripe = require("stripe");
+
 // Import Models
 const User = require("../models/user");
 const Dish = require("../models/dish");
@@ -586,6 +588,145 @@ exports.deleteDish = async (req, res, next) => {
     await restaurant.save();
 
     res.status(201).json({ deleted: true, dish: dishDeleted });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.editBank = async (req, res, next) => {
+  console.log("asdf");
+  // console.log(req.ip, req.connection.remoteAddress, "Request");
+  try {
+    // business_type=company   => default
+    // Set your secret key. Remember to switch to your live secret key in production!
+    // See your keys here: https://dashboard.stripe.com/account/apikeys
+    const stripe = Stripe(process.env.STRIPE_URI);
+
+    // const accountLinks = await stripe.accountLinks.create({
+    //   account: "acct_1032D82eZvKYlo2C",
+    //   refresh_url: "https://example.com/reauth",
+    //   return_url: "https://example.com/return",
+    //   type: "account_onboarding",
+    //   collect: "eventually_due",
+    // });
+
+    const token = await stripe.tokens.create({
+      bank_account: {
+        country: "US",
+        currency: "usd",
+        account_holder_name: "Jenny Rosen",
+        account_holder_type: "individual",
+        routing_number: "110000000",
+        account_number: "000123456789",
+      },
+    });
+    console.log(token);
+
+    const account = await stripe.account.create({
+      type: "custom",
+      country: "US",
+      email: "jenny.rosen@example.com",
+      business_type: "individual",
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+      tos_acceptance: {
+        date: Math.floor(Date.now() / 1000),
+        ip: req.ip,
+        user_agent: null,
+      },
+      individual: {
+        phone: "0000000000",
+        dob: {
+          day: 1,
+          month: 1,
+          year: 1992,
+        },
+        address: {
+          line1: "asbasa",
+          postal_code: "1121",
+          city: "NY",
+          country: "US",
+        },
+      },
+      external_account: {
+        object: "bank_account",
+        // data: token.bank_account.id,
+        has_more: false,
+        url: "/v1/accounts/acct_1032D82eZvKYlo2C/external_accounts",
+        country: "US",
+        currency: "USD",
+        account_holder_name: "Jenny Rosen",
+        account_holder_type: "individual",
+        routing_number: "110000000",
+        account_number: "000123456789",
+      },
+    });
+
+    console.log("account", account);
+
+    // const account = await stripe.accounts.create({
+    //   type: "custom",
+    //   country: "US",
+    //   email: "jenny.rosen@example.com",
+    //   capabilities: {
+    //     card_payments: { requested: true },
+    //     transfers: { requested: true },
+    //   },
+    //   tos_acceptance: {
+    //     date: new Date().getTime(),
+    //     ip: req.ip,
+    //     user_agent: null,
+    //   },
+    //   individual: {
+    //     phone: "",
+    // date_of_birth:{
+    //   day:1,
+    //   month:1,
+    //   year:1992,
+    // },
+    //     address: {
+    //       line1: "",
+    //       postal_code: "",
+    //       city: "",
+    //       country: "",
+    //     },
+    //   },
+    // "external_accounts": {
+    //   "object": "list",
+    //   "data": [TOKEN.ID],
+    //   "has_more": false,
+    //   "url": "/v1/accounts/acct_1032D82eZvKYlo2C/external_accounts"
+    // },
+    // });
+
+    // const bankAccount = await stripe.accounts.createExternalAccount(
+    //   account.id,
+    //   {
+    //     external_account: {
+    //       account_holder_name: "Jenny Rosen",
+    //       account_holder_type: "individual",
+    //       bank_name: "STRIPE TEST BANK",
+    //       country: "US",
+    //       currency: "usd",
+    //       fingerprint: "1JWtPxqbdX5Gamtc",
+    //       last4: "6789",
+    //       metadata: {},
+    //       routing_number: "110000000",
+    //     },
+    //   }
+    // );
+
+    // update account with external accounts
+    // external_accounts: {
+    //   object: "list",
+    //   data: [bankAccount.id],
+    //   has_more: false,
+    //   url: "/v1/accounts/acct_1032D82eZvKYlo2C/external_accounts",
+    // },
+    // console.log(bankAccount, "account");
+    // res.json({ account, bankAccount });
   } catch (err) {
     next(err);
   }
