@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const imagemin = require("imagemin");
 const imageminPngquant = require("imagemin-pngquant");
-const imageminMozjpeg = require("imagemin-mozjpeg");
+const imageminMozjpex = require("imagemin-mozjpeg");
 const Stripe = require("stripe");
 
 // Import Models
@@ -594,9 +594,26 @@ exports.deleteDish = async (req, res, next) => {
 };
 
 exports.editBank = async (req, res, next) => {
-  console.log("asdf");
-  // console.log(req.ip, req.connection.remoteAddress, "Request");
+  const userId = req.userId;
+
+  const name = req.body.name;
+  const phone = req.body.phone;
+  const DOB = req.body.DOB;
+  const bankName = req.body.bankName;
+  const iban = req.body.iban;
+  // const accountNumber = req.body.accountNumber;
+  // const routing = req.body.routing;
+
   try {
+    const restaurant = await User.findById(userId);
+    if (!restaurant) {
+      const err = new Error(Texts.Opps);
+      err.status = 404;
+      throw err;
+    }
+    console.log("restarurnt", restaurant);
+
+    // console.log(req.ip, req.connection.remoteAddress, "Request");
     // business_type=company   => default
     // Set your secret key. Remember to switch to your live secret key in production!
     // See your keys here: https://dashboard.stripe.com/account/apikeys
@@ -610,22 +627,22 @@ exports.editBank = async (req, res, next) => {
     //   collect: "eventually_due",
     // });
 
-    const token = await stripe.tokens.create({
-      bank_account: {
-        country: "US",
-        currency: "usd",
-        account_holder_name: "Jenny Rosen",
-        account_holder_type: "individual",
-        routing_number: "110000000",
-        account_number: "000123456789",
-      },
-    });
-    console.log(token);
+    // const token = await stripe.tokens.create({
+    //   bank_account: {
+    //     country: "US",
+    //     currency: "usd",
+    //     account_holder_name: restaurant.firstName + " " + restaurant.lastName,
+    //     account_holder_type: "individual",
+    //     routing_number: routing,
+    //     account_number: accountNumber,
+    //   },
+    // });
+    console.log(restaurant.address);
 
     const account = await stripe.account.create({
       type: "custom",
-      country: "US",
-      email: "jenny.rosen@example.com",
+      country: "FR",
+      email: restaurant.email,
       business_type: "individual",
       capabilities: {
         card_payments: { requested: true },
@@ -637,30 +654,47 @@ exports.editBank = async (req, res, next) => {
         user_agent: null,
       },
       individual: {
-        phone: "0000000000",
+        phone: phone,
         dob: {
           day: 1,
           month: 1,
           year: 1992,
         },
         address: {
-          line1: "asbasa",
-          postal_code: "1121",
-          city: "NY",
-          country: "US",
+          line1: restaurant.address.street,
+          postal_code: parseInt(restaurant.address.zip),
+          city: restaurant.address.city,
+          country: "FR",
         },
       },
       external_account: {
+        // object: "bank_account",
+        // // data: token.bank_account.id,
+        // has_more: false,
+        // url: "/v1/accounts/acct_1032D82eZvKYlo2C/external_accounts",
+        // country: "FR",
+        // currency: "EUR",
+        // account_holder_name: restaurant.firstName + " " + restaurant.lastName,
+        // account_holder_type: "individual",
+        // routing_number: null,
+        // account_number: "FR89370400440532013000",
+        // iban: "FR1420041010050500013M02606",
         object: "bank_account",
-        // data: token.bank_account.id,
-        has_more: false,
-        url: "/v1/accounts/acct_1032D82eZvKYlo2C/external_accounts",
-        country: "US",
-        currency: "USD",
-        account_holder_name: "Jenny Rosen",
-        account_holder_type: "individual",
-        routing_number: "110000000",
-        account_number: "000123456789",
+        account_number: "FR1420041010050500013M02606",
+        country: "FR",
+        currency: "eur",
+        // object: "bank_account",
+        // account_holder_name: "test",
+        // account_holder_type: "company",
+        // bank_name: "STRIPE TEST BANK",
+        // country: "US",
+        // currency: "usd",
+        // customer: "cus_Ifo2fJGpAJQinS",
+        // fingerprint: "1JWtPxqbdX5Gamtc",
+        // last4: "6789",
+        // metadata: {},
+        // routing_number: "110000000",
+        // status: "new",
       },
     });
 

@@ -1,3 +1,4 @@
+const { string } = require("joi");
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
@@ -69,6 +70,19 @@ const UserSchema = new Schema(
           ref: "Dish",
         },
       ],
+      bank: {
+        name: String,
+        phone: String,
+        DOB: {
+          day: String,
+          month: String,
+          year: String,
+        },
+        bankName: String,
+        iban: String,
+        // routing: String,
+        // accountNumber: String,
+      },
     },
     deliveryPerson: {
       bank: {
