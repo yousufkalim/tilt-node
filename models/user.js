@@ -73,13 +73,10 @@ const UserSchema = new Schema(
       bank: {
         name: String,
         phone: String,
-        DOB: {
-          day: String,
-          month: String,
-          year: String,
-        },
+        DOB: Date,
         bankName: String,
         iban: String,
+        stripeID: String,
         // routing: String,
         // accountNumber: String,
       },

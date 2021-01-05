@@ -88,5 +88,6 @@ router.put(
 // DELETE
 router.delete("/delete/:userId", isAuth, restaurantController.deleteRestaurant);
 router.delete("/dish/:dishId", isAuth, restaurantController.deleteDish);
+router.get("/getAccountStatus", restaurantController.accounttest);
 
 module.exports = router;

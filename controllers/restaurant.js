@@ -592,53 +592,46 @@ exports.deleteDish = async (req, res, next) => {
     next(err);
   }
 };
-
+/////////////////////////////////CREATING and UPDATING STRIPE ACCOUT/////////////////////////////////
 exports.editBank = async (req, res, next) => {
   const userId = req.userId;
 
   const name = req.body.name;
   const phone = req.body.phone;
   const DOB = req.body.DOB;
+  const newDOB = new Date(DOB);
   const bankName = req.body.bankName;
   const iban = req.body.iban;
   // const accountNumber = req.body.accountNumber;
   // const routing = req.body.routing;
 
   try {
-    const restaurant = await User.findById(userId);
+    const restaurant = await User.findById(userId).populate("block").exec();
     if (!restaurant) {
       const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
+
     console.log("restarurnt", restaurant);
 
-    // console.log(req.ip, req.connection.remoteAddress, "Request");
-    // business_type=company   => default
-    // Set your secret key. Remember to switch to your live secret key in production!
-    // See your keys here: https://dashboard.stripe.com/account/apikeys
     const stripe = Stripe(process.env.STRIPE_URI);
 
-    // const accountLinks = await stripe.accountLinks.create({
-    //   account: "acct_1032D82eZvKYlo2C",
-    //   refresh_url: "https://example.com/reauth",
-    //   return_url: "https://example.com/return",
-    //   type: "account_onboarding",
-    //   collect: "eventually_due",
-    // });
+    /////////////////////////////////UPDATING STRIPE ACCOUNT/////////////////////////////////
 
-    // const token = await stripe.tokens.create({
-    //   bank_account: {
-    //     country: "US",
-    //     currency: "usd",
-    //     account_holder_name: restaurant.firstName + " " + restaurant.lastName,
-    //     account_holder_type: "individual",
-    //     routing_number: routing,
-    //     account_number: accountNumber,
-    //   },
-    // });
-    console.log(restaurant.address);
+    const Updateaccount = await stripe.account.update("acct_1I69JCPqYDNw9YZ0", {
+      individual: {
+        first_name: "Jenny",
+        last_name: "Rosen",
+        dob: {
+          day: 10,
+          month: 11,
+          year: 1980,
+        },
+      },
+    });
 
+    /////////////////////////////////CREATING STRIPE ACCOUNT/////////////////////////////////
     const account = await stripe.account.create({
       type: "custom",
       country: "FR",
@@ -654,12 +647,20 @@ exports.editBank = async (req, res, next) => {
         user_agent: null,
       },
       individual: {
+        email: restaurant.email,
+        first_name: "Jenny",
+        last_name: "Rosen",
+
         phone: phone,
         dob: {
-          day: 1,
-          month: 1,
-          year: 1992,
+          // day: newDOB.getDate(),
+          // month: newDOB.getMonth() + 1,
+          // year: newDOB.getFullYear(),
+          day: 10,
+          month: 11,
+          year: 1980,
         },
+
         address: {
           line1: restaurant.address.street,
           postal_code: parseInt(restaurant.address.zip),
@@ -668,6 +669,11 @@ exports.editBank = async (req, res, next) => {
         },
       },
       external_account: {
+        object: "bank_account",
+        account_number: iban,
+        bank_name: bankName,
+        country: "FR",
+        currency: "eur",
         // object: "bank_account",
         // // data: token.bank_account.id,
         // has_more: false,
@@ -679,10 +685,6 @@ exports.editBank = async (req, res, next) => {
         // routing_number: null,
         // account_number: "FR89370400440532013000",
         // iban: "FR1420041010050500013M02606",
-        object: "bank_account",
-        account_number: "FR1420041010050500013M02606",
-        country: "FR",
-        currency: "eur",
         // object: "bank_account",
         // account_holder_name: "test",
         // account_holder_type: "company",
@@ -700,68 +702,29 @@ exports.editBank = async (req, res, next) => {
 
     console.log("account", account);
 
-    // const account = await stripe.accounts.create({
-    //   type: "custom",
-    //   country: "US",
-    //   email: "jenny.rosen@example.com",
-    //   capabilities: {
-    //     card_payments: { requested: true },
-    //     transfers: { requested: true },
-    //   },
-    //   tos_acceptance: {
-    //     date: new Date().getTime(),
-    //     ip: req.ip,
-    //     user_agent: null,
-    //   },
-    //   individual: {
-    //     phone: "",
-    // date_of_birth:{
-    //   day:1,
-    //   month:1,
-    //   year:1992,
-    // },
-    //     address: {
-    //       line1: "",
-    //       postal_code: "",
-    //       city: "",
-    //       country: "",
-    //     },
-    //   },
-    // "external_accounts": {
-    //   "object": "list",
-    //   "data": [TOKEN.ID],
-    //   "has_more": false,
-    //   "url": "/v1/accounts/acct_1032D82eZvKYlo2C/external_accounts"
-    // },
-    // });
+    restaurant.restaurant.bank.name = name;
+    restaurant.restaurant.bank.phone = phone;
+    restaurant.restaurant.bank.DOB = DOB;
+    restaurant.restaurant.bank.bankName = bankName;
+    restaurant.restaurant.bank.iban = iban;
+    restaurant.restaurant.bank.stripeID = account.id;
+    const userSaved = await restaurant.save();
 
-    // const bankAccount = await stripe.accounts.createExternalAccount(
-    //   account.id,
-    //   {
-    //     external_account: {
-    //       account_holder_name: "Jenny Rosen",
-    //       account_holder_type: "individual",
-    //       bank_name: "STRIPE TEST BANK",
-    //       country: "US",
-    //       currency: "usd",
-    //       fingerprint: "1JWtPxqbdX5Gamtc",
-    //       last4: "6789",
-    //       metadata: {},
-    //       routing_number: "110000000",
-    //     },
-    //   }
-    // );
-
-    // update account with external accounts
-    // external_accounts: {
-    //   object: "list",
-    //   data: [bankAccount.id],
-    //   has_more: false,
-    //   url: "/v1/accounts/acct_1032D82eZvKYlo2C/external_accounts",
-    // },
-    // console.log(bankAccount, "account");
-    // res.json({ account, bankAccount });
+    res.status(201).json({ message: "updated successuflly" });
   } catch (err) {
     next(err);
+  }
+};
+
+/////////////////////////////////TESTING ACCOUNT VERIFICATION/////////////////////////////////
+exports.accounttest = async (req, res, next) => {
+  try {
+    const stripe = Stripe(process.env.STRIPE_URI);
+
+    const account2 = await stripe.accounts.retrieve(account.id);
+    console.log("account", account2);
+    res.json({ account: account2 });
+  } catch (err) {
+    console.log(err);
   }
 };
