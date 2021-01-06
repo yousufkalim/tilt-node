@@ -619,55 +619,138 @@ exports.editBank = async (req, res, next) => {
 
     /////////////////////////////////UPDATING STRIPE ACCOUNT/////////////////////////////////
 
-    const Updateaccount = await stripe.account.update("acct_1I69JCPqYDNw9YZ0", {
-      individual: {
-        first_name: "Jenny",
-        last_name: "Rosen",
-        dob: {
-          day: 10,
-          month: 11,
-          year: 1980,
+    // const Updateaccount = await stripe.account.update("acct_1I6C74Q9Z4tsRZU9", {
+    //   individual: {
+    //     first_name: "Jenny",
+    //     last_name: "Rosen",
+    //     dob: {
+    //       day: 01,
+    //       month: 01,
+    //       year: 1901,
+    //     },
+    //   },
+    // });
+
+    /////////////////////////////////CREATING STRIPE ACCOUNT/////////////////////////////////
+
+    // const fs = require("fs");
+    // const file = await stripe.files.create(
+    //   {
+    //     purpose: "identity_document",
+    //     file: {
+    //       data: fs.readFileSync("file_name.png"),
+    //       name: "file_name.png",
+    //       type: "application/octet-stream",
+    //     },
+    //   },
+    //   {
+    //     stripeAccount: "{{CONNECTED_STRIPE_ACCOUNT_ID}}",
+    //   }
+    // );
+    const fs = require("fs");
+    var fp = fs.readFileSync("file_name.png");
+    var fileFront = await stripe.files.create({
+      purpose: "additional_verification",
+      file: {
+        data: fp,
+        name: "file.jpg",
+        type: "application/octet-stream",
+      },
+    });
+    var fileBack = await stripe.files.create({
+      purpose: "additional_verification",
+      file: {
+        data: fp,
+        name: "file.jpg",
+        type: "application/octet-stream",
+      },
+    });
+
+    const token = await stripe.tokens.create({
+      account: {
+        tos_shown_and_accepted: true,
+        business_type: "individual",
+        individual: {
+          email: restaurant.email,
+          first_name: "Jenny",
+          last_name: "Rosen",
+
+          phone: phone,
+          dob: {
+            // day: newDOB.getDate(),
+            // month: newDOB.getMonth() + 1,
+            // year: newDOB.getFullYear(),
+            day: 01,
+            month: 01,
+            year: 1901,
+          },
+
+          address: {
+            line1: restaurant.address.street,
+            postal_code: parseInt(restaurant.address.zip),
+            city: restaurant.address.city,
+            country: "FR",
+          },
+          verification: {
+            additional_document: {
+              back: fileBack.id,
+              details: "use document for front and back",
+              front: fileFront.id,
+            },
+          },
         },
       },
     });
 
-    /////////////////////////////////CREATING STRIPE ACCOUNT/////////////////////////////////
+    console.log("token", token);
     const account = await stripe.account.create({
+      // purpose: "identity_document",
+      // file: {
+      //   data: fs.readFileSync("file_name.png"),
+      //   name: "file_name.png  ",
+      //   type: "application/octet-stream",
+      // },
       type: "custom",
       country: "FR",
+      account_token: token.id,
       email: restaurant.email,
-      business_type: "individual",
+      // business_type: "individual",
+      business_profile: {
+        name: "Stripe.com",
+        mcc: "7011",
+        url: "http://google.com",
+      },
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true },
       },
-      tos_acceptance: {
-        date: Math.floor(Date.now() / 1000),
-        ip: req.ip,
-        user_agent: null,
-      },
-      individual: {
-        email: restaurant.email,
-        first_name: "Jenny",
-        last_name: "Rosen",
+      // tos_acceptance: {
+      //   date: Math.floor(Date.now() / 1000),
+      //   ip: req.ip,
+      //   user_agent: null,
+      // },
+      // individual: {
+      //   email: restaurant.email,
+      //   first_name: "Jenny",
+      //   last_name: "Rosen",
 
-        phone: phone,
-        dob: {
-          // day: newDOB.getDate(),
-          // month: newDOB.getMonth() + 1,
-          // year: newDOB.getFullYear(),
-          day: 10,
-          month: 11,
-          year: 1980,
-        },
+      //   phone: phone,
+      //   dob: {
+      //     // day: newDOB.getDate(),
+      //     // month: newDOB.getMonth() + 1,
+      //     // year: newDOB.getFullYear(),
+      //     day: 01,
+      //     month: 01,
+      //     year: 1901,
+      //   },
 
-        address: {
-          line1: restaurant.address.street,
-          postal_code: parseInt(restaurant.address.zip),
-          city: restaurant.address.city,
-          country: "FR",
-        },
-      },
+      //   address: {
+      //     line1: restaurant.address.street,
+      //     postal_code: parseInt(restaurant.address.zip),
+      //     city: restaurant.address.city,
+      //     country: "FR",
+      //   },
+      // },
       external_account: {
         object: "bank_account",
         account_number: iban,
@@ -721,7 +804,7 @@ exports.accounttest = async (req, res, next) => {
   try {
     const stripe = Stripe(process.env.STRIPE_URI);
 
-    const account2 = await stripe.accounts.retrieve(account.id);
+    const account2 = await stripe.accounts.retrieve("acct_1I6EeiQYdHHIMMZ2");
     console.log("account", account2);
     res.json({ account: account2 });
   } catch (err) {
