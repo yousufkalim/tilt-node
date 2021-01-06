@@ -596,7 +596,7 @@ exports.deleteDish = async (req, res, next) => {
 exports.editBank = async (req, res, next) => {
   const userId = req.userId;
 
-  const name = req.body.name;
+  // const name = req.body.name;
   const phone = req.body.phone;
   const DOB = req.body.DOB;
   const newDOB = new Date(DOB);
@@ -619,7 +619,7 @@ exports.editBank = async (req, res, next) => {
 
     /////////////////////////////////UPDATING STRIPE ACCOUNT/////////////////////////////////
 
-    // const Updateaccount = await stripe.account.update("acct_1I6C74Q9Z4tsRZU9", {
+    // const Updateaccount = await stripe.account.update(account.id, {
     //   individual: {
     //     first_name: "Jenny",
     //     last_name: "Rosen",
@@ -633,27 +633,13 @@ exports.editBank = async (req, res, next) => {
 
     /////////////////////////////////CREATING STRIPE ACCOUNT/////////////////////////////////
 
-    // const fs = require("fs");
-    // const file = await stripe.files.create(
-    //   {
-    //     purpose: "identity_document",
-    //     file: {
-    //       data: fs.readFileSync("file_name.png"),
-    //       name: "file_name.png",
-    //       type: "application/octet-stream",
-    //     },
-    //   },
-    //   {
-    //     stripeAccount: "{{CONNECTED_STRIPE_ACCOUNT_ID}}",
-    //   }
-    // );
     const fs = require("fs");
     var fp = fs.readFileSync("file_name.png");
     var fileFront = await stripe.files.create({
       purpose: "additional_verification",
       file: {
         data: fp,
-        name: "file.jpg",
+        name: "filefront.jpg",
         type: "application/octet-stream",
       },
     });
@@ -661,7 +647,7 @@ exports.editBank = async (req, res, next) => {
       purpose: "additional_verification",
       file: {
         data: fp,
-        name: "file.jpg",
+        name: "fileback.jpg",
         type: "application/octet-stream",
       },
     });
@@ -677,12 +663,12 @@ exports.editBank = async (req, res, next) => {
 
           phone: phone,
           dob: {
-            // day: newDOB.getDate(),
-            // month: newDOB.getMonth() + 1,
-            // year: newDOB.getFullYear(),
-            day: 01,
-            month: 01,
-            year: 1901,
+            day: newDOB.getDate(),
+            month: newDOB.getMonth() + 1,
+            year: newDOB.getFullYear(),
+            // day: 01,
+            // month: 01,
+            // year: 1901,
           },
 
           address: {
@@ -702,21 +688,14 @@ exports.editBank = async (req, res, next) => {
       },
     });
 
-    console.log("token", token);
     const account = await stripe.account.create({
-      // purpose: "identity_document",
-      // file: {
-      //   data: fs.readFileSync("file_name.png"),
-      //   name: "file_name.png  ",
-      //   type: "application/octet-stream",
-      // },
       type: "custom",
       country: "FR",
       account_token: token.id,
       email: restaurant.email,
       // business_type: "individual",
       business_profile: {
-        name: "Stripe.com",
+        name: restaurant.name,
         mcc: "7011",
         url: "http://google.com",
       },
@@ -785,7 +764,7 @@ exports.editBank = async (req, res, next) => {
 
     console.log("account", account);
 
-    restaurant.restaurant.bank.name = name;
+    // restaurant.restaurant.bank.name = name;
     restaurant.restaurant.bank.phone = phone;
     restaurant.restaurant.bank.DOB = DOB;
     restaurant.restaurant.bank.bankName = bankName;
@@ -804,7 +783,7 @@ exports.accounttest = async (req, res, next) => {
   try {
     const stripe = Stripe(process.env.STRIPE_URI);
 
-    const account2 = await stripe.accounts.retrieve("acct_1I6EeiQYdHHIMMZ2");
+    const account2 = await stripe.accounts.retrieve(account.id);
     console.log("account", account2);
     res.json({ account: account2 });
   } catch (err) {

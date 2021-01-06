@@ -71,7 +71,7 @@ const UserSchema = new Schema(
         },
       ],
       bank: {
-        name: String,
+        // name: String,
         phone: String,
         DOB: Date,
         bankName: String,

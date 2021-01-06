@@ -940,46 +940,56 @@ exports.paymentHandler = async (req, res, next) => {
     const token = req.body.token;
     const amount = req.body.amount;
     const card = req.body.card;
-
-    const token1 = await stripe.tokens.create({
-      bank_account: {
-        country: "US",
-        currency: "eur",
-        account_holder_name: "Jenny Rosen",
-        account_holder_type: "individual",
-        routing_number: "110000000",
-        account_number: "000123456789",
-      },
-    });
-    const bankAccount = await stripe.customers.createSource(
-      "cus_IaTyy36c62nTtG",
-      { source: token }
-    );
-
-    console.log(token1, bankAccount);
+    const totalres = req.body.totalres;
 
     const customer = await stripe.customers.create({
       name: name,
       email: email,
-      source: token,
+      // payment_method: card,
+      source: card.tokenId,
+
+      description: "My First Test Customer (created for API docs)",
     });
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100,
-      currency: "eur",
-      payment_method_types: ["bank_account"],
-      customer: customer.id,
-      payment_method: card.card.cardId,
-      confirm: true,
+    console.log(totalres);
+
+    totalres.map(async (restaurant) => {
+      console.log(restaurant.value * 100);
+      const charge = await stripe.charges.create({
+        amount: restaurant.value * 100,
+        currency: "eur",
+        receipt_email: restaurant.restaurant.email,
+        transfer_data: {
+          destination: restaurant.restaurant.restaurant.bank.stripeID,
+          amount: restaurant.value * 100,
+        },
+        customer: customer.id,
+        description: "My First Test Charge (created for API docs)",
+      });
     });
 
-    // await stripe.paymentIntents.confirm(paymentIntent.id);
-    // await stripe.paymentIntents.capture(paymentIntent.id);
-    if (paymentIntent.status !== "succeeded") {
-      const error = new Error(Texts.payment_Error);
-      error.status = 404;
-      throw error;
-    }
-    res.status(201).json({ paymentIntent });
+    // const paymentIntent = await stripe.paymentIntents.create({
+    //   amount: amount * 100,
+    //   currency: "eur",
+    //   payment_method_types: ["card"],
+    // });
+    // const charge = await stripe.charges.create({
+    //   amount: amount * 100,
+    //   currency: "eur",
+    //   customer: customer.id,
+    //   description: "My First Test Charge (created for API docs)",
+    // });
+
+    // totalres.map(async (restaurant) => {
+    //   // Create a Transfer to the connected account (later):
+    //   const transfer = await stripe.transfers.create({
+    //     amount: restaurant.value * 100,
+    //     currency: "eur",
+    //     source_transaction: charge.id,
+    //     destination: restaurant.restaurant.restaurant.bank.stripeID,
+    //   });
+    // });
+
+    res.status(201).json({ data: "success" });
   } catch (err) {
     next(err);
   }

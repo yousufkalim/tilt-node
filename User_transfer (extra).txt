@@ -1,0 +1,112 @@
+// const charge = await stripe.charges.create({
+    //   amount: amount * 100,
+    //   currency: "eur",
+    //   source: card.tokenId,
+    //   description: "My First Test Charge (created for API docs)",
+    // });
+
+    // Create a Transfer to the connected account (later):
+    // const transfer = await stripe.transfers.create({
+    //   amount: 10000,
+    //   currency: "eur",
+    //   source_transaction: charge.id,
+    //   // source_type: ["card"],
+    //   destination: totalres[0].restaurant.restaurant.bank.stripeID,
+    //   // transfer_group: "{ORDER10}",
+    // });
+
+    // totalres.map(async (restaurant) => {
+    //   // Create a Transfer to the connected account (later):
+    //   const transfer = await stripe.transfers.create({
+    //     amount: restaurant.value * 100,
+    //     currency: "eur",
+    //     source_transaction: charge.id,
+    //     destination: restaurant.restaurant.restaurant.bank.stripeID,
+    //   });
+    // });
+
+    // console.log("card", card);
+    // const GroupName = "SENDPAYMENT";
+    
+    // const sources = stripe.sources.create({
+      //   type: "ideal",
+      //   currency: "eur",
+      //   owner: {
+        //     email: email,
+        //   },
+        //   function(err, source) {
+          //     // asynchronously called
+          //   },
+          // });
+          
+          // Create a PaymentIntent:
+          // const paymentIntent = await stripe.paymentIntents.create({
+            //   amount: amount * 100,
+    //   currency: "eur",
+    //   confirm: true,
+    //   // payment_method: ,
+    //   payment_method_types: ["card"],
+    //   source: card.tokenId,
+
+    //   transfer_group: GroupName,
+    // });
+
+    // const paymentIntent = await stripe.paymentIntents.create({
+    //   payment_method_types: ["card"],
+    //   amount: 1000,
+    //   payment_method: card.card.cardId,
+    //   payment_method_types: ["card"],
+    //   currency: "eur",
+    //   transfer_group: GroupName,
+    //   application_fee_amount: 123,
+    //   transfer_data: {
+    //     destination: totalres[0].restaurant.restaurant.bank.stripeID,
+    //   },
+    // });
+
+    // console.log("payment", paymentIntent);
+    // const paymentIntent = await stripe.paymentIntents.create({
+    //   amount: 10000,
+    //   currency: "eur",
+    //   payment_method_types: ["card"],
+    //   transfer_group: "{ORDER10}",
+    // });
+
+    // Create a second Transfer to another connected account (later):
+    // const secondTransfer = await stripe.transfers.create({
+    //   amount: 2000,
+    //   currency: 'eur',
+    //   destination: '{{OTHER_CONNECTED_STRIPE_ACCOUNT_ID}}',
+    //   transfer_group: '{ORDER10}',
+    // });
+
+    // const transfer = await stripe.transfers.create({
+    //   amount: 1000,
+    //   currency: "eur",
+    //   destination: totalres[0].restaurant.restaurant.bank.stripeID,
+    //   transfer_group: GroupName,
+    // });
+
+    // await Promise.all(
+    //   totalres.map(async (restaurant) => {
+    //     // Create a Transfer to the connected account (later):
+    //     // const transfer = await stripe.transfers.create({
+    //     //   amount: restaurant.value,
+    //     //   currency: "eur",
+    //     //   destination: restaurant.restaurant.restaurant.bank.stripeID,
+    //     //   transfer_group: GroupName,
+    //     // });
+    //     const charge = await stripe.charges.create({
+    //       amount: restaurant.value * 100,
+    //       currency: "eur",
+    //       receipt_email: restaurant.restaurant.email,
+    //       transfer_data: {
+    //         destination: restaurant.restaurant.restaurant.bank.stripeID,
+    //         amount: restaurant.value * 100,
+    //       },
+    //       source: card.tokenId,
+    //       description: "My First Test Charge (created for API docs)",
+    //     });
+    //     console.log(charge);
+    //   })
+    // );
