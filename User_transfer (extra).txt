@@ -15,15 +15,7 @@
     //   // transfer_group: "{ORDER10}",
     // });
 
-    // totalres.map(async (restaurant) => {
-    //   // Create a Transfer to the connected account (later):
-    //   const transfer = await stripe.transfers.create({
-    //     amount: restaurant.value * 100,
-    //     currency: "eur",
-    //     source_transaction: charge.id,
-    //     destination: restaurant.restaurant.restaurant.bank.stripeID,
-    //   });
-    // });
+    	
 
     // console.log("card", card);
     // const GroupName = "SENDPAYMENT";

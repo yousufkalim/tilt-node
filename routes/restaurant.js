@@ -32,6 +32,14 @@ var storageDish = multer.diskStorage({
     cb(null, Date.now() + "-" + file.originalname);
   },
 });
+var storageDocs = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "data/documents");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
 
 var uploadRes = multer({
   storage: storageRes,
@@ -39,6 +47,10 @@ var uploadRes = multer({
 });
 var uploadDish = multer({
   storage: storageDish,
+  fileFilter: fileFilter,
+});
+var uploadDoc = multer({
+  storage: storageDocs,
   fileFilter: fileFilter,
 });
 
@@ -70,7 +82,15 @@ router.put(
   uploadRes.single("image"),
   restaurantController.editRestaurant
 );
-router.put("/edit-bank", isAuth, restaurantController.editBank);
+router.put(
+  "/edit-bank",
+  isAuth,
+  uploadDoc.fields([
+    { name: "front", maxCount: 1 },
+    { name: "back", maxCount: 1 },
+  ]),
+  restaurantController.editBank
+);
 router.put("/editpassword", isAuth, restaurantController.changePassword);
 router.put("/cart/stop/:companyId", isAuth, restaurantController.stopOrdering);
 router.put(

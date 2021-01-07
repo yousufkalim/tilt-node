@@ -1,8 +1,9 @@
 const bcrypt = require("bcryptjs");
 const imagemin = require("imagemin");
 const imageminPngquant = require("imagemin-pngquant");
-const imageminMozjpex = require("imagemin-mozjpeg");
+const imageminMozjpeg = require("imagemin-mozjpeg");
 const Stripe = require("stripe");
+const moment = require("moment");
 
 // Import Models
 const User = require("../models/user");
@@ -522,6 +523,7 @@ exports.editDish = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
+    console.log("Dishes", dish.image);
     let isDishes = dish.image !== "" && dish.image.split("/")[1].split("/")[0];
     if (isDishes === "dishes" && imagePath !== "") {
       clearFile(dish.image);
@@ -594,26 +596,35 @@ exports.deleteDish = async (req, res, next) => {
 };
 /////////////////////////////////CREATING and UPDATING STRIPE ACCOUT/////////////////////////////////
 exports.editBank = async (req, res, next) => {
-  const userId = req.userId;
-
-  // const name = req.body.name;
-  const phone = req.body.phone;
-  const DOB = req.body.DOB;
-  const newDOB = new Date(DOB);
-  const bankName = req.body.bankName;
-  const iban = req.body.iban;
-  // const accountNumber = req.body.accountNumber;
-  // const routing = req.body.routing;
-
   try {
+    const userId = req.userId;
+    const phone = req.body.phone;
+    const DOB = JSON.parse(req.body.DOB);
+    console.log(typeof DOB, "Dateis");
+    const newDOB = {
+      day: parseInt(moment(DOB).format("DD")),
+      month: parseInt(moment(DOB).format("MM")),
+      year: parseInt(moment(DOB).format("YYYY")),
+    };
+    const bankName = req.body.bankName;
+    const iban = req.body.iban;
+    console.log(newDOB);
+
+    let front =
+      req.files["front"] !== undefined ? req.files["front"][0].path : "";
+    front !== "" && (front = front.replace(/\\/g, "/"));
+
+    let back = req.files["back"] !== undefined ? req.files["back"][0].path : "";
+    back !== "" && (back = back.replace(/\\/g, "/"));
+
+    console.log(req.files["front"][0], req.files["back"][0], newDOB);
+
     const restaurant = await User.findById(userId).populate("block").exec();
     if (!restaurant) {
       const err = new Error(Texts.Opps);
       err.status = 404;
       throw err;
     }
-
-    console.log("restarurnt", restaurant);
 
     const stripe = Stripe(process.env.STRIPE_URI);
 
@@ -634,20 +645,22 @@ exports.editBank = async (req, res, next) => {
     /////////////////////////////////CREATING STRIPE ACCOUNT/////////////////////////////////
 
     const fs = require("fs");
-    var fp = fs.readFileSync("file_name.png");
+    var fp = fs.readFileSync(front);
+    var bk = fs.readFileSync(back);
+
     var fileFront = await stripe.files.create({
       purpose: "additional_verification",
       file: {
         data: fp,
-        name: "filefront.jpg",
+        name: req.files["front"][0].filename,
         type: "application/octet-stream",
       },
     });
     var fileBack = await stripe.files.create({
       purpose: "additional_verification",
       file: {
-        data: fp,
-        name: "fileback.jpg",
+        data: bk,
+        name: req.files["back"][0].filename,
         type: "application/octet-stream",
       },
     });
@@ -662,14 +675,7 @@ exports.editBank = async (req, res, next) => {
           last_name: "Rosen",
 
           phone: phone,
-          dob: {
-            day: newDOB.getDate(),
-            month: newDOB.getMonth() + 1,
-            year: newDOB.getFullYear(),
-            // day: 01,
-            // month: 01,
-            // year: 1901,
-          },
+          dob: newDOB,
 
           address: {
             line1: restaurant.address.street,
@@ -680,7 +686,7 @@ exports.editBank = async (req, res, next) => {
           verification: {
             additional_document: {
               back: fileBack.id,
-              details: "use document for front and back",
+              details: "Use document for front and back",
               front: fileFront.id,
             },
           },
@@ -693,7 +699,6 @@ exports.editBank = async (req, res, next) => {
       country: "FR",
       account_token: token.id,
       email: restaurant.email,
-      // business_type: "individual",
       business_profile: {
         name: restaurant.name,
         mcc: "7011",
@@ -703,73 +708,23 @@ exports.editBank = async (req, res, next) => {
         card_payments: { requested: true },
         transfers: { requested: true },
       },
-      // tos_acceptance: {
-      //   date: Math.floor(Date.now() / 1000),
-      //   ip: req.ip,
-      //   user_agent: null,
-      // },
-      // individual: {
-      //   email: restaurant.email,
-      //   first_name: "Jenny",
-      //   last_name: "Rosen",
-
-      //   phone: phone,
-      //   dob: {
-      //     // day: newDOB.getDate(),
-      //     // month: newDOB.getMonth() + 1,
-      //     // year: newDOB.getFullYear(),
-      //     day: 01,
-      //     month: 01,
-      //     year: 1901,
-      //   },
-
-      //   address: {
-      //     line1: restaurant.address.street,
-      //     postal_code: parseInt(restaurant.address.zip),
-      //     city: restaurant.address.city,
-      //     country: "FR",
-      //   },
-      // },
       external_account: {
         object: "bank_account",
         account_number: iban,
+        //test account_number: "FR1420041010050500013M02606",
         bank_name: bankName,
         country: "FR",
         currency: "eur",
-        // object: "bank_account",
-        // // data: token.bank_account.id,
-        // has_more: false,
-        // url: "/v1/accounts/acct_1032D82eZvKYlo2C/external_accounts",
-        // country: "FR",
-        // currency: "EUR",
-        // account_holder_name: restaurant.firstName + " " + restaurant.lastName,
-        // account_holder_type: "individual",
-        // routing_number: null,
-        // account_number: "FR89370400440532013000",
-        // iban: "FR1420041010050500013M02606",
-        // object: "bank_account",
-        // account_holder_name: "test",
-        // account_holder_type: "company",
-        // bank_name: "STRIPE TEST BANK",
-        // country: "US",
-        // currency: "usd",
-        // customer: "cus_Ifo2fJGpAJQinS",
-        // fingerprint: "1JWtPxqbdX5Gamtc",
-        // last4: "6789",
-        // metadata: {},
-        // routing_number: "110000000",
-        // status: "new",
       },
     });
 
-    console.log("account", account);
-
-    // restaurant.restaurant.bank.name = name;
     restaurant.restaurant.bank.phone = phone;
     restaurant.restaurant.bank.DOB = DOB;
     restaurant.restaurant.bank.bankName = bankName;
     restaurant.restaurant.bank.iban = iban;
     restaurant.restaurant.bank.stripeID = account.id;
+    restaurant.restaurant.bank.front.uri = front;
+    restaurant.restaurant.bank.back.uri = back;
     const userSaved = await restaurant.save();
 
     res.status(201).json({ message: "updated successuflly" });

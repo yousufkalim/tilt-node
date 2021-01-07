@@ -77,6 +77,16 @@ const UserSchema = new Schema(
         bankName: String,
         iban: String,
         stripeID: String,
+        front: {
+          uri: String,
+          name: String,
+          type: String,
+        },
+        back: {
+          uri: String,
+          name: String,
+          type: String,
+        },
         // routing: String,
         // accountNumber: String,
       },

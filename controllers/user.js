@@ -945,7 +945,6 @@ exports.paymentHandler = async (req, res, next) => {
     const customer = await stripe.customers.create({
       name: name,
       email: email,
-      // payment_method: card,
       source: card.tokenId,
 
       description: "My First Test Customer (created for API docs)",
@@ -966,28 +965,6 @@ exports.paymentHandler = async (req, res, next) => {
         description: "My First Test Charge (created for API docs)",
       });
     });
-
-    // const paymentIntent = await stripe.paymentIntents.create({
-    //   amount: amount * 100,
-    //   currency: "eur",
-    //   payment_method_types: ["card"],
-    // });
-    // const charge = await stripe.charges.create({
-    //   amount: amount * 100,
-    //   currency: "eur",
-    //   customer: customer.id,
-    //   description: "My First Test Charge (created for API docs)",
-    // });
-
-    // totalres.map(async (restaurant) => {
-    //   // Create a Transfer to the connected account (later):
-    //   const transfer = await stripe.transfers.create({
-    //     amount: restaurant.value * 100,
-    //     currency: "eur",
-    //     source_transaction: charge.id,
-    //     destination: restaurant.restaurant.restaurant.bank.stripeID,
-    //   });
-    // });
 
     res.status(201).json({ data: "success" });
   } catch (err) {
