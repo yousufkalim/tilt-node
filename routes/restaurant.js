@@ -91,6 +91,15 @@ router.put(
   ]),
   restaurantController.editBank
 );
+router.put(
+  "/add-bank",
+  isAuth,
+  uploadDoc.fields([
+    { name: "front", maxCount: 1 },
+    { name: "back", maxCount: 1 },
+  ]),
+  restaurantController.addBank
+);
 router.put("/editpassword", isAuth, restaurantController.changePassword);
 router.put("/cart/stop/:companyId", isAuth, restaurantController.stopOrdering);
 router.put(

@@ -421,15 +421,16 @@ exports.getDish = async (req, res, next) => {
   }
 };
 exports.addDish = async (req, res, next) => {
-  const userId = req.userId;
-  const name = req.body.name;
-  const price = req.body.price;
-  const dishType = req.body.dishType;
-  const description = req.body.description;
-  const specials = req.body.specials;
-  let imagePath = req.file !== undefined ? req.file.path : "";
-  imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
   try {
+    const userId = req.userId;
+    const name = req.body.name;
+    const price = req.body.price;
+    const dishType = req.body.dishType;
+    const description = req.body.description;
+    const specials = req.body.specials;
+    let imagePath = req.file !== undefined ? req.file.path : "";
+    imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
+    console.log(".imagePath", imagePath);
     let files;
     if (imagePath !== "") {
       files = await imagemin([imagePath], {
@@ -594,13 +595,13 @@ exports.deleteDish = async (req, res, next) => {
     next(err);
   }
 };
-/////////////////////////////////CREATING and UPDATING STRIPE ACCOUT/////////////////////////////////
-exports.editBank = async (req, res, next) => {
+
+/////////////////////////////////CREATING STRIPE ACCOUT/////////////////////////////////
+exports.addBank = async (req, res, next) => {
   try {
     const userId = req.userId;
     const phone = req.body.phone;
     const DOB = JSON.parse(req.body.DOB);
-    console.log(typeof DOB, "Dateis");
     const newDOB = {
       day: parseInt(moment(DOB).format("DD")),
       month: parseInt(moment(DOB).format("MM")),
@@ -608,7 +609,8 @@ exports.editBank = async (req, res, next) => {
     };
     const bankName = req.body.bankName;
     const iban = req.body.iban;
-    console.log(newDOB);
+    const stripeid = req.body.stripeID;
+    console.log(stripeid);
 
     let front =
       req.files["front"] !== undefined ? req.files["front"][0].path : "";
@@ -617,7 +619,7 @@ exports.editBank = async (req, res, next) => {
     let back = req.files["back"] !== undefined ? req.files["back"][0].path : "";
     back !== "" && (back = back.replace(/\\/g, "/"));
 
-    console.log(req.files["front"][0], req.files["back"][0], newDOB);
+    console.log("front", front, back);
 
     const restaurant = await User.findById(userId).populate("block").exec();
     if (!restaurant) {
@@ -627,22 +629,6 @@ exports.editBank = async (req, res, next) => {
     }
 
     const stripe = Stripe(process.env.STRIPE_URI);
-
-    /////////////////////////////////UPDATING STRIPE ACCOUNT/////////////////////////////////
-
-    // const Updateaccount = await stripe.account.update(account.id, {
-    //   individual: {
-    //     first_name: "Jenny",
-    //     last_name: "Rosen",
-    //     dob: {
-    //       day: 01,
-    //       month: 01,
-    //       year: 1901,
-    //     },
-    //   },
-    // });
-
-    /////////////////////////////////CREATING STRIPE ACCOUNT/////////////////////////////////
 
     const fs = require("fs");
     var fp = fs.readFileSync(front);
@@ -671,8 +657,8 @@ exports.editBank = async (req, res, next) => {
         business_type: "individual",
         individual: {
           email: restaurant.email,
-          first_name: "Jenny",
-          last_name: "Rosen",
+          first_name: restaurant.firstName,
+          last_name: restaurant.firstName,
 
           phone: phone,
           dob: newDOB,
@@ -717,17 +703,114 @@ exports.editBank = async (req, res, next) => {
         currency: "eur",
       },
     });
-
     restaurant.restaurant.bank.phone = phone;
     restaurant.restaurant.bank.DOB = DOB;
     restaurant.restaurant.bank.bankName = bankName;
     restaurant.restaurant.bank.iban = iban;
     restaurant.restaurant.bank.stripeID = account.id;
-    restaurant.restaurant.bank.front.uri = front;
-    restaurant.restaurant.bank.back.uri = back;
+    restaurant.restaurant.bank.front = front;
+    restaurant.restaurant.bank.back = back;
+
+    // restaurant.restaurant.bank.front = {
+    //   uri: req.files["front"][0].path,
+    //   name: req.files["front"][0].filename,
+    //   type: "application/octet-stream",
+    // };
+    // restaurant.restaurant.bank.back = {
+    //   uri: req.files["back"][0].path,
+    //   name: req.files["back"][0].filename,
+    //   type: "application/octet-stream",
+    // };
+
+    // restaurant.restaurant.bank = {
+    //   ...restaurant.restaurant.bank,
+    //   front: {
+    //     uri: front,
+    //     name: req.files["front"][0].filename,
+    //     type: "application/octet-stream",
+    //   },
+    //   back: {
+    //     uri: back,
+    //     name: req.files["back"][0].filename,
+    //     type: "application/octet-stream",
+    //   },
+    // };
     const userSaved = await restaurant.save();
 
-    res.status(201).json({ message: "updated successuflly" });
+    res
+      .status(201)
+      .json({ message: "updated successuflly", restaurant: userSaved });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/////////////////////////////////UPDATING STRIPE ACCOUNT/////////////////////////////////
+exports.editBank = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const phone = req.body.phone;
+    const DOB = JSON.parse(req.body.DOB);
+    const newDOB = {
+      day: parseInt(moment(DOB).format("DD")),
+      month: parseInt(moment(DOB).format("MM")),
+      year: parseInt(moment(DOB).format("YYYY")),
+    };
+    const bankName = req.body.bankName;
+    const iban = req.body.iban;
+
+    let front =
+      req.files["front"] !== undefined ? req.files["front"][0].path : "";
+    front !== "" && (front = front.replace(/\\/g, "/"));
+
+    let back = req.files["back"] !== undefined ? req.files["back"][0].path : "";
+    back !== "" && (back = back.replace(/\\/g, "/"));
+
+    console.log("front", front, back);
+
+    const restaurant = await User.findById(userId).populate("block").exec();
+    if (!restaurant) {
+      const err = new Error(Texts.Opps);
+      err.status = 404;
+      throw err;
+    }
+    const stripeid = restaurant.restaurant.bank.stripeID;
+
+    const stripe = Stripe(process.env.STRIPE_URI);
+
+    const token = await stripe.tokens.create({
+      account: {
+        individual: {
+          first_name: restaurant.firstName,
+          last_name: restaurant.firstName,
+        },
+      },
+    });
+    const Updateaccount = await stripe.account.update(stripeid, {
+      account_token: token.id,
+      external_account: {
+        object: "bank_account",
+        account_number: iban,
+        //test account_number: "FR1420041010050500013M02606",
+        bank_name: bankName,
+        country: "FR",
+        currency: "eur",
+      },
+    });
+
+    restaurant.restaurant.bank.phone = phone;
+    restaurant.restaurant.bank.DOB = DOB;
+    restaurant.restaurant.bank.bankName = bankName;
+    restaurant.restaurant.bank.iban = iban;
+    // restaurant.restaurant.bank.stripeID = account.id;
+    // restaurant.restaurant.bank.front = front;
+    // restaurant.restaurant.bank.back = back;
+
+    const userSaved = await restaurant.save();
+
+    res
+      .status(201)
+      .json({ message: "updated successuflly", restaurant: userSaved });
   } catch (err) {
     next(err);
   }
