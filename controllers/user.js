@@ -950,9 +950,10 @@ exports.paymentHandler = async (req, res, next) => {
       description: "My First Test Customer (created for API docs)",
     });
     console.log(totalres);
-
+    let totalValueSent = 0;
     totalres.map(async (restaurant) => {
       console.log(restaurant.value * 100);
+      totalValueSent += restaurant.value;
       const charge = await stripe.charges.create({
         amount: restaurant.value * 100,
         currency: "eur",
@@ -962,8 +963,16 @@ exports.paymentHandler = async (req, res, next) => {
           amount: restaurant.value * 100,
         },
         customer: customer.id,
-        description: "My First Test Charge (created for API docs)",
+        description: "Amount Paid by Customer",
       });
+    });
+    let amountleft = +amount - totalValueSent;
+    const RemainingCharge = await stripe.charges.create({
+      amount: amountleft * 100,
+      currency: "eur",
+      customer: customer.id,
+
+      description: "Delivery Charges",
     });
 
     res.status(201).json({ data: "success" });
