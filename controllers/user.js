@@ -949,7 +949,6 @@ exports.paymentHandler = async (req, res, next) => {
 
       description: "My First Test Customer (created for API docs)",
     });
-    console.log(totalres);
     let totalValueSent = 0;
     totalres.map(async (restaurant) => {
       console.log(restaurant.value * 100);
