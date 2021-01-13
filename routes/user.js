@@ -18,6 +18,7 @@ router.get("/dishlist/:companyId", UserController.getDishesWithoutAuth);
 router.post("/", UserController.registerUser);
 router.post("/cart", isAuth, UserController.addToCart);
 router.post("/payment", isAuth, UserController.paymentHandler);
+router.post("/package/payment", isAuth, UserController.packagePaymentHandler);
 
 // PUT
 router.put("/edit/:id", isAuth, UserController.editUser);

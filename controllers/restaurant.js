@@ -766,8 +766,6 @@ exports.editBank = async (req, res, next) => {
     let back = req.files["back"] !== undefined ? req.files["back"][0].path : "";
     back !== "" && (back = back.replace(/\\/g, "/"));
 
-    console.log("front", front, back);
-
     const restaurant = await User.findById(userId).populate("block").exec();
     if (!restaurant) {
       const err = new Error(Texts.Opps);
@@ -786,7 +784,7 @@ exports.editBank = async (req, res, next) => {
         },
       },
     });
-    const Updateaccount = await stripe.account.update(stripeid, {
+    await stripe.account.update(stripeid, {
       account_token: token.id,
       external_account: {
         object: "bank_account",
@@ -802,9 +800,8 @@ exports.editBank = async (req, res, next) => {
     restaurant.restaurant.bank.DOB = DOB;
     restaurant.restaurant.bank.bankName = bankName;
     restaurant.restaurant.bank.iban = iban;
-    // restaurant.restaurant.bank.stripeID = account.id;
-    // restaurant.restaurant.bank.front = front;
-    // restaurant.restaurant.bank.back = back;
+    front !== "" && (restaurant.restaurant.bank.front = front);
+    back !== "" && (restaurant.restaurant.bank.back = back);
 
     const userSaved = await restaurant.save();
 

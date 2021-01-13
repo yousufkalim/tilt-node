@@ -1,5 +1,10 @@
 const bcrypt = require("bcryptjs");
 var Pusher = require("pusher");
+const Stripe = require("stripe");
+const moment = require("moment");
+const imagemin = require("imagemin");
+const imageminPngquant = require("imagemin-pngquant");
+const imageminMozjpeg = require("imagemin-mozjpeg");
 
 // Import Models
 const User = require("../models/user");
@@ -75,6 +80,11 @@ exports.registerUser = async (req, res, next) => {
   const lastName = req.body.lastName;
   const email = req.body.email;
   const password = req.body.password;
+  const street = req.body.street;
+  const city = req.body.city;
+  const zip = req.body.zip;
+  const lat = req.body.lat;
+  const long = req.body.long;
   try {
     const userCheck = await User.findOne({ email: email });
     if (userCheck) {
@@ -89,42 +99,28 @@ exports.registerUser = async (req, res, next) => {
       email: email,
       password: hashedPassword,
       role: "delivery",
+      address: {
+        street: street || "street",
+        city: city || "city",
+        zip: zip || "41200",
+        lat: lat || "0",
+        long: long || "0",
+      },
       deliveryPerson: {
         bank: {
-          account: "",
-          name: "",
-          code: "",
+          phone: "",
+          DOB: new Date(),
+          bankName: "",
+          iban: "",
+          stripeID: "",
+          front: "",
+          back: "",
         },
       },
     });
     const userSaved = await user.save();
 
     res.status(200).json({ registered: true, user: userSaved });
-  } catch (err) {
-    if (!err.status) {
-      err.status = 500;
-    }
-    next(err);
-  }
-};
-exports.editBank = async (req, res, next) => {
-  const userId = req.userId;
-  const account = req.body.account;
-  const name = req.body.name;
-  const code = req.body.code;
-  try {
-    const user = await User.findById(userId).populate("block").exec();
-    if (!user) {
-      const err = new Error(Texts.not_user);
-      err.status = 404;
-      throw err;
-    }
-    user.deliveryPerson.bank.account = account;
-    user.deliveryPerson.bank.name = name;
-    user.deliveryPerson.bank.code = code;
-
-    const userSaved = await user.save();
-    res.status(201).json({ updated: true, user: userSaved });
   } catch (err) {
     if (!err.status) {
       err.status = 500;
@@ -567,6 +563,191 @@ exports.getHistory = async (req, res, next) => {
       history.deliveryPersonHistory = results;
       res.status(200).json({ history: history });
     }
+  } catch (err) {
+    next(err);
+  }
+};
+
+/////////////////////////////////CREATING STRIPE ACCOUT/////////////////////////////////
+exports.addBank = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const phone = req.body.phone;
+    const DOB = JSON.parse(req.body.DOB);
+    const bankName = req.body.bankName;
+    const iban = req.body.iban;
+    const stripeid = req.body.stripeID;
+    const newDOB = {
+      day: parseInt(moment(DOB).format("DD")),
+      month: parseInt(moment(DOB).format("MM")),
+      year: parseInt(moment(DOB).format("YYYY")),
+    };
+
+    let front =
+      req.files["front"] !== undefined ? req.files["front"][0].path : "";
+    front !== "" && (front = front.replace(/\\/g, "/"));
+
+    let back = req.files["back"] !== undefined ? req.files["back"][0].path : "";
+    back !== "" && (back = back.replace(/\\/g, "/"));
+
+    const delivery = await User.findById(userId).populate("block").exec();
+    if (!delivery) {
+      const err = new Error(Texts.Opps);
+      err.status = 404;
+      throw err;
+    }
+
+    const stripe = Stripe(process.env.STRIPE_URI);
+
+    const fs = require("fs");
+    var fp = fs.readFileSync(front);
+    var bk = fs.readFileSync(back);
+
+    var fileFront = await stripe.files.create({
+      purpose: "additional_verification",
+      file: {
+        data: fp,
+        name: req.files["front"][0].filename,
+        type: "application/octet-stream",
+      },
+    });
+    var fileBack = await stripe.files.create({
+      purpose: "additional_verification",
+      file: {
+        data: bk,
+        name: req.files["back"][0].filename,
+        type: "application/octet-stream",
+      },
+    });
+
+    const token = await stripe.tokens.create({
+      account: {
+        tos_shown_and_accepted: true,
+        business_type: "individual",
+        individual: {
+          email: delivery.email,
+          first_name: delivery.firstName,
+          last_name: delivery.firstName,
+
+          phone: phone,
+          dob: newDOB,
+
+          address: {
+            line1: delivery.address.street,
+            postal_code: parseInt(delivery.address.zip),
+            city: delivery.address.city,
+            country: "FR",
+          },
+          verification: {
+            additional_document: {
+              back: fileBack.id,
+              details: "Use document for front and back",
+              front: fileFront.id,
+            },
+          },
+        },
+      },
+    });
+
+    const account = await stripe.account.create({
+      type: "custom",
+      country: "FR",
+      account_token: token.id,
+      email: delivery.email,
+      business_profile: {
+        name: delivery.name,
+        mcc: "7011",
+        url: "http://google.com",
+      },
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+      external_account: {
+        object: "bank_account",
+        account_number: iban,
+        //test account_number: "FR1420041010050500013M02606",
+        bank_name: bankName,
+        country: "FR",
+        currency: "eur",
+      },
+    });
+    delivery.deliveryPerson.bank.phone = phone;
+    delivery.deliveryPerson.bank.DOB = DOB;
+    delivery.deliveryPerson.bank.bankName = bankName;
+    delivery.deliveryPerson.bank.iban = iban;
+    delivery.deliveryPerson.bank.stripeID = account.id;
+    delivery.deliveryPerson.bank.front = front;
+    delivery.deliveryPerson.bank.back = back;
+
+    const userSaved = await delivery.save();
+
+    res.status(201).json({ updated: true, delivery: userSaved });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/////////////////////////////////UPDATING STRIPE ACCOUNT/////////////////////////////////
+exports.editBank = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const phone = req.body.phone;
+    const DOB = JSON.parse(req.body.DOB);
+    const bankName = req.body.bankName;
+    const iban = req.body.iban;
+    const newDOB = {
+      day: parseInt(moment(DOB).format("DD")),
+      month: parseInt(moment(DOB).format("MM")),
+      year: parseInt(moment(DOB).format("YYYY")),
+    };
+
+    let front =
+      req.files["front"] !== undefined ? req.files["front"][0].path : "";
+    front !== "" && (front = front.replace(/\\/g, "/"));
+
+    let back = req.files["back"] !== undefined ? req.files["back"][0].path : "";
+    back !== "" && (back = back.replace(/\\/g, "/"));
+
+    const delivery = await User.findById(userId).populate("block").exec();
+    if (!delivery) {
+      const err = new Error(Texts.Opps);
+      err.status = 404;
+      throw err;
+    }
+    const stripeid = delivery.deliveryPerson.bank.stripeID;
+
+    const stripe = Stripe(process.env.STRIPE_URI);
+
+    const token = await stripe.tokens.create({
+      account: {
+        individual: {
+          first_name: delivery.firstName,
+          last_name: delivery.firstName,
+        },
+      },
+    });
+    await stripe.account.update(stripeid, {
+      account_token: token.id,
+      external_account: {
+        object: "bank_account",
+        account_number: iban,
+        bank_name: bankName,
+        country: "FR",
+        currency: "eur",
+      },
+    });
+
+    delivery.deliveryPerson.bank.phone = phone;
+    delivery.deliveryPerson.bank.DOB = DOB;
+    delivery.deliveryPerson.bank.bankName = bankName;
+    delivery.deliveryPerson.bank.iban = iban;
+    front !== "" && (delivery.deliveryPerson.bank.front = front);
+    back !== "" && (delivery.deliveryPerson.bank.back = back);
+
+    const userSaved = await delivery.save();
+
+    res.status(201).json({ updated: true, delivery: userSaved });
   } catch (err) {
     next(err);
   }

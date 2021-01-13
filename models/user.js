@@ -1,4 +1,3 @@
-const { string } = require("joi");
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
@@ -71,7 +70,6 @@ const UserSchema = new Schema(
         },
       ],
       bank: {
-        // name: String,
         phone: String,
         DOB: Date,
         bankName: String,
@@ -79,25 +77,17 @@ const UserSchema = new Schema(
         stripeID: String,
         front: String,
         back: String,
-        // front: {
-        //   uri: String,
-        //   name: String,
-        //   type: String,
-        // },
-        // back: {
-        //   uri: String,
-        //   name: String,
-        //   type: String,
-        // },
-        // routing: String,
-        // accountNumber: String,
       },
     },
     deliveryPerson: {
       bank: {
-        account: String,
-        name: String,
-        code: String,
+        phone: String,
+        DOB: Date,
+        bankName: String,
+        iban: String,
+        stripeID: String,
+        front: String,
+        back: String,
       },
     },
   },

@@ -6,5 +6,8 @@ data/dishes/*.jpeg
 data/restaurants/*.png
 data/restaurants/*.jpg
 data/restaurants/*.jpeg
+data/documents/*.png
+data/documents/*.jpg
+data/documents/*.jpeg
 *lock.json
 *.log
