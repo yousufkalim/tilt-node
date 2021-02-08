@@ -5,6 +5,7 @@ const moment = require("moment");
 const imagemin = require("imagemin");
 const imageminPngquant = require("imagemin-pngquant");
 const imageminMozjpeg = require("imagemin-mozjpeg");
+const fetch = require("node-fetch");
 
 // Import Models
 const User = require("../models/user");
@@ -438,18 +439,41 @@ exports.deliverDelivery = async (req, res, next) => {
                 ) {
                   userOrderHistory.status = "Completed";
                   // Notifying the user for order delivery
-                  var pusher = new Pusher({
-                    appId: process.env.PUSHER_APP_ID,
-                    key: process.env.PUSHER_KEY,
-                    secret: process.env.PUSHER_SECRET,
-                    cluster: process.env.PUSHER_CLUSTER,
-                    encrypted: true,
-                  });
-                  pusher.trigger("orderDelivery", companyUserCart.id, {
-                    title: "Delivered! 📬",
-                    message: Texts.message_delivered,
-                    key: companyUserCart.id,
-                    orderId: companyUserCart.orderId,
+                  // var pusher = new Pusher({
+                  //   appId: process.env.PUSHER_APP_ID,
+                  //   key: process.env.PUSHER_KEY,
+                  //   secret: process.env.PUSHER_SECRET,
+                  //   cluster: process.env.PUSHER_CLUSTER,
+                  //   encrypted: true,
+                  // });
+                  // pusher.trigger("orderDelivery", companyUserCart.id, {
+                  //   title: "Delivered! 📬",
+                  //   message: Texts.message_delivered,
+                  //   key: companyUserCart.id,
+                  //   orderId: companyUserCart.orderId,
+                  // });
+                  User.findById(companyUserCart.id, function (err, data) {
+                    if (err) {
+                    } else if (!data) {
+                    } else if (!data.expoToken) {
+                    } else {
+                      fetch("https://exp.host/--/api/v2/push/send", {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: {
+                          Accept: "application/json",
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          to: data.expoToken,
+                          title: "Delivered! 📬",
+                          body: Texts.message_delivered,
+                          data: {
+                            orderId: companyUserCart.orderId,
+                          },
+                        }),
+                      });
+                    }
                   });
                 }
               });

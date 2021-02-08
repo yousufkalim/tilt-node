@@ -9,6 +9,7 @@ const History = require("../models/history");
 const Discount = require("../models/discounts");
 const Company = require("../models/company");
 const Texts = require("../utils/Messages");
+
 exports.getAll = async (req, res, next) => {
   try {
     const users = await User.find({ role: "user" })
@@ -173,8 +174,20 @@ exports.changeCompany = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
+    // UserCode Generation
+    const company = await Company.findById(companyId);
+    const companyUserCheck = await User.find({
+      "user.company": companyId,
+    });
+    const userCode =
+      company.city +
+      "-" +
+      company.name.substring(0, 3) +
+      "-" +
+      companyUserCheck.length;
     user.user.company = companyId;
     user.status = "active";
+    user.userCode = userCode;
     await user.save();
     const user2 = await User.findById(userId)
       .populate("user.package")
@@ -281,6 +294,19 @@ exports.registerUser = async (req, res, next) => {
       return (~~(Math.random() * 16)).toString(16);
     });
     const hashedPassword = await bcrypt.hash(password, 12);
+
+    // UserCode Generation
+    const company = await Company.findById(companyId);
+    const companyUserCheck = await User.find({
+      "user.company": companyId,
+    });
+    const userCode =
+      company.city +
+      "-" +
+      company.name.substring(0, 3) +
+      "-" +
+      companyUserCheck.length;
+
     const user = new User({
       firstName: firstName,
       lastName: lastName,
@@ -290,6 +316,7 @@ exports.registerUser = async (req, res, next) => {
         affiliateCode: affiliateCode,
         company: companyId,
       },
+      userCode: userCode,
     });
     const userSaved = await user.save();
     if (affiliate !== "") {
@@ -354,6 +381,43 @@ exports.editUser = async (req, res, next) => {
     user.email = email;
     const userSaved = await user.save();
     res.status(201).json({ updated: true, user: userSaved });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
+exports.addExpoToken = async (req, res, next) => {
+  const userId = req.userId;
+  const expoToken = req.body.expoToken;
+  console.log("expoToken", expoToken);
+  try {
+    const user = await User.findByIdAndUpdate(userId, { expoToken: expoToken })
+      .populate("user.package")
+      .populate({
+        path: "user.company",
+        populate: { path: "block" },
+      })
+      .populate({
+        path: "user.cart",
+        populate: [
+          {
+            path: "userCarts.restaurant",
+          },
+          {
+            path: "userCarts.dishes.id",
+          },
+        ],
+      })
+      .exec();
+    if (!user) {
+      const err = new Error(Texts.not_user);
+      err.status = 404;
+      throw err;
+    }
+
+    res.status(201).json({ updated: true, user });
   } catch (err) {
     if (!err.status) {
       err.status = 500;

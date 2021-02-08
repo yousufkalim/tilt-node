@@ -5,6 +5,7 @@ const UserSchema = new Schema(
   {
     firstName: String,
     lastName: String,
+    userCode: String,
     email: String,
     password: String,
     address: {
@@ -14,6 +15,7 @@ const UserSchema = new Schema(
       lat: { type: Number },
       long: { type: Number },
     },
+    expoToken: String,
     status: { type: String, default: "active" },
     block: {
       type: Schema.Types.ObjectId,

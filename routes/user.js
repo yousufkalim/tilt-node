@@ -17,6 +17,7 @@ router.get("/dishlist/:companyId", UserController.getDishesWithoutAuth);
 // POST
 router.post("/", UserController.registerUser);
 router.post("/cart", isAuth, UserController.addToCart);
+router.post("/expo/token", isAuth, UserController.addExpoToken);
 router.post("/payment", isAuth, UserController.paymentHandler);
 router.post("/package/payment", isAuth, UserController.packagePaymentHandler);
 
@@ -33,5 +34,3 @@ router.delete("/delete/:userId", isAuth, UserController.deleteUser);
 router.delete("/creditCard", isAuth, UserController.deleteCreditCard);
 
 module.exports = router;
-
-// 01313964
