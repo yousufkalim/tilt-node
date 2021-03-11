@@ -1,5 +1,8 @@
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
+const imagemin = require("imagemin");
+const imageminPngquant = require("imagemin-pngquant");
+const imageminMozjpeg = require("imagemin-mozjpeg");
 // Import Models
 const User = require("../models/user");
 const Company = require("../models/company");
@@ -86,6 +89,8 @@ exports.registerCompany = async (req, res, next) => {
   // req body values
   const name = req.body.name;
   const deliveryPlace = req.body.deliveryPlace;
+  const street = req.body.street;
+  const city = req.body.city;
 
   try {
     // check if the package exists already
@@ -99,6 +104,8 @@ exports.registerCompany = async (req, res, next) => {
     const input = {
       name: name,
       deliveryPlace: deliveryPlace,
+      street: street,
+      city: city,
     };
     const value = await validaion.register_Company(input);
     const company = new Company(value);
@@ -119,6 +126,8 @@ exports.editCompany = async (req, res, next) => {
   // req body values
   const name = req.body.name;
   const deliveryPlace = req.body.deliveryPlace;
+  const street = req.body.street;
+  const city = req.body.city;
   try {
     // find the package to edit by id
     const company = await Company.findById(companyId);
@@ -130,12 +139,16 @@ exports.editCompany = async (req, res, next) => {
     const input = {
       name,
       deliveryPlace,
+      street,
+      city,
     };
     const value = await validaion.edit_company(input);
 
     // update the new values
     company.name = value.name;
     company.deliveryPlace = value.deliveryPlace;
+    company.street = value.street;
+    company.city = value.city;
     // saving the updated doc
     const companySaved = await company.save();
     // response sending
@@ -173,6 +186,58 @@ exports.deleteCompany = async (req, res, next) => {
     res.status(201).json({
       deleted: true,
       company,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Resturants
+exports.editRestaurant = async (req, res, next) => {
+  const email = req.body.email;
+  const name = req.body.name;
+  const street = req.body.street;
+  const city = req.body.city;
+  const zip = req.body.zip;
+
+  const pickupPlace = req.body.pickupPlace;
+
+  let imagePath = req.file !== undefined ? req.file.path : "";
+  imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
+  try {
+    let files;
+    if (imagePath !== "") {
+      files = await imagemin([imagePath], {
+        destination: "data/restaurants",
+        plugins: [
+          imageminMozjpeg({ quality: 30 }),
+          imageminPngquant({
+            quality: [0.3, 0.3],
+          }),
+        ],
+      });
+    }
+
+    const restaurantSaved = await User.findOneAndUpdate(
+      { email: email },
+      {
+        firstName: name,
+        address: {
+          street: street,
+          city: city,
+          zip: zip,
+        },
+        restaurant: {
+          pickupPlace: pickupPlace,
+          image: files[0].destinationPath.replace(/\\/g, "/"),
+        },
+      },
+      { new: true }
+    );
+
+    res.status(201).json({
+      updated: true,
+      restaurant: restaurantSaved,
     });
   } catch (err) {
     next(err);

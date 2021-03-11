@@ -37,6 +37,8 @@ module.exports = {
     const Company = Joi.object().keys({
       name: Joi.string().required(),
       deliveryPlace: Joi.string().required(),
+      street: Joi.string().required(),
+      city: Joi.string().required(),
     });
 
     const { error, value } = Company.validate(data);
@@ -51,6 +53,8 @@ module.exports = {
     const schema = Joi.object().keys({
       name: Joi.string().required(),
       deliveryPlace: Joi.string().required(),
+      street: Joi.string().required(),
+      city: Joi.string().required(),
     });
     const { error, value } = schema.validate(data);
     if (error) {
@@ -122,6 +126,7 @@ module.exports = {
       pickUpTime: Joi.string().required(),
       deliveryTime: Joi.string().required(),
       deliveryCost: Joi.number().required(),
+      deliveryPerson: Joi.string().required(),
       restaurants: Joi.array().required(),
       companies: Joi.array().required(),
     });

@@ -9,5 +9,6 @@ data/restaurants/*.jpeg
 data/documents/*.png
 data/documents/*.jpg
 data/documents/*.jpeg
-*lock.json
+package-lock.json
+yarn-lock.json
 *.log

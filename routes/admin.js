@@ -1,5 +1,46 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/jpeg"
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+
+var storageRes = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "data/restaurants");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+var storageDocs = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "data/documents");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+var uploadRes = multer({
+  storage: storageRes,
+  fileFilter: fileFilter,
+});
+
+var uploadDoc = multer({
+  storage: storageDocs,
+  fileFilter: fileFilter,
+});
 
 const adminController = require("../controllers/admin");
 const isAuth = require("../utils/isAuth");
@@ -28,6 +69,12 @@ router.post(
   "/block/addDeliveryPerson",
   isAuth,
   adminController.addDeliveryPerson
+);
+router.post(
+  "/editRestaurant",
+  isAuth,
+  uploadRes.single("image"),
+  adminController.editRestaurant
 );
 
 // PUT
