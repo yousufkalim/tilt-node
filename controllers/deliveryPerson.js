@@ -186,6 +186,27 @@ exports.deleteProfile = async (req, res, next) => {
   }
 };
 
+const pushNotification = (expoToken) => {
+  console.log("in notification...");
+  fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      // to: "ExponentPushToken[twFMN5Fq_cqSDSAfJ913E7]",
+      to: expoToken,
+      title: Texts.order_is_ready,
+      body: Texts.order_ready_30min,
+      // data: {
+      //   orderId: companyUserCart.orderId,
+      // },
+    }),
+  });
+};
+
 exports.getDeliveries = async (req, res, next) => {
   let userId = req.userId;
   try {
@@ -202,6 +223,29 @@ exports.getDeliveries = async (req, res, next) => {
     }
     const restaurantsIds = user.block.restaurants;
     const companiesIds = user.block.companies;
+
+    const getTime = user?.block?.deliveryTime?.split("h")[1]?.split("m")[0]
+      ? user?.block?.deliveryTime?.split("h")[1]?.split("m")[0]
+      : user?.block?.deliveryTime?.split("m")[0];
+    const checkTime = /\D/.test(getTime);
+    // console.log("delivery time ===> ", checkTime, getTime);
+
+    const delivery_gay_detail = await User.findById(userId);
+
+    if (delivery_gay_detail?.expoToken) {
+      checkTime
+        ? setTimeout(
+            () => {
+              pushNotification(delivery_gay_detail?.expoToken);
+            },
+            getTime - 1 === 0 ? 30 * 1000 : ((getTime - 1) * 60 + 30) * 1000
+          )
+        : getTime === 30 || getTime <= 30
+        ? pushNotification(delivery_gay_detail?.expoToken)
+        : setTimeout(() => {
+            pushNotification(delivery_gay_detail?.expoToken);
+          }, getTime - 30 * 1000);
+    }
 
     const cookedArrayToSend = [];
     const pickedArrayToSend = [];
@@ -223,14 +267,19 @@ exports.getDeliveries = async (req, res, next) => {
           const pickedArray = [];
           restaurantCart.restaurantHistory.map((restaurantHist) => {
             companiesIds.map((companyId) => {
-              if (
-                restaurantHist.company._id.toString() === companyId.toString()
-              ) {
-                if (restaurantHist.status === "Cooked") {
-                  cookedArray.push(restaurantHist);
-                }
-                if (restaurantHist.status === "Picked") {
-                  pickedArray.push(restaurantHist);
+              // console.log('restaurantHist****', restaurantHist)
+              if (restaurantHist?.company?._id && companyId) {
+                // console.log('restaurantHistory ===> ', restaurantHist.company?._id.toString(), 'company id ===> ', companyId.toString())
+                if (
+                  restaurantHist.company?._id.toString() ===
+                  companyId.toString()
+                ) {
+                  if (restaurantHist.status === "Cooked") {
+                    cookedArray.push(restaurantHist);
+                  }
+                  if (restaurantHist.status === "Picked") {
+                    pickedArray.push(restaurantHist);
+                  }
                 }
               }
             });

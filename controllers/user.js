@@ -9,6 +9,7 @@ const History = require("../models/history");
 const Discount = require("../models/discounts");
 const Company = require("../models/company");
 const Texts = require("../utils/Messages");
+const fetch = require("node-fetch");
 
 exports.getAll = async (req, res, next) => {
   try {
@@ -774,6 +775,48 @@ exports.getCart = async (req, res, next) => {
 };
 exports.order = async (req, res, next) => {
   let userId = req.userId;
+  const user = await User.findById(userId);
+  // console.log("user details ===> ", JSON.stringify(user.user.company, null, 2));
+  const cart = await Cart.find({
+    "restaurantCarts.company": user.user.company,
+  });
+
+  cart.map(async (item) => {
+    item.restaurantCarts.map(async (cartItems) => {
+      if (!cartItems?.carts || cartItems.carts.length === 0) {
+        const companyID = await User.find({
+          "user.company": cartItems.company,
+        });
+        companyID.map((companyUsers) => {
+          if (companyUsers?.expoToken) {
+            // console.log(
+            //   "user cart ===> ",
+            //   JSON.stringify(companyUsers.expoToken, null, 2)
+            // );
+
+            fetch("https://exp.host/--/api/v2/push/send", {
+              method: "POST",
+              mode: "no-cors",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                to: companyUsers.expoToken,
+                title: Texts.company_placed_first_order,
+                body: Texts.message_to_all_person,
+                // data: {
+                //   orderId: companyUserCart.orderId,
+                // },
+              }),
+            });
+          }
+        });
+      }
+    });
+  });
+  // console.log("user cart ===> ", JSON.stringify(cart, null, 2));
+
   try {
     const cart = await Cart.findOne({ user: userId })
       .populate({
@@ -795,12 +838,38 @@ exports.order = async (req, res, next) => {
     let orderId = "0000000000000000".replace(/0/g, function () {
       return (~~(Math.random() * 16)).toString(16);
     });
+    console.log("orderId", orderId);
     await Promise.all(
       cart.userCarts.map(async (userCart) => {
+        console.log("userCart", userCart);
         if (userCart.dishes.length > 0) {
           const restaurantCart = await Cart.findOne({
             user: userCart.restaurant,
           });
+          const restaurant_order = await User.findById(userCart.restaurant);
+          console.log("rest id ", restaurant_order);
+
+          if (!restaurant_order) {
+          } else if (!restaurant_order.expoToken) {
+          } else {
+            fetch("https://exp.host/--/api/v2/push/send", {
+              method: "POST",
+              mode: "no-cors",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                to: data.restaurant_order,
+                title: "Order Recived! 📬",
+                body: Texts.new_order_recived,
+                // data: {
+                //   orderId: companyUserCart.orderId,
+                // },
+              }),
+            });
+          }
+
           if (!restaurantCart) {
             // restaurantCart not found
             const newRestaurantCart = new Cart({
