@@ -291,6 +291,22 @@ exports.registerUser = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
+    if (affiliate !== "") {
+      const userAffiliate = await User.findOne({
+        "user.affiliateCode": affiliate,
+      });
+      if (userAffiliate) {
+        userAffiliate.user.referrals == null
+          ? (userAffiliate.user.referrals = 1)
+          : (userAffiliate.user.referrals += 1);
+        await userAffiliate.save();
+      } else {
+        const err = new Error(Texts.invalid_affiliate_code);
+        err.status = 404;
+        throw err;
+      }
+    }
+
     const affiliateCode = "0000000".replace(/0/g, function () {
       return (~~(Math.random() * 16)).toString(16);
     });
@@ -320,17 +336,6 @@ exports.registerUser = async (req, res, next) => {
       userCode: userCode,
     });
     const userSaved = await user.save();
-    if (affiliate !== "") {
-      const userAffiliate = await User.findOne({
-        "user.affiliateCode": affiliate,
-      });
-      if (userAffiliate) {
-        userAffiliate.user.referrals == null
-          ? (userAffiliate.user.referrals = 1)
-          : (userAffiliate.user.referrals += 1);
-        await userAffiliate.save();
-      }
-    }
 
     res.status(200).json({ registered: true, user: userSaved });
   } catch (err) {
@@ -1046,7 +1051,6 @@ exports.orders = async (req, res, next) => {
       .populate("orderHistory.order.restaurant")
       .populate("orderHistory.order.dishes.id")
       .exec();
-
     if (!history) {
       res.status(200).json({ history: "" });
     } else {

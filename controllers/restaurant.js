@@ -483,6 +483,7 @@ exports.addDish = async (req, res, next) => {
     next(err);
   }
 };
+
 exports.editDish = async (req, res, next) => {
   const userId = req.userId;
   const dishId = req.body.dishId;
