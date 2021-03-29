@@ -224,27 +224,29 @@ exports.getDeliveries = async (req, res, next) => {
     const restaurantsIds = user.block.restaurants;
     const companiesIds = user.block.companies;
 
-    const getTime = user?.block?.deliveryTime?.split("h")[1]?.split("m")[0]
-      ? user?.block?.deliveryTime?.split("h")[1]?.split("m")[0]
-      : user?.block?.deliveryTime?.split("m")[0];
+    const getTime = user.block.deliveryTime.split("h")[1].split("m")[0]
+      ? user.block.deliveryTime.split("h")[1].split("m")[0]
+      : user.block.deliveryTime.split("m")[0];
     const checkTime = /\D/.test(getTime);
     // console.log("delivery time ===> ", checkTime, getTime);
 
     const delivery_gay_detail = await User.findById(userId);
 
-    if (delivery_gay_detail?.expoToken) {
-      checkTime
-        ? setTimeout(
-            () => {
-              pushNotification(delivery_gay_detail?.expoToken);
-            },
-            getTime - 1 === 0 ? 30 * 1000 : ((getTime - 1) * 60 + 30) * 1000
-          )
-        : getTime === 30 || getTime <= 30
-        ? pushNotification(delivery_gay_detail?.expoToken)
-        : setTimeout(() => {
-            pushNotification(delivery_gay_detail?.expoToken);
-          }, getTime - 30 * 1000);
+    if (delivery_gay_detail) {
+      if (delivery_gay_detail.expoToken) {
+        checkTime
+          ? setTimeout(
+              () => {
+                pushNotification(delivery_gay_detail.expoToken);
+              },
+              getTime - 1 === 0 ? 30 * 10000 : ((getTime - 1) * 60 + 30) * 10000
+            )
+          : getTime === 30 || getTime <= 30
+          ? pushNotification(delivery_gay_detail.expoToken)
+          : setTimeout(() => {
+              pushNotification(delivery_gay_detail.expoToken);
+            }, getTime - 30 * 10000);
+      }
     }
 
     const cookedArrayToSend = [];
@@ -267,18 +269,22 @@ exports.getDeliveries = async (req, res, next) => {
           const pickedArray = [];
           restaurantCart.restaurantHistory.map((restaurantHist) => {
             companiesIds.map((companyId) => {
-              // console.log('restaurantHist****', restaurantHist)
-              if (restaurantHist?.company?._id && companyId) {
-                // console.log('restaurantHistory ===> ', restaurantHist.company?._id.toString(), 'company id ===> ', companyId.toString())
-                if (
-                  restaurantHist.company?._id.toString() ===
-                  companyId.toString()
-                ) {
-                  if (restaurantHist.status === "Cooked") {
-                    cookedArray.push(restaurantHist);
-                  }
-                  if (restaurantHist.status === "Picked") {
-                    pickedArray.push(restaurantHist);
+              if (restaurantHist) {
+                if (restaurantHist.company) {
+                  // console.log('restaurantHist****', restaurantHist)
+                  if (restaurantHistcompany_id && companyId) {
+                    // console.log('restaurantHistory ===> ', restaurantHist.company?._id.toString(), 'company id ===> ', companyId.toString())
+                    if (
+                      restaurantHist.company_id.toString() ===
+                      companyId.toString()
+                    ) {
+                      if (restaurantHist.status === "Cooked") {
+                        cookedArray.push(restaurantHist);
+                      }
+                      if (restaurantHist.status === "Picked") {
+                        pickedArray.push(restaurantHist);
+                      }
+                    }
                   }
                 }
               }

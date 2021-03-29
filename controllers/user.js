@@ -788,33 +788,35 @@ exports.order = async (req, res, next) => {
 
   cart.map(async (item) => {
     item.restaurantCarts.map(async (cartItems) => {
-      if (!cartItems?.carts || cartItems.carts.length === 0) {
+      if (!cartItems.carts || cartItems.carts.length === 0) {
         const companyID = await User.find({
           "user.company": cartItems.company,
         });
         companyID.map((companyUsers) => {
-          if (companyUsers?.expoToken) {
-            // console.log(
-            //   "user cart ===> ",
-            //   JSON.stringify(companyUsers.expoToken, null, 2)
-            // );
+          if (companyUsers) {
+            if (companyUsers.expoToken) {
+              // console.log(
+              //   "user cart ===> ",
+              //   JSON.stringify(companyUsers.expoToken, null, 2)
+              // );
 
-            fetch("https://exp.host/--/api/v2/push/send", {
-              method: "POST",
-              mode: "no-cors",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                to: companyUsers.expoToken,
-                title: Texts.company_placed_first_order,
-                body: Texts.message_to_all_person,
-                // data: {
-                //   orderId: companyUserCart.orderId,
-                // },
-              }),
-            });
+              fetch("https://exp.host/--/api/v2/push/send", {
+                method: "POST",
+                mode: "no-cors",
+                headers: {
+                  Accept: "application/json",
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  to: companyUsers.expoToken,
+                  title: Texts.company_placed_first_order,
+                  body: Texts.message_to_all_person,
+                  // data: {
+                  //   orderId: companyUserCart.orderId,
+                  // },
+                }),
+              });
+            }
           }
         });
       }
