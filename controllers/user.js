@@ -867,7 +867,7 @@ exports.order = async (req, res, next) => {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                to: data.restaurant_order,
+                to: restaurant_order.expoToken,
                 title: "Order Recived! 📬",
                 body: Texts.new_order_recived,
                 // data: {

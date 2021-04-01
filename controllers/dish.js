@@ -32,11 +32,16 @@ exports.getById = async (req, res, next) => {
     next(err);
   }
 };
-exports.getAllByRestaurant = async (req, res, next) => {
-  const restaurantId = req.params.restaurantId;
+exports.getAllByRestaurantById = async (req, res, next) => {
+  const restaurantId = req.body.restaurantId;
+  const dishType = req.body.dishType;
+
   try {
     // find all the dish of a restaurant
-    const dishes = await Dish.find({ restaurant: restaurantId })
+    const dishes = await Dish.find({
+      restaurant: restaurantId,
+      dishType: dishType,
+    })
       .populate("restaurant")
       .exec();
     if (!dishes) {

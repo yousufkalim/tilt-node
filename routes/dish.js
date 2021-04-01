@@ -7,10 +7,6 @@ const isAuth = require("../utils/isAuth");
 // GET
 router.get("/", isAuth, dishController.getAll);
 router.get("/get/:dishId", isAuth, dishController.getById);
-router.get(
-  "/getallbyrestaurant/:restaurantId",
-  isAuth,
-  dishController.getAllByRestaurant
-);
+router.post("/getAllByRestaurantById", dishController.getAllByRestaurantById);
 
 module.exports = router;

@@ -11,6 +11,11 @@ const companySchema = new Schema(
       enum: ["RS", "DU", "FDF", "LAM", "SCH"],
       required: true,
     },
+    deliveryPerson: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
     block: {
       type: Schema.Types.ObjectId,
       ref: "Block",
