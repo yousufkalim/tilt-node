@@ -228,7 +228,7 @@ exports.getDeliveries = async (req, res, next) => {
       ? user.block.deliveryTime.split("h")[1].split("m")[0]
       : user.block.deliveryTime.split("m")[0];
     const checkTime = /\D/.test(getTime);
-    // console.log("delivery time ===> ", checkTime, getTime);
+    console.log("delivery time ===> ", checkTime, getTime);
 
     const delivery_gay_detail = await User.findById(userId);
 
@@ -271,11 +271,17 @@ exports.getDeliveries = async (req, res, next) => {
             companiesIds.map((companyId) => {
               if (restaurantHist) {
                 if (restaurantHist.company) {
-                  // console.log('restaurantHist****', restaurantHist)
-                  if (restaurantHistcompany_id && companyId) {
+                  // console.log(
+                  //   "restaurantHist****",
+                  //   restaurantHist.company._id.toString()
+                  // );
+                  if (
+                    restaurantHist.company._id.toString() &&
+                    companyId.toString()
+                  ) {
                     // console.log('restaurantHistory ===> ', restaurantHist.company?._id.toString(), 'company id ===> ', companyId.toString())
                     if (
-                      restaurantHist.company_id.toString() ===
+                      restaurantHist.company._id.toString() ===
                       companyId.toString()
                     ) {
                       if (restaurantHist.status === "Cooked") {
