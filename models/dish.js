@@ -9,7 +9,7 @@ const dishSchema = new Schema(
     description: { type: String, required: true },
     specials: { type: Array },
     image: { type: String },
-    status: { type: String, default: "Active" },
+    status: { type: String, default: "Active", enum: ["Active", "Inactive"] },
     restaurant: {
       type: Schema.Types.ObjectId,
       ref: "User",
