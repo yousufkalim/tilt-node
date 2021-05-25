@@ -560,13 +560,15 @@ exports.getDishes = async (req, res, next) => {
           .populate("restaurant.dishes")
           .exec();
         restaurantsArray.push(restaurant);
-        restaurant.restaurant.dishes.map((dish) =>
-          dishesArray.push({
-            ...dish.toObject(),
-            restaurantName: restaurant.firstName,
-            restaurantImage: restaurant.restaurant.image,
-          })
-        );
+        restaurant.restaurant.dishes.map((dish) => {
+          if (dish.status === "Active") {
+            dishesArray.push({
+              ...dish.toObject(),
+              restaurantName: restaurant.firstName,
+              restaurantImage: restaurant.restaurant.image,
+            });
+          }
+        });
       })
     );
     const discounts = await Discount.findOne();
@@ -675,9 +677,8 @@ exports.addToCart = async (req, res, next) => {
           res.status(201).json({ added: true, cart: cartToSend });
         } else {
           // dish found
-          cart.userCarts[restaurantCartIndex].dishes[
-            dishIndex
-          ].count += +dishCount;
+          cart.userCarts[restaurantCartIndex].dishes[dishIndex].count +=
+            +dishCount;
           cart.totalPrice += +dishPrice * +dishCount;
           const cartSaved = await cart.save();
           const cartToSend = await Cart.findById(cartSaved._id)

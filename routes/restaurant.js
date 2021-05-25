@@ -113,6 +113,7 @@ router.put(
   uploadDish.single("image"),
   restaurantController.editDish
 );
+router.put("/dish-status", isAuth, restaurantController.changeDishStatus);
 
 // DELETE
 router.delete("/delete/:userId", isAuth, restaurantController.deleteRestaurant);

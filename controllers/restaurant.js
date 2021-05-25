@@ -406,6 +406,27 @@ exports.getDishes = async (req, res, next) => {
     next(err);
   }
 };
+exports.changeDishStatus = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const dishId = req.body.dishId;
+    const dishStatus = req.body.status;
+
+    const dish = await Dish.findByIdAndUpdate(
+      dishId,
+      { $set: { status: dishStatus } },
+      { new: true }
+    );
+    if (!dish) {
+      const err = new Error(Texts.Opps);
+      err.status = 404;
+      throw err;
+    }
+    res.status(201).json({ dish });
+  } catch (err) {
+    next(err);
+  }
+};
 exports.getDish = async (req, res, next) => {
   const dishId = req.params.dishId;
   try {
