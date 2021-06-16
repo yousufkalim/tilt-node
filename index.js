@@ -16,6 +16,7 @@ const deliveryRoutes = require("./routes/deliveryPerson");
 const restaurantRoutes = require("./routes/restaurant");
 const dishRoutes = require("./routes/dish");
 const userRoutes = require("./routes/user");
+const contactRoutes = require("./routes/contact");
 
 // App initialization
 const app = express();
@@ -54,6 +55,7 @@ app.use("/deliveryuser", deliveryRoutes);
 app.use("/restaurant", restaurantRoutes);
 app.use("/dish", dishRoutes);
 app.use("/user", userRoutes);
+app.use("/contact", contactRoutes);
 
 // Error Handler
 app.use((error, req, res, next) => {

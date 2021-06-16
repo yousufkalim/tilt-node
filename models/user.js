@@ -62,6 +62,13 @@ const UserSchema = new Schema(
       },
     },
     restaurant: {
+      isPremium: { type: Boolean, default: false },
+      promotedDishes: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "Dish",
+        },
+      ],
       image: { type: String },
       pickupPlace: { type: String },
       deliveryCost: { type: String },

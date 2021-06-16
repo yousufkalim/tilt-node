@@ -61,6 +61,11 @@ router.get("/cart", isAuth, restaurantController.getCart);
 router.get("/dishes", isAuth, restaurantController.getDishes);
 router.get("/history", isAuth, restaurantController.getHistory);
 router.get("/dish/:dishId", isAuth, restaurantController.getDish);
+router.get(
+  "/getPremiumDishes/:_id",
+  // isAuth,
+  restaurantController.getPremiumDishes
+);
 
 // POST
 router.post(
@@ -114,6 +119,24 @@ router.put(
   restaurantController.editDish
 );
 router.put("/dish-status", isAuth, restaurantController.changeDishStatus);
+
+router.put(
+  "/togglePremiumStatus",
+  // isAuth,
+  restaurantController.togglePremiumStatus
+);
+
+router.put(
+  "/setPremiumDishes",
+  // isAuth,
+  restaurantController.setPremiumDishes
+);
+
+router.put(
+  "/removePremiumDish",
+  // isAuth,
+  restaurantController.removePremiumDish
+);
 
 // DELETE
 router.delete("/delete/:userId", isAuth, restaurantController.deleteRestaurant);

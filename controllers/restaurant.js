@@ -13,6 +13,7 @@ const History = require("../models/history");
 const Block = require("../models/block");
 const Texts = require("../utils/Messages");
 const { clearFile } = require("../utils/clearFile");
+const { findByIdAndUpdate } = require("../models/user");
 
 // Profile
 exports.getAll = async (req, res, next) => {
@@ -843,6 +844,85 @@ exports.accounttest = async (req, res, next) => {
     const account2 = await stripe.accounts.retrieve(account.id);
     console.log("account", account2);
     res.json({ account: account2 });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+exports.togglePremiumStatus = async (req, res, next) => {
+  try {
+    const restaurantInDb = await User.findById(req.body.restaurantId);
+    if (!restaurantInDb) return res.status(400).send("Restaurant Not Found");
+
+    restaurantInDb.restaurant.isPremium = !restaurantInDb.restaurant.isPremium;
+    await restaurantInDb.save();
+
+    res.json({ restaurant: restaurantInDb });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+exports.setPremiumDishes = async (req, res, next) => {
+  try {
+    const restaurantInDb = await User.findById(req.body.restaurantId);
+    if (!restaurantInDb) return res.status(400).send("Restaurant Not Found");
+
+    const dishInDb = await Dish.findById(req.body.dishId);
+    if (!dishInDb) return res.status(400).send("Dish Not Found");
+
+    const { promotedDishes } = restaurantInDb.restaurant;
+    if (promotedDishes.length === 4)
+      return res.status(400).send("You cannot add more than 4 dishes");
+
+    const restaurant = await User.findByIdAndUpdate(
+      restaurantInDb._id,
+      {
+        $addToSet: {
+          "restaurant.promotedDishes": req.body.dishId,
+        },
+      },
+      { new: true }
+    );
+
+    res.json({ restaurant });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+exports.removePremiumDish = async (req, res, next) => {
+  try {
+    const restaurantInDb = await User.findById(req.body.restaurantId);
+    if (!restaurantInDb) return res.status(400).send("Restaurant Not Found");
+
+    const dishInDb = await Dish.findById(req.body.dishId);
+    if (!dishInDb) return res.status(400).send("Dish Not Found");
+
+    const restaurant = await User.findByIdAndUpdate(
+      restaurantInDb._id,
+      {
+        $pull: {
+          "restaurant.promotedDishes": req.body.dishId,
+        },
+      },
+      { new: true }
+    );
+
+    res.json({ restaurant });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+exports.getPremiumDishes = async (req, res, next) => {
+  try {
+    const restaurantInDb = await User.findById(req.params._id).populate(
+      "restaurant.promotedDishes"
+    );
+    if (!restaurantInDb) return res.status(400).send("Restaurant Not Found");
+
+    res.json({ premium: restaurantInDb.restaurant.promotedDishes });
   } catch (err) {
     console.log(err);
   }
