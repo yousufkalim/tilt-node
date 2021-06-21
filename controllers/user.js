@@ -539,6 +539,7 @@ exports.deleteUser = async (req, res, next) => {
 
 exports.getDishes = async (req, res, next) => {
   const userId = req.userId;
+
   try {
     const user = await User.findById(userId)
       .populate({
@@ -571,25 +572,19 @@ exports.getDishes = async (req, res, next) => {
         });
       })
     );
-  //   res.status(200).json({
-  //     sort: dishesArray,
-  //   });
-  //   const sort = dishesArray.sort(function(x, y) {
-  //     // true values first
-  //     console.log(y.isPromoted,"x.isPromoted")
-  //     return (x.isPromoted === y.isPromoted)? 0 : x.isPromoted==false? -1 : 1;
-  //     // false values first
-  //     // return (x === y)? 0 : x? 1 : -1;
-  // });
-    
-  //   res.status(200).json({
-  //     sort: sort,
-  //   });
+    //   res.status(200).json({
+    //     sort: dishesArray,
+    //   });
+
+    const sort = dishesArray.sort(function (x, y) {
+      return x.isPromoted === y.isPromoted ? 0 : y.isPromoted == false ? -1 : 1;
+      
+    });
     const discounts = await Discount.findOne();
 
     res.status(200).json({
       restaurantsArray: restaurantsArray,
-      dishesArray: dishesArray,
+      dishesArray: sort,
       discounts,
     });
   } catch (err) {

@@ -445,6 +445,7 @@ exports.getDish = async (req, res, next) => {
 exports.addDish = async (req, res, next) => {
   try {
     const userId = req.userId;
+    const isPromoted = req.body.isPromoted;
     const name = req.body.name;
     const price = req.body.price;
     const dishType = req.body.dishType;
@@ -488,6 +489,7 @@ exports.addDish = async (req, res, next) => {
     const dish = new Dish({
       name: name,
       price: price,
+      isPromoted: isPromoted,
       image:
         imagePath === ""
           ? restaurant.restaurant.image
@@ -508,6 +510,8 @@ exports.addDish = async (req, res, next) => {
 
 exports.editDish = async (req, res, next) => {
   const userId = req.userId;
+  const isPromoted = req.body.isPromoted;
+
   const dishId = req.body.dishId;
   const name = req.body.name;
   const price = req.body.price;
@@ -553,6 +557,7 @@ exports.editDish = async (req, res, next) => {
       clearFile(dish.image);
     }
     dish.name = name;
+    dish.isPromoted = isPromoted;
     dish.price = price;
     dish.dishType = dishType;
     dish.description = description;
