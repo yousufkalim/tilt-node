@@ -13,6 +13,7 @@ router.get("/order", isAuth, UserController.order);
 router.get("/orders", isAuth, UserController.orders);
 router.get("/dishes", isAuth, UserController.getDishes);
 router.get("/dishlist/:companyId", UserController.getDishesWithoutAuth);
+router.get("/getReviews", isAuth, UserController.getAllReviews);
 
 // POST
 router.post("/", UserController.registerUser);
@@ -20,7 +21,7 @@ router.post("/cart", isAuth, UserController.addToCart);
 router.post("/expo/token", isAuth, UserController.addExpoToken);
 router.post("/payment", isAuth, UserController.paymentHandler);
 router.post("/package/payment", isAuth, UserController.packagePaymentHandler);
-
+router.post("/addReview", isAuth, UserController.AddReview);
 // PUT
 router.put("/edit/:id", isAuth, UserController.editUser);
 router.put("/cart", isAuth, UserController.removeFromCart);

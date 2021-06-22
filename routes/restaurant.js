@@ -138,6 +138,12 @@ router.put(
   restaurantController.removePremiumDish
 );
 
+router.put(
+  "/addRating/:id",
+  isAuth,
+  restaurantController.AddRating
+);
+
 // DELETE
 router.delete("/delete/:userId", isAuth, restaurantController.deleteRestaurant);
 router.delete("/dish/:dishId", isAuth, restaurantController.deleteDish);

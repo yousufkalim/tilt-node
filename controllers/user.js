@@ -5,6 +5,8 @@ const User = require("../models/user");
 const Cart = require("../models/cart");
 const Dish = require("../models/dish");
 const Package = require("../models/package");
+const Review = require("../models/reviews");
+
 const History = require("../models/history");
 const Discount = require("../models/discounts");
 const Company = require("../models/company");
@@ -94,7 +96,21 @@ exports.getProfileById = async (req, res, next) => {
   const userId = req.params.id;
   try {
     const user = await User.findById(userId)
+      .populate({
+        path: "restaurant",
+        populate: [
+          {
+            path: "ratings",
+            populate: [
+              {
+                path: "user",
+              },
+            ],
+          },
+        ],
+      })
       .populate("user.package")
+
       .populate({
         path: "user.company",
         populate: { path: "block" },
@@ -110,6 +126,7 @@ exports.getProfileById = async (req, res, next) => {
           },
         ],
       })
+
       .exec();
     if (!user) {
       const err = new Error(Texts.not_user);
@@ -578,7 +595,6 @@ exports.getDishes = async (req, res, next) => {
 
     const sort = dishesArray.sort(function (x, y) {
       return x.isPromoted === y.isPromoted ? 0 : y.isPromoted == false ? -1 : 1;
-      
     });
     const discounts = await Discount.findOne();
 
@@ -1157,6 +1173,34 @@ exports.packagePaymentHandler = async (req, res, next) => {
     }
     res.status(201).json({ paymentIntent });
   } catch (err) {
+    next(err);
+  }
+};
+
+exports.AddReview = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+
+    const { comment, rating } = req.body;
+    const review = new Review({
+      comment: comment,
+      user: userId,
+      rating: rating,
+    });
+    const result = await review.save();
+    res.status(201).json({ message: "Review Add Succesfully", result });
+  } catch (err) {
+    res.status(404).json({ message: err.message });
+    next(err);
+  }
+};
+exports.getAllReviews = async (req, res, next) => {
+  try {
+    const result = await Review.find({});
+    // .populate("user");
+    res.status(201).json({ result });
+  } catch (err) {
+    res.status(404).json({ message: err.message });
     next(err);
   }
 };

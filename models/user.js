@@ -69,7 +69,22 @@ const UserSchema = new Schema(
           ref: "Dish",
         },
       ],
+      googleLink: { type: String },
       image: { type: String },
+      ratings: [
+        {
+          user: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+          },
+          rating: { type: Number, default: 0 },
+          createdAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
+      ],
+
       pickupPlace: { type: String },
       deliveryCost: { type: String },
       dishes: [

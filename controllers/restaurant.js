@@ -54,6 +54,7 @@ exports.registerRestaurant = async (req, res, next) => {
   const password = req.body.password;
   const name = req.body.name;
   const address = req.body.address;
+  const googleLink = req.body.googleLink;
   const pickupPlace = req.body.pickupPlace;
   let imagePath = req.file.path;
   imagePath = imagePath.replace(/\\/g, "/");
@@ -106,6 +107,7 @@ exports.registerRestaurant = async (req, res, next) => {
       restaurant: {
         image: files[0].destinationPath.replace(/\\/g, "/"),
         pickupPlace: pickupPlace,
+        googleLink: googleLink,
       },
     });
     const restaurantSaved = await restaurant.save();
@@ -123,6 +125,8 @@ exports.editRestaurant = async (req, res, next) => {
   const email = req.body.email;
   const name = req.body.name;
   const address = req.body.address;
+  const googleLink = req.body.googleLink;
+
   const pickupPlace = req.body.pickupPlace;
   let imagePath = req.file !== undefined ? req.file.path : "";
   imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
@@ -166,6 +170,8 @@ exports.editRestaurant = async (req, res, next) => {
     user.address.city = JSON.parse(address).city;
     user.address.zip = JSON.parse(address).zip;
     user.restaurant.pickupPlace = pickupPlace;
+    user.restaurant.googleLink = googleLink;
+
     imagePath !== "" &&
       (user.restaurant.image = files[0].destinationPath.replace(/\\/g, "/"));
     const restaurantSaved = await user.save();
@@ -445,7 +451,6 @@ exports.getDish = async (req, res, next) => {
 exports.addDish = async (req, res, next) => {
   try {
     const userId = req.userId;
-    const isPromoted = req.body.isPromoted;
     const name = req.body.name;
     const price = req.body.price;
     const dishType = req.body.dishType;
@@ -489,7 +494,6 @@ exports.addDish = async (req, res, next) => {
     const dish = new Dish({
       name: name,
       price: price,
-      isPromoted: isPromoted,
       image:
         imagePath === ""
           ? restaurant.restaurant.image
@@ -510,9 +514,11 @@ exports.addDish = async (req, res, next) => {
 
 exports.editDish = async (req, res, next) => {
   const userId = req.userId;
-  const isPromoted = req.body.isPromoted;
 
+  const isPromoted = req.body.isPromoted;
   const dishId = req.body.dishId;
+  console.log(dishId, "dishId");
+
   const name = req.body.name;
   const price = req.body.price;
   const dishType = req.body.dishType;
@@ -534,7 +540,9 @@ exports.editDish = async (req, res, next) => {
         ],
       });
     }
+
     const dish = await Dish.findById(dishId);
+
     if (!dish) {
       if (imagePath !== "") {
         clearFile(files[0].destinationPath);
@@ -561,7 +569,9 @@ exports.editDish = async (req, res, next) => {
     dish.price = price;
     dish.dishType = dishType;
     dish.description = description;
-    dish.specials = JSON.parse(specials);
+    dish.specials = specials;
+    // dish.specials = JSON.parse(specials);
+
     imagePath !== "" &&
       (dish.image = files[0].destinationPath.replace(/\\/g, "/"));
     const dishSaved = await dish.save();
@@ -930,5 +940,27 @@ exports.getPremiumDishes = async (req, res, next) => {
     res.json({ premium: restaurantInDb.restaurant.promotedDishes });
   } catch (err) {
     console.log(err);
+  }
+};
+
+exports.AddRating = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const restaurantId = req.params.id;
+
+    const rating = req.body.rating;
+    console.log(rating, "rating");
+    // let result = await User.findByIdAndUpdate(restaurantId, {
+    //   $pull: { "restaurant.rating": { user: `${userId}` } },
+    // });
+    let result = await User.findOneAndUpdate(
+      { _id: restaurantId },
+      { $push: { "restaurant.ratings": { user: userId, rating: rating } } },
+      { new: true }
+    );
+
+    res.status(201).json({ result: result });
+  } catch (err) {
+    next(err);
   }
 };
