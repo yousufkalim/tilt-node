@@ -458,7 +458,6 @@ exports.addDish = async (req, res, next) => {
     const specials = req.body.specials;
     let imagePath = req.file !== undefined ? req.file.path : "";
     imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
-    console.log(".imagePath", imagePath);
     let files;
     if (imagePath !== "") {
       files = await imagemin([imagePath], {
@@ -517,7 +516,6 @@ exports.editDish = async (req, res, next) => {
 
   const isPromoted = req.body.isPromoted;
   const dishId = req.body.dishId;
-  console.log(dishId, "dishId");
 
   const name = req.body.name;
   const price = req.body.price;
@@ -542,7 +540,6 @@ exports.editDish = async (req, res, next) => {
     }
 
     const dish = await Dish.findById(dishId);
-
     if (!dish) {
       if (imagePath !== "") {
         clearFile(files[0].destinationPath);
@@ -551,33 +548,42 @@ exports.editDish = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    if (dish.restaurant.toString() !== userId.toString()) {
-      if (imagePath !== "") {
-        clearFile(files[0].destinationPath);
+    let tempRes = await Dish.find({
+      $and: [{ restaurant: userId }, { isPromoted: true }],
+    });
+    let length = tempRes.length;
+    if (length === 4) {
+      res.status(201).json({ message: "You can only promote dishes upto 4 " });
+    } else {
+      if (dish.restaurant.toString() !== userId.toString()) {
+        if (imagePath !== "") {
+          clearFile(files[0].destinationPath);
+        }
+        const err = new Error(Texts.not_Authorize);
+        err.status = 404;
+        throw err;
       }
-      const err = new Error(Texts.not_Authorize);
-      err.status = 404;
-      throw err;
-    }
-    console.log("Dishes", dish.image);
-    let isDishes = dish.image !== "" && dish.image.split("/")[1].split("/")[0];
-    if (isDishes === "dishes" && imagePath !== "") {
-      clearFile(dish.image);
-    }
-    dish.name = name;
-    dish.isPromoted = isPromoted;
-    dish.price = price;
-    dish.dishType = dishType;
-    dish.description = description;
-    dish.specials = specials;
-    // dish.specials = JSON.parse(specials);
+      let isDishes =
+        dish.image !== "" && dish.image.split("/")[1].split("/")[0];
+      if (isDishes === "dishes" && imagePath !== "") {
+        clearFile(dish.image);
+      }
+      dish.name = name;
+      dish.isPromoted = isPromoted;
+      dish.price = price;
+      dish.dishType = dishType;
+      dish.description = description;
+      // dish.specials = specials;
+      dish.specials = JSON.parse(specials);
+      imagePath !== "" &&
+        (dish.image = files[0].destinationPath.replace(/\\/g, "/"));
+      const dishSaved = await dish.save();
 
-    imagePath !== "" &&
-      (dish.image = files[0].destinationPath.replace(/\\/g, "/"));
-    const dishSaved = await dish.save();
-
-    res.status(201).json({ updated: true, dish: dishSaved });
+      res.status(201).json({ updated: true, dish: dishSaved });
+    }
   } catch (err) {
+    res.status(404).json({ message: err.message });
+
     next(err);
   }
 };
@@ -947,9 +953,23 @@ exports.AddRating = async (req, res, next) => {
   try {
     const userId = req.userId;
     const restaurantId = req.params.id;
+    const orderId = req.body.orderId;
 
+    let restaurantCart1 = await History.findOne({ user: restaurantId });
+    if (!restaurantCart1) {
+      const err = new Error(Texts.Opps);
+      err.status = 404;
+      throw err;
+    }
+    // change status of the orders of a company
+    restaurantCart1.orderHistory.map((history) => {
+      if (`${history.orderId}` === `${orderId}`) {
+        history.popup = true;
+      }
+    });
+    // save restaurant history doc
+    await restaurantCart1.save();
     const rating = req.body.rating;
-    console.log(rating, "rating");
     // let result = await User.findByIdAndUpdate(restaurantId, {
     //   $pull: { "restaurant.rating": { user: `${userId}` } },
     // });

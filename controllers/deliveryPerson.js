@@ -499,6 +499,7 @@ exports.deliverDelivery = async (req, res, next) => {
                   userOrderHistory.status !== "Completed"
                 ) {
                   userOrderHistory.status = "Completed";
+                  userOrderHistory.completedAt = Date.now();
                   // Notifying the user for order delivery
                   // var pusher = new Pusher({
                   //   appId: process.env.PUSHER_APP_ID,

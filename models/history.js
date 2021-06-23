@@ -10,7 +10,11 @@ const HistorySchema = new Schema(
         paidPrice: Number,
         orderId: String,
         time: { type: Date, default: Date.now },
-        completedAt: { type: Date },
+        completedAt: { type: Date, default: Date.now() },
+        popup: {
+          type: Boolean,
+          default: false,
+        },
         status: { type: String, default: "in progress" },
         order: [
           {
