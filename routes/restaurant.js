@@ -82,6 +82,13 @@ router.post(
 
 // PUT
 router.put(
+  "/editByAdmin/:id",
+  isAuth,
+  uploadRes.single("image"),
+  restaurantController.editRestaurantByAdmin
+);
+
+router.put(
   "/edit",
   isAuth,
   uploadRes.single("image"),
@@ -138,11 +145,7 @@ router.put(
   restaurantController.removePremiumDish
 );
 
-router.put(
-  "/addRating/:id",
-  isAuth,
-  restaurantController.AddRating
-);
+router.put("/addRating/:id", isAuth, restaurantController.AddRating);
 
 // DELETE
 router.delete("/delete/:userId", isAuth, restaurantController.deleteRestaurant);

@@ -4,7 +4,7 @@ const imageminPngquant = require("imagemin-pngquant");
 const imageminMozjpeg = require("imagemin-mozjpeg");
 const Stripe = require("stripe");
 const moment = require("moment");
-
+const mongoose = require("mongoose");
 // Import Models
 const User = require("../models/user");
 const Dish = require("../models/dish");
@@ -56,6 +56,7 @@ exports.registerRestaurant = async (req, res, next) => {
   const address = req.body.address;
   const googleLink = req.body.googleLink;
   const pickupPlace = req.body.pickupPlace;
+  const phone = req.body.phone;
   let imagePath = req.file.path;
   imagePath = imagePath.replace(/\\/g, "/");
   try {
@@ -97,6 +98,7 @@ exports.registerRestaurant = async (req, res, next) => {
       password: hashedPassword,
       status: "active",
       role: "restaurant",
+      phone: phone,
       address: {
         street: JSON.parse(address).street,
         city: JSON.parse(address).city,
@@ -126,6 +128,7 @@ exports.editRestaurant = async (req, res, next) => {
   const name = req.body.name;
   const address = req.body.address;
   const googleLink = req.body.googleLink;
+  const phone = req.body.phone;
 
   const pickupPlace = req.body.pickupPlace;
   let imagePath = req.file !== undefined ? req.file.path : "";
@@ -144,6 +147,7 @@ exports.editRestaurant = async (req, res, next) => {
       });
     }
     const user = await User.findById(userId);
+
     if (!user) {
       if (imagePath !== "") {
         clearFile(files[0].destinationPath);
@@ -153,7 +157,9 @@ exports.editRestaurant = async (req, res, next) => {
       throw error;
     }
     if (email !== user.email) {
-      const userCheck = await User.findOne({ email: email });
+      const userCheck = await User.findOne({
+        email: email,
+      });
       if (userCheck) {
         if (imagePath !== "") {
           clearFile(files[0].destinationPath);
@@ -171,6 +177,7 @@ exports.editRestaurant = async (req, res, next) => {
     user.address.zip = JSON.parse(address).zip;
     user.restaurant.pickupPlace = pickupPlace;
     user.restaurant.googleLink = googleLink;
+    phone !== "" && (user.phone = phone);
 
     imagePath !== "" &&
       (user.restaurant.image = files[0].destinationPath.replace(/\\/g, "/"));
@@ -980,6 +987,100 @@ exports.AddRating = async (req, res, next) => {
     );
 
     res.status(201).json({ result: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.editRestaurantByAdmin = async (req, res, next) => {
+  const userId = req.params.id;
+  const email = req.body.email;
+  const name = req.body.name;
+  const address = req.body.address;
+  const googleLink = req.body.googleLink;
+  const phone = req.body.phone;
+
+  const pickupPlace = req.body.pickupPlace;
+  let imagePath = req.file !== undefined ? req.file.path : "";
+  imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
+  try {
+    let files;
+    if (imagePath !== "") {
+      files = await imagemin([imagePath], {
+        destination: "data/restaurants",
+        plugins: [
+          imageminMozjpeg({ quality: 30 }),
+          imageminPngquant({
+            quality: [0.3, 0.3],
+          }),
+        ],
+      });
+    }
+    const user = await User.findById(userId);
+
+    if (!user) {
+      if (imagePath !== "") {
+        clearFile(files[0].destinationPath);
+      }
+      const error = new Error(Texts.Opps);
+      error.status = 404;
+      throw error;
+    }
+    if (email !== user.email) {
+      const userCheck = await User.findOne({
+        email: email,
+      });
+      if (userCheck) {
+        if (imagePath !== "") {
+          clearFile(files[0].destinationPath);
+        }
+        const err = new Error(Texts.already_Email);
+        err.status = 404;
+        throw err;
+      }
+    }
+
+    user.firstName = name;
+    user.email = email;
+    user.address.street = JSON.parse(address).street;
+    user.address.city = JSON.parse(address).city;
+    user.address.zip = JSON.parse(address).zip;
+    user.restaurant.pickupPlace = pickupPlace;
+    user.restaurant.googleLink = googleLink;
+    phone !== "" && (user.phone = phone);
+
+    imagePath !== "" &&
+      (user.restaurant.image = files[0].destinationPath.replace(/\\/g, "/"));
+    const restaurantSaved = await user.save();
+    res.status(201).json({
+      updated: true,
+      restaurant: restaurantSaved,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+exports.changePassword = async (req, res, next) => {
+  const userId = req.userId;
+  const password = req.body.password;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      const err = new Error(Texts.Opps);
+      err.status = 404;
+      throw err;
+    }
+    const checkPassword = bcrypt.compareSync(password, user.password);
+    if (checkPassword) {
+      const err = new Error(Texts.password_change);
+      err.status = 402;
+      throw err;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    user.password = hashedPassword;
+    const userSaved = await user.save();
+    res.json({ updated: true, user: userSaved });
   } catch (err) {
     next(err);
   }

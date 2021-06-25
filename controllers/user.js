@@ -25,14 +25,14 @@ exports.getAll = async (req, res, next) => {
         path: "user.cart",
         populate: [
           {
-            path: "userCarts.restaurant",
+            path: "userCarts",
+            populate: { path: "dishes", populate: "id" },
           },
-          {
-            path: "userCarts.dishes.id",
-          },
+          { path: "userCarts", populate: "restaurant" },
         ],
       })
       .exec();
+
     if (!users) {
       const err = new Error(Texts.Opps);
       err.status = 404;
