@@ -984,3 +984,22 @@ exports.AddRating = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.updateGoogleLink = async (req, res, next) => {
+  const userId = req.userId;
+
+  console.log("req.body", req.body);
+
+  const restaurantInDb = await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        "restaurant.googleLink": req.body.link,
+      },
+    },
+    { new: true }
+  );
+  if (!restaurantInDb) return res.status(400).send("Restaurant Not Found");
+
+  res.status(201).json({ success: true });
+};
