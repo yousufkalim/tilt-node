@@ -1180,14 +1180,20 @@ exports.packagePaymentHandler = async (req, res, next) => {
 exports.AddReview = async (req, res, next) => {
   try {
     const userId = req.userId;
-
+    const restaurantId = req.params.id;
     const { comment, rating } = req.body;
     const review = new Review({
       comment: comment,
       user: userId,
       rating: rating,
     });
-    const result = await review.save();
+    await review.save();
+    let _id = review._id;
+    const result = await User.findOneAndUpdate(
+      { _id: restaurantId },
+      { $push: { "restaurant.reviews": { _id } } },
+      { new: true }
+    );
     res.status(201).json({ message: "Review Add Succesfully", result });
   } catch (err) {
     res.status(404).json({ message: err.message });

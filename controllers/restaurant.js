@@ -126,6 +126,7 @@ exports.editRestaurant = async (req, res, next) => {
   const name = req.body.name;
   const address = req.body.address;
   const googleLink = req.body.googleLink;
+  const isPremium = req.body.isPremium;
 
   const pickupPlace = req.body.pickupPlace;
   let imagePath = req.file !== undefined ? req.file.path : "";
@@ -171,6 +172,7 @@ exports.editRestaurant = async (req, res, next) => {
     user.address.zip = JSON.parse(address).zip;
     user.restaurant.pickupPlace = pickupPlace;
     user.restaurant.googleLink = googleLink;
+    user.restaurant.isPremium = isPremium;
 
     imagePath !== "" &&
       (user.restaurant.image = files[0].destinationPath.replace(/\\/g, "/"));
@@ -552,7 +554,7 @@ exports.editDish = async (req, res, next) => {
       $and: [{ restaurant: userId }, { isPromoted: true }],
     });
     let length = tempRes.length;
-    if (length === 4) {
+    if (length == 4) {
       res.status(201).json({ message: "You can only promote dishes upto 4 " });
     } else {
       if (dish.restaurant.toString() !== userId.toString()) {

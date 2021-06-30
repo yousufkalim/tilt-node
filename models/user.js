@@ -69,6 +69,12 @@ const UserSchema = new Schema(
           ref: "Dish",
         },
       ],
+      reviews: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "Review",
+        },
+      ],
       googleLink: { type: String },
       image: { type: String },
       ratings: [

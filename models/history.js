@@ -10,7 +10,7 @@ const HistorySchema = new Schema(
         paidPrice: Number,
         orderId: String,
         time: { type: Date, default: Date.now },
-        completedAt: { type: Date, default: Date.now() },
+        completedAt: { type: Number, default: Date.now() },
         popup: {
           type: Boolean,
           default: false,

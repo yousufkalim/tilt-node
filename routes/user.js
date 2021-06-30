@@ -21,7 +21,7 @@ router.post("/cart", isAuth, UserController.addToCart);
 router.post("/expo/token", isAuth, UserController.addExpoToken);
 router.post("/payment", isAuth, UserController.paymentHandler);
 router.post("/package/payment", isAuth, UserController.packagePaymentHandler);
-router.post("/addReview", isAuth, UserController.AddReview);
+router.post("/addReview/:id", isAuth, UserController.AddReview);
 // PUT
 router.put("/edit/:id", isAuth, UserController.editUser);
 router.put("/cart", isAuth, UserController.removeFromCart);
