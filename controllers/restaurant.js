@@ -997,8 +997,6 @@ exports.AddRating = async (req, res, next) => {
 exports.updateGoogleLink = async (req, res, next) => {
   const userId = req.userId;
 
-  console.log("req.body", req.body);
-
   const restaurantInDb = await User.findByIdAndUpdate(
     userId,
     {

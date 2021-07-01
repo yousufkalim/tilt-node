@@ -146,6 +146,7 @@ router.put(
 );
 
 router.put("/addRating/:id", isAuth, restaurantController.AddRating);
+router.put("/updateGoogleLink", isAuth, restaurantController.updateGoogleLink);
 
 // DELETE
 router.delete("/delete/:userId", isAuth, restaurantController.deleteRestaurant);
