@@ -988,7 +988,7 @@ exports.AddRating = async (req, res, next) => {
       { new: true }
     );
 
-    res.status(201).json({ result: result });
+    res.status(201).json({ result: result, restaurantCart: restaurantCart });
   } catch (err) {
     next(err);
   }
