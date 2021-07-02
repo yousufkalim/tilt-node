@@ -5,6 +5,10 @@ const reviewSchema = new Schema(
   {
     comment: { type: String },
     rating: { type: Number },
+    restaurantId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
 
     user: {
       type: Schema.Types.ObjectId,

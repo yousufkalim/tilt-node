@@ -1185,6 +1185,7 @@ exports.AddReview = async (req, res, next) => {
     const review = new Review({
       comment: comment,
       user: userId,
+      restaurantId: restaurantId,
       rating: rating,
     });
     await review.save();
@@ -1202,7 +1203,9 @@ exports.AddReview = async (req, res, next) => {
 };
 exports.getAllReviews = async (req, res, next) => {
   try {
-    const result = await Review.find({}).populate("user");
+    const result = await Review.find({ restaurantId: req.params.id }).populate(
+      "user"
+    );
     res.status(201).json({ result });
   } catch (err) {
     res.status(404).json({ message: err.message });

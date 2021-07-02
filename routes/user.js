@@ -13,7 +13,7 @@ router.get("/order", isAuth, UserController.order);
 router.get("/orders", isAuth, UserController.orders);
 router.get("/dishes", isAuth, UserController.getDishes);
 router.get("/dishlist/:companyId", UserController.getDishesWithoutAuth);
-router.get("/getReviews", isAuth, UserController.getAllReviews);
+router.get("/getReviews/:id", isAuth, UserController.getAllReviews);
 
 // POST
 router.post("/", UserController.registerUser);

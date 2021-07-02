@@ -988,7 +988,7 @@ exports.AddRating = async (req, res, next) => {
       { new: true }
     );
 
-    res.status(201).json({ result: result, restaurantCart: restaurantCart });
+    res.status(201).json({ result: result, restaurantCart: restaurantCart1 });
   } catch (err) {
     next(err);
   }
@@ -1057,6 +1057,7 @@ exports.editRestaurantByAdmin = async (req, res, next) => {
         throw err;
       }
     }
+    res.status(200).json({ user });
 
     user.firstName = name;
     user.email = email;
@@ -1066,6 +1067,11 @@ exports.editRestaurantByAdmin = async (req, res, next) => {
     user.restaurant.pickupPlace = pickupPlace;
     user.restaurant.googleLink = googleLink;
     user.restaurant.isPremium = isPremium;
+    user.restaurant.dishes = user.restaurant.dishes;
+    user.restaurant.promotedDishes = user.restaurant.promotedDishes;
+    user.restaurant.ratings = user.restaurant.ratings;
+    user.restaurant.reviews = user.restaurant.reviews;
+    user.restaurant.deliveryCost = user.restaurant.deliveryCost;
 
     phone !== "" && (user.phone = phone);
 
