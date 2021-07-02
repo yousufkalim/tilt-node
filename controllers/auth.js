@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 
 // Imports
 const User = require("../models/user");
@@ -95,11 +96,19 @@ exports.checkEmail = async (req, res, next) => {
 exports.recover = async (req, res, next) => {
   // req body values
   const email = req.body.email;
+  const transporter = nodemailer.createTransport({
+    service: process.env.CONTACT_FORM_EMAIL_SERVICE,
+    auth: {
+      user: process.env.CONTACT_FORM_EMAIL_LOGIN_EMAIL,
+      pass: process.env.CONTACT_FORM_EMAIL_PASSWORD,
+    },
+  });
   try {
     // find the user
     const user = await User.findOne({ email });
     if (!user) {
       const err = new Error(Texts.not_Found);
+
       err.status = 400;
       throw err;
     }
@@ -111,7 +120,21 @@ exports.recover = async (req, res, next) => {
       var char = Math.floor(Math.random() * str.length + 1);
       generatedPassword += str.charAt(char);
     }
-    Email(user, email, generatedPassword);
+    var mailOptions = {
+      from: process.env.CONTACT_FORM_EMAIL_FROM_EMAIL,
+
+      to: user.email,
+      subject: "Forgot Password",
+      text:
+        "You are receiving this because you (or someone else) have requested to forgot password your password on Tilt.\n\n" +
+        "New Password: " +
+        generatedPassword +
+        "\n\n" +
+        "If you did not request this, please ignore this email.\n",
+    };
+
+    await transporter.sendMail(mailOptions);
+
     // hash the new password
     const hashedPassword = await bcrypt.hash(generatedPassword, 12);
 
@@ -119,7 +142,10 @@ exports.recover = async (req, res, next) => {
     user.password = hashedPassword;
     await user.save();
     // response send
-    res.status(201).json({ reset: true });
+    res.status(201).json({
+      reset: true,
+      message: "Password sent to your email Successfully",
+    });
   } catch (err) {
     next(err);
   }
