@@ -11,7 +11,7 @@ const English = {
   not_resturent: "Aucun restaurant de ce genre n’existe!",
   not_user: "Aucun utilisateur de ce genre n’existe!",
   already_Email: "E-mail Déjà enregistré.",
-  invalid_affiliate_code: "Le code affilié n est",
+  invalid_affiliate_code: "Le code affilié n’est pas correct.",
   not_Email_Password:
     "La combinaison est incorrecte, s’il vous plaît essayer à nouveau!",
   contact_admin: "Contactez admin pour vous assigner un bloc !",
