@@ -560,9 +560,12 @@ exports.editDish = async (req, res, next) => {
     let tempRes = await Dish.find({
       $and: [{ restaurant: userId }, { isPromoted: true }],
     });
-    let length = tempRes.length;
-    if (length == 4 && isPromoted === true) {
-      res.status(201).json({ message: "You can only promote dishes upto 4 " });
+    const check = tempRes.length === 4 && isPromoted;
+    if (check === "true") {
+      res.status(400).json({
+        updated: false,
+        message: "You can only promote dishes upto 4 ",
+      });
     } else {
       if (dish.restaurant.toString() !== userId.toString()) {
         if (imagePath !== "") {
