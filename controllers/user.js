@@ -1212,3 +1212,63 @@ exports.getAllReviews = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getFilteredDishes = async (req, res, next) => {
+  const userId = req.userId;
+  const { filter } = req.query;
+
+  try {
+    const user = await User.findById(userId)
+      .populate({
+        path: "user.company",
+        populate: { path: "block" },
+      })
+      .exec();
+    if (!user) {
+      const err = new Error(Texts.not_user);
+      err.status = 404;
+      throw err;
+    }
+    const restaurantsIdsArray = user.user.company.block.restaurants;
+    let dishesArray = [];
+    const restaurantsArray = [];
+    let filteredDishes = [];
+    await Promise.all(
+      restaurantsIdsArray.map(async (restaurantId) => {
+        const restaurant = await User.findById(restaurantId)
+          .populate("restaurant.dishes")
+          .exec();
+        restaurantsArray.push(restaurant);
+        restaurant.restaurant.dishes.map((dish) => {
+          if (dish.status === "Active") {
+            dishesArray.push({
+              ...dish.toObject(),
+              restaurantName: restaurant.firstName,
+              restaurantImage: restaurant.restaurant.image,
+            });
+          }
+        });
+      })
+    );
+
+    filter !== "all" &&
+      (filteredDishes = dishesArray.filter((d) => d.dishType === filter));
+    filteredDishes.length > 0 && (dishesArray = filteredDishes);
+
+    const sort = dishesArray.sort(function (x, y) {
+      return x.isPromoted === y.isPromoted ? 0 : y.isPromoted == false ? -1 : 1;
+    });
+    const discounts = await Discount.findOne();
+
+    res.status(200).json({
+      restaurantsArray: restaurantsArray,
+      dishesArray: sort,
+      discounts,
+    });
+  } catch (err) {
+    if (!err.status) {
+      err.status = 500;
+    }
+    next(err);
+  }
+};
