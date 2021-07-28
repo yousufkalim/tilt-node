@@ -19,7 +19,7 @@ const English = {
   order_ready_30min: "Récupérez les plats dans 30 minutes !",
   not_Found: "Whoops, aucun utilisateur trouvé avec cet e-mail!",
   password_change: "Changez votre mot de passe pour un nouveau!",
-  message_delivered: "Votre commande TILT est livrée.",
+  message_delivered: "Votre plat vient d'être livré !",
   new_order_recived: "Vous avez une nouvelle commande à traiter !",
   company_placed_first_order: "la société a passé la première commande! 📬",
   message_to_all_person: "Un de votre collègue a commandé un plat sur TILT !",
