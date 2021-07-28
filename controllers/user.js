@@ -808,46 +808,73 @@ exports.order = async (req, res, next) => {
   let userId = req.userId;
   const user = await User.findById(userId);
   // console.log("user details ===> ", JSON.stringify(user.user.company, null, 2));
+
   const cart = await Cart.find({
-    "restaurantCarts.company": user.user.company,
-  });
+    restaurantCarts: { $elemMatch: { company: user.user.company } },
+  }).populate("restaurantCarts.company");
 
-  cart.map(async (item) => {
-    item.restaurantCarts.map(async (cartItems) => {
-      if (!cartItems.carts || cartItems.carts.length === 0) {
-        const companyID = await User.find({
-          "user.company": cartItems.company,
-        });
-        companyID.map((companyUsers) => {
-          if (companyUsers) {
-            if (companyUsers.expoToken) {
-              // console.log(
-              //   "user cart ===> ",
-              //   JSON.stringify(companyUsers.expoToken, null, 2)
-              // );
+  if (cart.length === 0) {
+    console.log("CHecking second order");
+    const allUsersInCompany = await User.find({
+      $and: [{ "user.company": user.user.company }, { _id: { $ne: user._id } }],
+    });
 
-              fetch("https://exp.host/--/api/v2/push/send", {
-                method: "POST",
-                mode: "no-cors",
-                headers: {
-                  Accept: "application/json",
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  to: companyUsers.expoToken,
-                  title: Texts.company_placed_first_order,
-                  body: Texts.message_to_all_person,
-                  // data: {
-                  //   orderId: companyUserCart.orderId,
-                  // },
-                }),
-              });
-            }
-          }
+    allUsersInCompany.forEach((item) => {
+      if (item.expoToken) {
+        fetch("https://exp.host/--/api/v2/push/send", {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to: item.expoToken,
+            title: Texts.company_placed_first_order,
+            body: Texts.message_to_all_person,
+          }),
         });
       }
     });
-  });
+  }
+
+  // Commented because the conditions were wrong and notifications were not working
+  // cart.map(async (item) => {
+  //   item.restaurantCarts.map(async (cartItems) => {
+  //     if (!cartItems.carts || cartItems.carts.length === 0) {
+  //       const companyID = await User.find({
+  //         "user.company": cartItems.company,
+  //       });
+  //       companyID.map((companyUsers) => {
+  //         if (companyUsers) {
+  //           if (companyUsers.expoToken) {
+  //             // console.log(
+  //             //   "user cart ===> ",
+  //             //   JSON.stringify(companyUsers.expoToken, null, 2)
+  //             // );
+
+  //             fetch("https://exp.host/--/api/v2/push/send", {
+  //               method: "POST",
+  //               mode: "no-cors",
+  //               headers: {
+  //                 Accept: "application/json",
+  //                 "Content-Type": "application/json",
+  //               },
+  //               body: JSON.stringify({
+  //                 to: companyUsers.expoToken,
+  //                 title: Texts.company_placed_first_order,
+  //                 body: Texts.message_to_all_person,
+  //                 // data: {
+  //                 //   orderId: companyUserCart.orderId,
+  //                 // },
+  //               }),
+  //             });
+  //           }
+  //         }
+  //       });
+  //     }
+  //   });
+  // });
   // console.log("user cart ===> ", JSON.stringify(cart, null, 2));
 
   try {
