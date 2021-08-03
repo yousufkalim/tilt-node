@@ -921,7 +921,7 @@ exports.order = async (req, res, next) => {
               },
               body: JSON.stringify({
                 to: restaurant_order.expoToken,
-                title: "Order Recived! 📬",
+                title: "Nouvelle commande! 📬",
                 body: Texts.new_order_recived,
                 // data: {
                 //   orderId: companyUserCart.orderId,

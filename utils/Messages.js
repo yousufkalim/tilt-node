@@ -15,7 +15,7 @@ const English = {
   not_Email_Password:
     "La combinaison est incorrecte, s’il vous plaît essayer à nouveau!",
   contact_admin: "Contactez admin pour vous assigner un bloc !",
-  order_is_ready: "El pedido está listo! 📬",
+  order_is_ready: "La préparation est en cours 📬",
   order_ready_30min: "Récupérez les plats dans 30 minutes !",
   not_Found: "Whoops, aucun utilisateur trouvé avec cet e-mail!",
   password_change: "Changez votre mot de passe pour un nouveau!",
