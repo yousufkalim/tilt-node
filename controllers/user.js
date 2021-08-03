@@ -317,6 +317,21 @@ exports.registerUser = async (req, res, next) => {
           ? (userAffiliate.user.referrals = 1)
           : (userAffiliate.user.referrals += 1);
         await userAffiliate.save();
+        if (userAffiliate.expoToken) {
+          fetch("https://exp.host/--/api/v2/push/send", {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              to: userAffiliate.expoToken,
+              title: Texts.affiliate_code_used_title,
+              body: Texts.affiliate_code_used_body,
+            }),
+          });
+        }
       } else {
         const err = new Error(Texts.invalid_affiliate_code);
         err.status = 404;

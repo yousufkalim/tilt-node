@@ -29,6 +29,9 @@ const English = {
   not_cart: "Oups, pas de chariot trouvé!",
   restricted_resturent: "Whoops, restaurant restreint plus de commandes !",
   payment_Error: "Il y avait un problème à partir de la fin du paiement.",
+  affiliate_code_used_title: "Nouveau parrainage !",
+  affiliate_code_used_body:
+    "Bravo, une personne s'est inscrite avec votre code parrain. Vous bénéficierez de 1€ de réduction à la prochaine commande. ",
 };
 
 module.exports = English;
