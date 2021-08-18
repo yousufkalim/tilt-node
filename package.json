@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index",
-    "start:dev": "nodemon index"
+    "start:dev": "nodemon index",
+    "deploy": "git pull origin master && npm install && pm2 restart 8"
   },
   "author": "Talha_Falcon",
   "license": "ISC",
