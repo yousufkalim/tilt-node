@@ -32,6 +32,6 @@ exports.sendEmail = async (req, res, next) => {
       data: { prenom, nom, phone, email, message },
     });
   } catch (error) {
-    console.log(err);
+    console.log(error.message);
   }
 };
