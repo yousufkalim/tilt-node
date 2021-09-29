@@ -28,7 +28,7 @@ exports.sendEmail = async (req, res, next) => {
     await transporter.sendMail(mailOptions);
 
     res.send({
-      msg: "Email Sent Successfully",
+      msg: "E-mail envoyé avec succès",
       data: { prenom, nom, phone, email, message },
     });
   } catch (error) {

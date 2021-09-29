@@ -564,7 +564,7 @@ exports.editDish = async (req, res, next) => {
     if (check === "true") {
       res.status(400).json({
         updated: false,
-        message: "You can only promote dishes upto 4 ",
+        message: "Vous ne pouvez promouvoir que des plats jusqu'à 4",
       });
     } else {
       if (dish.restaurant.toString() !== userId.toString()) {
@@ -728,7 +728,7 @@ exports.addBank = async (req, res, next) => {
           verification: {
             additional_document: {
               back: fileBack.id,
-              details: "Use document for front and back",
+              details: "Utiliser le document pour le recto et le verso",
               front: fileFront.id,
             },
           },
@@ -795,7 +795,7 @@ exports.addBank = async (req, res, next) => {
 
     res
       .status(201)
-      .json({ message: "updated successuflly", restaurant: userSaved });
+      .json({ message: "mis à jour avec succès", restaurant: userSaved });
   } catch (err) {
     next(err);
   }
@@ -863,7 +863,7 @@ exports.editBank = async (req, res, next) => {
 
     res
       .status(201)
-      .json({ message: "updated successuflly", restaurant: userSaved });
+      .json({ message: "Mis à jour avec succés", restaurant: userSaved });
   } catch (err) {
     next(err);
   }
@@ -885,7 +885,7 @@ exports.accounttest = async (req, res, next) => {
 exports.togglePremiumStatus = async (req, res, next) => {
   try {
     const restaurantInDb = await User.findById(req.body.restaurantId);
-    if (!restaurantInDb) return res.status(400).send("Restaurant Not Found");
+    if (!restaurantInDb) return res.status(400).send("Restaurant introuvable");
 
     restaurantInDb.restaurant.isPremium = !restaurantInDb.restaurant.isPremium;
     await restaurantInDb.save();
@@ -899,14 +899,14 @@ exports.togglePremiumStatus = async (req, res, next) => {
 exports.setPremiumDishes = async (req, res, next) => {
   try {
     const restaurantInDb = await User.findById(req.body.restaurantId);
-    if (!restaurantInDb) return res.status(400).send("Restaurant Not Found");
+    if (!restaurantInDb) return res.status(400).send("Restaurant introuvable");
 
     const dishInDb = await Dish.findById(req.body.dishId);
-    if (!dishInDb) return res.status(400).send("Dish Not Found");
+    if (!dishInDb) return res.status(400).send("Plat introuvable");
 
     const { promotedDishes } = restaurantInDb.restaurant;
     if (promotedDishes.length === 4)
-      return res.status(400).send("You cannot add more than 4 dishes");
+      return res.status(400).send("Vous ne pouvez pas ajouter plus de 4 plats");
 
     const restaurant = await User.findByIdAndUpdate(
       restaurantInDb._id,
@@ -927,10 +927,10 @@ exports.setPremiumDishes = async (req, res, next) => {
 exports.removePremiumDish = async (req, res, next) => {
   try {
     const restaurantInDb = await User.findById(req.body.restaurantId);
-    if (!restaurantInDb) return res.status(400).send("Restaurant Not Found");
+    if (!restaurantInDb) return res.status(400).send("Restaurant introuvable");
 
     const dishInDb = await Dish.findById(req.body.dishId);
-    if (!dishInDb) return res.status(400).send("Dish Not Found");
+    if (!dishInDb) return res.status(400).send("Plat introuvable");
 
     const restaurant = await User.findByIdAndUpdate(
       restaurantInDb._id,
@@ -953,7 +953,7 @@ exports.getPremiumDishes = async (req, res, next) => {
     const restaurantInDb = await User.findById(req.params._id).populate(
       "restaurant.promotedDishes"
     );
-    if (!restaurantInDb) return res.status(400).send("Restaurant Not Found");
+    if (!restaurantInDb) return res.status(400).send("Restaurant introuvable");
 
     res.json({ premium: restaurantInDb.restaurant.promotedDishes });
   } catch (err) {
@@ -1009,7 +1009,7 @@ exports.updateGoogleLink = async (req, res, next) => {
     },
     { new: true }
   );
-  if (!restaurantInDb) return res.status(400).send("Restaurant Not Found");
+  if (!restaurantInDb) return res.status(400).send("Restaurant introuvable");
 
   res.status(201).json({ success: true });
 };

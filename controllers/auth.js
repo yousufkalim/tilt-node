@@ -73,6 +73,8 @@ exports.login = async (req, res, next) => {
       res.status(200).json({ loggedIn: true, user: user, token: token });
     }
   } catch (err) {
+    res.status(500).json({ message: err.message });
+
     next(err);
   }
 };
@@ -124,13 +126,13 @@ exports.recover = async (req, res, next) => {
       from: process.env.CONTACT_FORM_EMAIL_FROM_EMAIL,
 
       to: user.email,
-      subject: "Forgot Password",
+      subject: "Mot de passe oublié",
       text:
-        "You are receiving this because you (or someone else) have requested to forgot password your password on Tilt.\n\n" +
-        "New Password: " +
+        "Vous recevez ceci parce que vous (ou quelqu'un d'autre) avez demandé d'oublier le mot de passe votre mot de passe sur Tilt.\n\n" +
+        "nouveau mot de passe: " +
         generatedPassword +
         "\n\n" +
-        "If you did not request this, please ignore this email.\n",
+        "Si vous ne l'avez pas demandé, veuillez ignorer cet e-mail.\n",
     };
 
     await transporter.sendMail(mailOptions);
@@ -144,7 +146,7 @@ exports.recover = async (req, res, next) => {
     // response send
     res.status(201).json({
       reset: true,
-      message: "Password sent to your email Successfully",
+      message: "Mot de passe envoyé à votre email avec succès",
     });
   } catch (err) {
     next(err);
