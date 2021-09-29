@@ -4,7 +4,7 @@ module.exports = async (req, res, next) => {
   const header = req.get("Authorization");
 
   if (!header) {
-    const error = new Error("Authorization header not found!");
+    const error = new Error("En-tête d'autorisation introuvable!");
     error.status = 400;
     next(error);
   }
@@ -22,7 +22,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (!decodedToken) {
-    const error = new Error("Authorization token not validated!");
+    const error = new Error("Jeton d'autorisation non validé!");
     error.status = 401;
     next(error);
   }

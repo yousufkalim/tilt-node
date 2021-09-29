@@ -727,7 +727,7 @@ exports.addBank = async (req, res, next) => {
           verification: {
             additional_document: {
               back: fileBack.id,
-              details: "Use document for front and back",
+              details: "Utiliser le document pour le recto et le verso",
               front: fileFront.id,
             },
           },

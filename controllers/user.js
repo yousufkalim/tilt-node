@@ -1180,7 +1180,7 @@ exports.paymentHandler = async (req, res, next) => {
       });
     }
 
-    res.status(201).json({ data: "success" });
+    res.status(201).json({ data: "Succès" });
   } catch (err) {
     next(err);
   }
@@ -1209,7 +1209,7 @@ exports.packagePaymentHandler = async (req, res, next) => {
     });
 
     if (paymentIntent.status !== "succeeded") {
-      const error = new Error("There was a problem from payment end.");
+      const error = new Error("Il y a eu un problème de fin de paiement.");
       error.status = 404;
       throw error;
     }
@@ -1237,7 +1237,7 @@ exports.AddReview = async (req, res, next) => {
       { $push: { "restaurant.reviews": { _id } } },
       { new: true }
     );
-    res.status(201).json({ message: "Review Add Succesfully", result });
+    res.status(201).json({ message: "Réviser l'ajout avec succès", result });
   } catch (err) {
     res.status(404).json({ message: err.message });
     next(err);
