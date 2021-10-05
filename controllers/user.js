@@ -10,6 +10,7 @@ const Review = require("../models/reviews");
 const History = require("../models/history");
 const Discount = require("../models/discounts");
 const Company = require("../models/company");
+const Block = require("../models/block");
 const Texts = require("../utils/Messages");
 const fetch = require("node-fetch");
 
@@ -1133,6 +1134,100 @@ exports.orders = async (req, res, next) => {
       history.orderHistory = results;
       res.status(200).json({ history: history });
     }
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getAllOrders = async (req, res, next) => {
+  let userId = req.userId;
+  try {
+    let orders = await History.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "order.user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$order.user",
+        },
+      },
+      {
+        $match: {
+          "order.user.role": "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$orderHistory",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "orderHistory.order.restaurant",
+          foreignField: "_id",
+          as: "order.restaurant",
+        },
+      },
+      {
+        $lookup: {
+          from: "blocks",
+          localField: "order.restaurant.block",
+          foreignField: "_id",
+          as: "order.companies",
+        },
+      },
+      {
+        $unwind: {
+          path: "$order.companies",
+        },
+      },
+      {
+        $lookup: {
+          from: "companies",
+          localField: "order.companies.companies",
+          foreignField: "_id",
+          as: "order.companies",
+        },
+      },
+      {
+        $lookup: {
+          from: "dishes",
+          localField: "orderHistory.order.dishes.id",
+          foreignField: "_id",
+          as: "order.dishes",
+        },
+      },
+      {
+        $project: {
+          "orderHistory.time": 1,
+          "orderHistory.paidPrice": 1,
+          order: 1,
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: {
+            $mergeObjects: ["$orderHistory", "$order"],
+          },
+        },
+      },
+      {
+        $unset: [
+          "user.restaurant",
+          "restaurant.restaurant",
+          "user.user",
+          "restaurant.user",
+        ],
+      },
+    ]);
+
+    res.status(200).json({ orders: orders });
   } catch (err) {
     next(err);
   }
