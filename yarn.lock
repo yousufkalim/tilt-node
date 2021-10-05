@@ -2209,7 +2209,7 @@
   "resolved" "https://registry.npmjs.org/mongoose-legacy-pluralize/-/mongoose-legacy-pluralize-1.0.2.tgz"
   "version" "1.0.2"
 
-"mongoose@^5.9.28":
+"mongoose@*", "mongoose@^5.9.28":
   "integrity" "sha512-lmG6R64jtGGxqtn88BkkY+v470LUfGgyTKUyjswQ5c01GNgQvxA0kQd8h+tm0hZb639hKNRxL9ZBQlLleUpuIQ=="
   "resolved" "https://registry.npmjs.org/mongoose/-/mongoose-5.11.9.tgz"
   "version" "5.11.9"

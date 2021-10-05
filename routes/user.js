@@ -11,6 +11,7 @@ router.get("/getbyid/:id", isAuth, UserController.getProfileById);
 router.get("/cart", isAuth, UserController.getCart);
 router.get("/order", isAuth, UserController.order);
 router.get("/orders", isAuth, UserController.orders);
+router.get("/getallorders", isAuth, UserController.getAllOrders);
 router.get("/dishes", isAuth, UserController.getDishes);
 router.get("/filtered-dishes", isAuth, UserController.getFilteredDishes);
 router.get("/dishlist/:companyId", UserController.getDishesWithoutAuth);
