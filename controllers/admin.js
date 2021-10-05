@@ -91,7 +91,7 @@ exports.registerCompany = async (req, res, next) => {
   const deliveryPlace = req.body.deliveryPlace;
   const street = req.body.street;
   const city = req.body.city;
-  const deliveryPerson = req.body.deliveryPerson;
+  // const deliveryPerson = req.body.deliveryPerson;
 
   try {
     // check if the package exists already
@@ -107,7 +107,7 @@ exports.registerCompany = async (req, res, next) => {
       deliveryPlace: deliveryPlace,
       street: street,
       city: city,
-      deliveryPerson: deliveryPerson,
+      // deliveryPerson: deliveryPerson,
     };
     const value = await validaion.register_Company(input);
     const company = new Company(value);
