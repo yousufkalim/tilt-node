@@ -130,7 +130,7 @@ exports.editCompany = async (req, res, next) => {
   const deliveryPlace = req.body.deliveryPlace;
   const street = req.body.street;
   const city = req.body.city;
-  const deliveryPerson = req.body.deliveryPerson;
+  // const deliveryPerson = req.body.deliveryPerson;
 
   try {
     // find the package to edit by id
@@ -145,7 +145,7 @@ exports.editCompany = async (req, res, next) => {
       deliveryPlace,
       street,
       city,
-      deliveryPerson: deliveryPerson,
+      // deliveryPerson: deliveryPerson,
     };
     const value = await validaion.edit_company(input);
 

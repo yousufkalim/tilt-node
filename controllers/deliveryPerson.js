@@ -223,7 +223,6 @@ exports.getDeliveries = async (req, res, next) => {
     }
     const restaurantsIds = user.block.restaurants;
     const companiesIds = user.block.companies;
-
     const getTime = user.block.deliveryTime.split("h")[1].split("m")[0]
       ? user.block.deliveryTime.split("h")[1].split("m")[0]
       : user.block.deliveryTime.split("m")[0];
@@ -271,15 +270,10 @@ exports.getDeliveries = async (req, res, next) => {
             companiesIds.map((companyId) => {
               if (restaurantHist) {
                 if (restaurantHist.company) {
-                  // console.log(
-                  //   "restaurantHist****",
-                  //   restaurantHist.company._id.toString()
-                  // );
                   if (
                     restaurantHist.company._id.toString() &&
                     companyId.toString()
                   ) {
-                    // console.log('restaurantHistory ===> ', restaurantHist.company?._id.toString(), 'company id ===> ', companyId.toString())
                     if (
                       restaurantHist.company._id.toString() ===
                       companyId.toString()
@@ -385,14 +379,16 @@ exports.pickDelivery = async (req, res, next) => {
           const pickedArray = [];
           restaurantCart.restaurantHistory.map((restaurantHist) => {
             companiesIds.map((companyId) => {
-              if (
-                restaurantHist.company._id.toString() === companyId.toString()
-              ) {
-                if (restaurantHist.status === "Cooked") {
-                  cookedArray.push(restaurantHist);
-                }
-                if (restaurantHist.status === "Picked") {
-                  pickedArray.push(restaurantHist);
+              if (restaurantHist.company) {
+                if (
+                  restaurantHist.company._id.toString() === companyId.toString()
+                ) {
+                  if (restaurantHist.status === "Cooked") {
+                    cookedArray.push(restaurantHist);
+                  }
+                  if (restaurantHist.status === "Picked") {
+                    pickedArray.push(restaurantHist);
+                  }
                 }
               }
             });
@@ -582,14 +578,16 @@ exports.deliverDelivery = async (req, res, next) => {
         if (restaurantCart) {
           restaurantCart.restaurantHistory.map((restaurantHist) => {
             companiesIds.map((companyId) => {
-              if (
-                restaurantHist.company._id.toString() === companyId.toString()
-              ) {
-                if (restaurantHist.status === "Cooked") {
-                  cookedArray.push(restaurantHist);
-                }
-                if (restaurantHist.status === "Picked") {
-                  pickedArray.push(restaurantHist);
+              if (restaurantHist.company) {
+                if (
+                  restaurantHist.company._id.toString() === companyId.toString()
+                ) {
+                  if (restaurantHist.status === "Cooked") {
+                    cookedArray.push(restaurantHist);
+                  }
+                  if (restaurantHist.status === "Picked") {
+                    pickedArray.push(restaurantHist);
+                  }
                 }
               }
             });
