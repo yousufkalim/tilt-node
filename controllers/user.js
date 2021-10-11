@@ -925,26 +925,55 @@ exports.order = async (req, res, next) => {
           const restaurant_order = await User.findById(userCart.restaurant);
           console.log("rest id ", restaurant_order);
 
-          if (!restaurant_order) {
-          } else if (!restaurant_order.expoToken) {
+          const companyIndex = restaurantCart.restaurantCarts.findIndex(
+            (element) =>
+              element.company.toString() ===
+              cart.user.user.company._id.toString()
+          );
+
+          // console.log("Stopped ----> ", restaurantCart.restaurantCarts[companyIndex])
+
+          if (restaurantCart.restaurantCarts[companyIndex]) {
+            if (!restaurant_order) {
+            } else if (!restaurant_order.expoToken) {
+            } else if (!restaurantCart.restaurantCarts[companyIndex].stopped) {
+              fetch("https://exp.host/--/api/v2/push/send", {
+                method: "POST",
+                mode: "no-cors",
+                headers: {
+                  Accept: "application/json",
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  to: restaurant_order.expoToken,
+                  title: "Nouvelle commande! 📬",
+                  body: Texts.new_order_recived,
+                  // data: {
+                  //   orderId: companyUserCart.orderId,
+                  // },
+                }),
+              });
+            }
           } else {
             fetch("https://exp.host/--/api/v2/push/send", {
-              method: "POST",
-              mode: "no-cors",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                to: restaurant_order.expoToken,
-                title: "Nouvelle commande! 📬",
-                body: Texts.new_order_recived,
-                // data: {
-                //   orderId: companyUserCart.orderId,
-                // },
-              }),
-            });
+                method: "POST",
+                mode: "no-cors",
+                headers: {
+                  Accept: "application/json",
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  to: restaurant_order.expoToken,
+                  title: "Nouvelle commande! 📬",
+                  body: Texts.new_order_recived,
+                  // data: {
+                  //   orderId: companyUserCart.orderId,
+                  // },
+                }),
+              });
           }
+
+          
 
           if (!restaurantCart) {
             // restaurantCart not found
@@ -993,6 +1022,7 @@ exports.order = async (req, res, next) => {
                 error.status = 404;
                 throw error;
               }
+
               const userIndex = restaurantCart.restaurantCarts[
                 companyIndex
               ].carts.findIndex(
