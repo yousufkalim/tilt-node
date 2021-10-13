@@ -836,7 +836,7 @@ exports.order = async (req, res, next) => {
     });
 
     allUsersInCompany.forEach((item) => {
-      if (item.expoToken) {
+      if (item.expoToken && user.status === "active") {
         fetch("https://exp.host/--/api/v2/push/send", {
           method: "POST",
           mode: "no-cors",
@@ -956,24 +956,22 @@ exports.order = async (req, res, next) => {
             }
           } else {
             fetch("https://exp.host/--/api/v2/push/send", {
-                method: "POST",
-                mode: "no-cors",
-                headers: {
-                  Accept: "application/json",
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  to: restaurant_order.expoToken,
-                  title: "Nouvelle commande! 📬",
-                  body: Texts.new_order_recived,
-                  // data: {
-                  //   orderId: companyUserCart.orderId,
-                  // },
-                }),
-              });
+              method: "POST",
+              mode: "no-cors",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                to: restaurant_order.expoToken,
+                title: "Nouvelle commande! 📬",
+                body: Texts.new_order_recived,
+                // data: {
+                //   orderId: companyUserCart.orderId,
+                // },
+              }),
+            });
           }
-
-          
 
           if (!restaurantCart) {
             // restaurantCart not found

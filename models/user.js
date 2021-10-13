@@ -18,10 +18,12 @@ const UserSchema = new Schema(
     },
     expoToken: String,
     status: { type: String, default: "active" },
-    block: {
-      type: Schema.Types.ObjectId,
-      ref: "Block",
-    },
+    block: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Block",
+      },
+    ],
     history: {
       type: Schema.Types.ObjectId,
       ref: "History",
