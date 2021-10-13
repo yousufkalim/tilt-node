@@ -70,11 +70,16 @@ const PORT = process.env.PORT || 5001;
 
 // Connecting to Database and listening to server
 mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useFindAndModify: false,
-  })
+  .connect(
+    process.env.NODE_ENV === "development"
+      ? process.env.MONGO_URI_DEV
+      : process.env.MONGO_URI_PRO,
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      useFindAndModify: false,
+    }
+  )
   .then(async (result) => {
     app.listen(PORT, () => console.log(`App listening at ${PORT}`));
     const discount = await DiscountsModel.find();
