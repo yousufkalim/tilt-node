@@ -216,16 +216,22 @@ exports.getDeliveries = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    if (!user.block) {
+    if (user.block.length === 0) {
       const err = new Error(Texts.contact_admin);
       err.status = 404;
       throw err;
     }
-    const restaurantsIds = user.block.restaurants;
-    const companiesIds = user.block.companies;
-    const getTime = user.block.deliveryTime.split("h")[1].split("m")[0]
-      ? user.block.deliveryTime.split("h")[1].split("m")[0]
-      : user.block.deliveryTime.split("m")[0];
+
+    let restaurantsIds = [];
+    let companiesIds = [];
+    user.block.map((b) => {
+      restaurantsIds = b.restaurants;
+      companiesIds = b.companies;
+    });
+
+    const getTime = user.block[0].deliveryTime.split("h")[1].split("m")[0]
+      ? user.block[0].deliveryTime.split("h")[1].split("m")[0]
+      : user.block[0].deliveryTime.split("m")[0];
     const checkTime = /\D/.test(getTime);
     console.log("delivery time ===> ", checkTime, getTime);
 
@@ -351,13 +357,18 @@ exports.pickDelivery = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    if (!user.block) {
+    if (user.block.length === 0) {
       const err = new Error(Texts.contact_admin);
       err.status = 404;
       throw err;
     }
-    const restaurantsIds = user.block.restaurants;
-    const companiesIds = user.block.companies;
+
+    let restaurantsIds = [];
+    let companiesIds = [];
+    user.block.map((b) => {
+      restaurantsIds = b.restaurants;
+      companiesIds = b.companies;
+    });
 
     const cookedArrayToSend = [];
     const pickedArrayToSend = [];
@@ -550,13 +561,18 @@ exports.deliverDelivery = async (req, res, next) => {
       err.status = 404;
       throw err;
     }
-    if (!user.block) {
+    if (user.block.length === 0) {
       const err = new Error(Texts.contact_admin);
       err.status = 404;
       throw err;
     }
-    const restaurantsIds = user.block.restaurants;
-    const companiesIds = user.block.companies;
+
+    let restaurantsIds = [];
+    let companiesIds = [];
+    user.block.map((b) => {
+      restaurantsIds = b.restaurants;
+      companiesIds = b.companies;
+    });
 
     const cookedArrayToSend = [];
     const pickedArrayToSend = [];
