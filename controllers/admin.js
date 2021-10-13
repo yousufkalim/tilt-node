@@ -500,7 +500,7 @@ exports.registerBlock = async (req, res, next) => {
     if (restaurants) {
       restaurants.map(async (id) => {
         var restaurant = await User.findByIdAndUpdate(id, {
-          block: blockSaved._id,
+          $push: { block: blockSaved._id },
         });
       });
     }
@@ -607,11 +607,10 @@ exports.editBlock = async (req, res, next) => {
       });
       // Comparing Old restaurants array with new requested restaurants array //
 
-      const arr3 = oldResturantsID.filter(function (id) {
-        return restaurants.indexOf(id) == -1;
-      });
-      arr3.map(async (val) => {
-        await User.findByIdAndUpdate(val, { $unset: { block: 1 } });
+      oldResturantsID.map(async (val) => {
+        await User.findByIdAndUpdate(val, {
+          $pull: { block: blockId },
+        });
       });
     }
 
@@ -649,7 +648,7 @@ exports.editBlock = async (req, res, next) => {
     if (restaurants) {
       restaurants.map(async (id) => {
         var restaurant = await User.findByIdAndUpdate(id, {
-          block: blockId,
+          $push: { block: blockSaved._id },
         });
       });
     }
@@ -699,7 +698,7 @@ exports.deleteBlock = async (req, res, next) => {
       if (restaurants) {
         restaurants.map(async (item) => {
           await User.findByIdAndUpdate(item, {
-            $unset: { block: 1 },
+            $pull: { block: blockId },
           });
         });
       }

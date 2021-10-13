@@ -237,19 +237,21 @@ exports.deleteRestaurant = async (req, res, next) => {
         }
       })
     );
-    let blockId = user.block;
+    let blockIds = user.block;
     user.status = "deleted";
     user.block = undefined;
     user.restaurant.dishes = [];
     const restaurantSaved = await user.save();
-    let block = await Block.findById(blockId);
-    if (block) {
-      let restaurants = block.restaurants;
-      restaurants = restaurants.filter(
-        (rest) => String(rest) !== String(restaurantSaved._id)
-      );
-      block.restaurants = restaurants;
-      await block.save();
+    if (blockIds.length > 0) {
+      blockIds.map(async (blockId) => {
+        let block = await Block.findById(blockId);
+        let restaurants = block.restaurants;
+        restaurants = restaurants.filter(
+          (rest) => String(rest) !== String(restaurantSaved._id)
+        );
+        block.restaurants = restaurants;
+        await block.save();
+      });
     }
 
     res.status(201).json({
