@@ -42,7 +42,7 @@ exports.login = async (req, res, next) => {
       throw err;
     }
     // Check if the user is assigned a block (for delivery person or restaurant)
-    if (user.role === "delivery" && !user.block) {
+    if (user.role === "delivery" && user.block.length === 0) {
       const err = new Error(Texts.contact_admin);
       err.status = 402;
       throw err;
