@@ -174,8 +174,10 @@ exports.suggestCompany = async (req, res, next) => {
     };
 
     await transporter.sendMail(mailOptions);
-  } catch (error) {}
-  res
-    .status(200)
-    .json({ suggested: true, message: "E-mail envoyé avec succès" });
+    res
+      .status(200)
+      .json({ suggested: true, message: "E-mail envoyé avec succès" });
+  } catch (err) {
+    next(err);
+  }
 };
