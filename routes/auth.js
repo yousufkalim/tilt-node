@@ -9,6 +9,7 @@ router.get("/checkemail/:email", AuthController.checkEmail);
 
 // POST
 router.post("/login", AuthController.login);
+router.post("/suggestCompany", AuthController.suggestCompany);
 
 // PUT
 router.put("/recover", AuthController.recover);
