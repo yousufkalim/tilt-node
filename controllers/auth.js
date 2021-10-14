@@ -152,3 +152,30 @@ exports.recover = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.suggestCompany = async (req, res, next) => {
+  try {
+    const name = req.body.name;
+    const email = req.body.email;
+
+    const transporter = nodemailer.createTransport({
+      service: process.env.CONTACT_FORM_EMAIL_SERVICE,
+      auth: {
+        user: process.env.CONTACT_FORM_EMAIL_LOGIN_EMAIL,
+        pass: process.env.CONTACT_FORM_EMAIL_PASSWORD,
+      },
+    });
+
+    var mailOptions = {
+      to: process.env.CONTACT_FORM_EMAIL_FROM_EMAIL,
+      from: email,
+      subject: "Suggestion pour ajouter une nouvelle Enterprise",
+      text: "Je vous propose d'ajouter l'entreprise suivante : " + name,
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {}
+  res
+    .status(200)
+    .json({ suggested: true, message: "E-mail envoyé avec succès" });
+};
