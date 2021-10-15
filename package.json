@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index",
     "start:dev": "nodemon index",
-    "deploy": "git pull origin master && npm install && pm2 restart 8"
+    "deploy": "git pull origin master && npm install && pm2 restart 8",
+    "prod": "git pull origin main && npm install && pm2 restart 2"
   },
   "author": "Talha_Falcon",
   "license": "ISC",
