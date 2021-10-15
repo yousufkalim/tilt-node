@@ -30,11 +30,7 @@ var accessLogStream = fs.createWriteStream(path.join(__dirname, "access.log"), {
 });
 
 // Logger
-app.use(
-  process.env.PORT
-    ? morgan("combined", { stream: accessLogStream })
-    : morgan("dev")
-);
+app.use(morgan("dev"));
 
 // CORS
 app.options("*", cors()); // enable pre-flight across-the-board
