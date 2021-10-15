@@ -12,3 +12,4 @@ data/documents/*.jpeg
 package-lock.json
 yarn-lock.json
 *.log
+.env
