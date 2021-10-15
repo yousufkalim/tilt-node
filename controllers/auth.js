@@ -167,8 +167,8 @@ exports.suggestCompany = async (req, res, next) => {
     });
 
     var mailOptions = {
-      to: process.env.CONTACT_FORM_EMAIL_FROM_EMAIL,
-      from: email,
+      from: process.env.CONTACT_FORM_EMAIL_FROM_EMAIL,
+      to: email,
       subject: "Suggestion pour ajouter une nouvelle Enterprise",
       text: "Je vous propose d'ajouter l'entreprise suivante : " + name,
     };
