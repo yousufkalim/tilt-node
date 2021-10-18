@@ -5,6 +5,7 @@ const companySchema = new Schema(
   {
     name: String,
     deliveryPlace: String,
+    phone: String,
     street: String,
     city: {
       type: String,
