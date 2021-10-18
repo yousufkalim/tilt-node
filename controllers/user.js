@@ -300,6 +300,7 @@ exports.registerUser = async (req, res, next) => {
   const lastName = req.body.lastName;
   const email = req.body.email;
   const password = req.body.password;
+  const phone = req.body.phone;
   const companyId = req.body.companyId;
   const affiliate = req.body.affiliate;
   try {
@@ -362,6 +363,7 @@ exports.registerUser = async (req, res, next) => {
       lastName: lastName,
       email: email,
       password: hashedPassword,
+      phone: phone,
       user: {
         affiliateCode: affiliateCode,
         company: companyId,
@@ -383,6 +385,7 @@ exports.editUser = async (req, res, next) => {
   const firstName = req.body.firstName;
   const lastName = req.body.lastName;
   const email = req.body.email;
+  const phone = req.body.phone;
   try {
     const user = await User.findById(userId)
       .populate("user.package")
@@ -418,6 +421,7 @@ exports.editUser = async (req, res, next) => {
     user.firstName = firstName;
     user.lastName = lastName;
     user.email = email;
+    user.phone = phone;
     const userSaved = await user.save();
     res.status(201).json({ updated: true, user: userSaved });
   } catch (err) {
@@ -1235,6 +1239,7 @@ exports.getAllOrders = async (req, res, next) => {
         $project: {
           "orderHistory.time": 1,
           "orderHistory.paidPrice": 1,
+          "orderHistory.status": 1,
           order: 1,
         },
       },
