@@ -5,10 +5,11 @@ const companySchema = new Schema(
   {
     name: String,
     deliveryPlace: String,
+    phone: String,
     street: String,
     city: {
       type: String,
-      enum: ["RS", "DU", "FDF", "LAM", "SCH"],
+      enum: ["RS", "DU", "FDF", "LAM", "SCH", "SL"],
       required: true,
     },
     deliveryPerson: {

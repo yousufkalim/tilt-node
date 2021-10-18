@@ -91,8 +91,8 @@ exports.registerCompany = async (req, res, next) => {
   const deliveryPlace = req.body.deliveryPlace;
   const street = req.body.street;
   const city = req.body.city;
+  const phone = req.body.phone;
   // const deliveryPerson = req.body.deliveryPerson;
-
   try {
     // check if the package exists already
     const companyCheck = await Company.findOne({ name: name });
@@ -107,10 +107,12 @@ exports.registerCompany = async (req, res, next) => {
       deliveryPlace: deliveryPlace,
       street: street,
       city: city,
+      phone: phone,
       // deliveryPerson: deliveryPerson,
     };
     const value = await validaion.register_Company(input);
     const company = new Company(value);
+
     // save the company to the db
     const companySaved = await company.save();
     // response sending
@@ -130,6 +132,7 @@ exports.editCompany = async (req, res, next) => {
   const deliveryPlace = req.body.deliveryPlace;
   const street = req.body.street;
   const city = req.body.city;
+  const phone = req.body.phone;
   // const deliveryPerson = req.body.deliveryPerson;
 
   try {
@@ -143,6 +146,7 @@ exports.editCompany = async (req, res, next) => {
     const input = {
       name,
       deliveryPlace,
+      phone,
       street,
       city,
       // deliveryPerson: deliveryPerson,
@@ -155,6 +159,7 @@ exports.editCompany = async (req, res, next) => {
     company.street = value.street;
     company.city = value.city;
     company.deliveryPerson = value.deliveryPerson;
+    company.phone = value.phone;
     // saving the updated doc
     const companySaved = await company.save();
     // response sending
