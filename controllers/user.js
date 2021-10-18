@@ -1239,6 +1239,7 @@ exports.getAllOrders = async (req, res, next) => {
         $project: {
           "orderHistory.time": 1,
           "orderHistory.paidPrice": 1,
+          "orderHistory.status": 1,
           order: 1,
         },
       },
