@@ -8,7 +8,7 @@ const companySchema = new Schema(
     street: String,
     city: {
       type: String,
-      enum: ["RS", "DU", "FDF", "LAM", "SCH"],
+      enum: ["RS", "DU", "FDF", "LAM", "SCH", "SL"],
       required: true,
     },
     deliveryPerson: {
