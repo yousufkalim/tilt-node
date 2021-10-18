@@ -39,6 +39,7 @@ module.exports = {
       deliveryPlace: Joi.string().required(),
       street: Joi.string().required(),
       city: Joi.string().required(),
+      phone: Joi.string().required(),
       // deliveryPerson: Joi.string().required(),
     });
 
@@ -56,6 +57,7 @@ module.exports = {
       deliveryPlace: Joi.string().required(),
       street: Joi.string().required(),
       city: Joi.string().required(),
+      phone: Joi.string().required(),
       // deliveryPerson: Joi.string().required(),
     });
     const { error, value } = schema.validate(data);
