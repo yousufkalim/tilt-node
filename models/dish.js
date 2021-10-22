@@ -1,6 +1,18 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
+const addOnsSchema = new Schema({
+  name: String,
+  min: Number,
+  max: Number,
+  choice: [
+    {
+      name: String,
+      price: Number,
+    },
+  ],
+});
+
 const dishSchema = new Schema(
   {
     name: { type: String, required: true },
@@ -15,6 +27,7 @@ const dishSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
+    addOns: [addOnsSchema],
   },
   { timestamps: true }
 );

@@ -18,6 +18,17 @@ const cartSchema = new Schema(
               ref: "Dish",
             },
             count: Number,
+            addOns: [
+              {
+                name: String,
+                choice: [
+                  {
+                    name: String,
+                    price: Number,
+                  },
+                ],
+              },
+            ],
           },
         ],
       },
@@ -44,6 +55,17 @@ const cartSchema = new Schema(
                   ref: "Dish",
                 },
                 count: Number,
+                addOns: [
+                  {
+                    name: String,
+                    choice: [
+                      {
+                        name: String,
+                        price: Number,
+                      },
+                    ],
+                  },
+                ],
               },
             ],
             totalPrice: Number,
