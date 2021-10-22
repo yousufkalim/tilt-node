@@ -326,7 +326,6 @@ exports.completeOrder = async (req, res, next) => {
     );
 
     const companyCart = cart.restaurantCarts[companyIndex];
-
     const history = await History.findOne({ user: userId });
     if (history) {
       history.restaurantHistory.push({
@@ -467,6 +466,8 @@ exports.addDish = async (req, res, next) => {
     const dishType = req.body.dishType;
     const description = req.body.description;
     const specials = req.body.specials;
+    const addOns = req.body.addOns;
+
     let imagePath = req.file !== undefined ? req.file.path : "";
     imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
     let files;
@@ -512,7 +513,9 @@ exports.addDish = async (req, res, next) => {
       specials: JSON.parse(specials),
       description: description,
       restaurant: userId,
+      addOns: JSON.parse(addOns),
     });
+
     const dishSaved = await dish.save();
     restaurant.restaurant.dishes.push(dishSaved._id);
     await restaurant.save();
