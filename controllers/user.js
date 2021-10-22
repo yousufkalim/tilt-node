@@ -434,7 +434,6 @@ exports.editUser = async (req, res, next) => {
 exports.addExpoToken = async (req, res, next) => {
   const userId = req.userId;
   const expoToken = req.body.expoToken;
-  console.log("expoToken", expoToken);
   try {
     const user = await User.findByIdAndUpdate(userId, { expoToken: expoToken })
       .populate("user.package")
@@ -1098,7 +1097,6 @@ exports.order = async (req, res, next) => {
       })
       .exec();
 
-    console.log("history", history);
     if (history) {
       history.orderHistory.push({
         totalPrice: cart.totalPrice,
@@ -1116,7 +1114,6 @@ exports.order = async (req, res, next) => {
         user: userToSend,
       });
     } else {
-      cosnole.log("hissssss");
       const newHistory = new History({
         user: cart.user._id,
         orderHistory: [
@@ -1129,8 +1126,6 @@ exports.order = async (req, res, next) => {
           },
         ],
       });
-      cosnole.log("toryyyy", newHistory);
-
       const historySaved = await newHistory.save();
       await Cart.findByIdAndDelete(cart._id);
       res.status(201).json({
