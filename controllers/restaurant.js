@@ -536,6 +536,7 @@ exports.editDish = async (req, res, next) => {
   const dishType = req.body.dishType;
   const description = req.body.description;
   const specials = req.body.specials;
+  const addOns = req.body.addOns;
   let imagePath = req.file !== undefined ? req.file.path : "";
   imagePath !== "" && (imagePath = imagePath.replace(/\\/g, "/"));
 
@@ -590,8 +591,8 @@ exports.editDish = async (req, res, next) => {
       dish.price = price;
       dish.dishType = dishType;
       dish.description = description;
-      // dish.specials = specials;
       dish.specials = JSON.parse(specials);
+      dish.addOns = JSON.parse(addOns);
       imagePath !== "" &&
         (dish.image = files[0].destinationPath.replace(/\\/g, "/"));
       const dishSaved = await dish.save();
