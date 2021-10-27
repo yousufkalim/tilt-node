@@ -671,17 +671,14 @@ exports.addBank = async (req, res, next) => {
     };
     const bankName = req.body.bankName;
     const iban = req.body.iban;
-    const stripeid = req.body.stripeID;
-    console.log(stripeid);
-
+    const accountToken = req.body.token;
+    const personToken = req.body.personToken;
     let front =
       req.files["front"] !== undefined ? req.files["front"][0].path : "";
     front !== "" && (front = front.replace(/\\/g, "/"));
 
     let back = req.files["back"] !== undefined ? req.files["back"][0].path : "";
     back !== "" && (back = back.replace(/\\/g, "/"));
-
-    console.log("front", front, back);
 
     const restaurant = await User.findById(userId).populate("block").exec();
     if (!restaurant) {
@@ -692,60 +689,10 @@ exports.addBank = async (req, res, next) => {
 
     const stripe = Stripe(process.env.STRIPE_URI);
 
-    const fs = require("fs");
-    var fp = fs.readFileSync(front);
-    var bk = fs.readFileSync(back);
-
-    var fileFront = await stripe.files.create({
-      purpose: "additional_verification",
-      file: {
-        data: fp,
-        name: req.files["front"][0].filename,
-        type: "application/octet-stream",
-      },
-    });
-    var fileBack = await stripe.files.create({
-      purpose: "additional_verification",
-      file: {
-        data: bk,
-        name: req.files["back"][0].filename,
-        type: "application/octet-stream",
-      },
-    });
-
-    const token = await stripe.tokens.create({
-      account: {
-        tos_shown_and_accepted: true,
-        business_type: "individual",
-        individual: {
-          email: restaurant.email,
-          first_name: restaurant.firstName,
-          last_name: restaurant.firstName,
-
-          phone: phone,
-          dob: newDOB,
-
-          address: {
-            line1: restaurant.address.street,
-            postal_code: parseInt(restaurant.address.zip),
-            city: restaurant.address.city,
-            country: "FR",
-          },
-          verification: {
-            additional_document: {
-              back: fileBack.id,
-              details: "Utiliser le document pour le recto et le verso",
-              front: fileFront.id,
-            },
-          },
-        },
-      },
-    });
-
     const account = await stripe.account.create({
       type: "custom",
       country: "FR",
-      account_token: token.id,
+      account_token: accountToken,
       email: restaurant.email,
       business_profile: {
         name: restaurant.name,
@@ -765,6 +712,14 @@ exports.addBank = async (req, res, next) => {
         currency: "eur",
       },
     });
+    //Creating person
+    var person = await stripe.accounts.createPerson(
+      account.id, // id of the account created earlier
+      {
+        person_token: personToken,
+      }
+    );
+
     restaurant.restaurant.bank.phone = phone;
     restaurant.restaurant.bank.DOB = DOB;
     restaurant.restaurant.bank.bankName = bankName;
@@ -773,30 +728,6 @@ exports.addBank = async (req, res, next) => {
     restaurant.restaurant.bank.front = front;
     restaurant.restaurant.bank.back = back;
 
-    // restaurant.restaurant.bank.front = {
-    //   uri: req.files["front"][0].path,
-    //   name: req.files["front"][0].filename,
-    //   type: "application/octet-stream",
-    // };
-    // restaurant.restaurant.bank.back = {
-    //   uri: req.files["back"][0].path,
-    //   name: req.files["back"][0].filename,
-    //   type: "application/octet-stream",
-    // };
-
-    // restaurant.restaurant.bank = {
-    //   ...restaurant.restaurant.bank,
-    //   front: {
-    //     uri: front,
-    //     name: req.files["front"][0].filename,
-    //     type: "application/octet-stream",
-    //   },
-    //   back: {
-    //     uri: back,
-    //     name: req.files["back"][0].filename,
-    //     type: "application/octet-stream",
-    //   },
-    // };
     const userSaved = await restaurant.save();
 
     res
