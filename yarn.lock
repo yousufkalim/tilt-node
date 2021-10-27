@@ -3405,10 +3405,10 @@
   dependencies:
     "escape-string-regexp" "^1.0.2"
 
-"stripe@^8.113.0":
-  "integrity" "sha512-73b49GQg2+ig6Cet11QhN1WgBab+2xtHy57W4ZLRd9dq146vz+vik+kMQ7UAcTSF5vYyTM5Zo6POMZDPXqzWUg=="
-  "resolved" "https://registry.npmjs.org/stripe/-/stripe-8.129.0.tgz"
-  "version" "8.129.0"
+"stripe@^8.184.0":
+  "integrity" "sha512-ZUdvyX+sizTxXLEbUjgTShrulSWSkMIt7hIKdAkhnajYrHdzVtdmhBJl8sQbR9chMVox3Ig5ohilyeIrvcCE2g=="
+  "resolved" "https://registry.npmjs.org/stripe/-/stripe-8.184.0.tgz"
+  "version" "8.184.0"
   dependencies:
     "@types/node" ">=8.1.0"
     "qs" "^6.6.0"
