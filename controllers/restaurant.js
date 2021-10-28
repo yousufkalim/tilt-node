@@ -730,7 +730,7 @@ exports.addBank = async (req, res, next) => {
       .status(201)
       .json({ message: "mis à jour avec succès", restaurant: userSaved });
   } catch (err) {
-    next(err);
+    res.status(err.statusCode).json({ message: err.message });
   }
 };
 
