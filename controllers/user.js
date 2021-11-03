@@ -675,7 +675,7 @@ exports.addToCart = async (req, res, next) => {
   const dishId = req.body.dishId;
   const dishPrice = req.body.dishPrice;
   const dishCount = req.body.dishCount;
-  const addOns = req.body.addOns;
+  const addOns = JSON.parse(req.body.addOns);
 
   try {
     const cart = await Cart.findOne({ user: userId });
@@ -688,14 +688,22 @@ exports.addToCart = async (req, res, next) => {
       );
       if (restaurantCartIndex < 0) {
         // restaurnat entry not found
-        cart.totalPrice += +dishPrice * +dishCount;
+        let choicePrice = 0;
+        if (addOns.length > 0) {
+          addOns.map((addon) => {
+            addon.choice.map((c) => {
+              return (choicePrice += c.price);
+            });
+          });
+        }
+        cart.totalPrice += +dishPrice * +dishCount + choicePrice;
         cart.userCarts.push({
           restaurant: dish.restaurant,
           dishes: [
             {
               id: dishId,
               count: +dishCount,
-              addOns: JSON.parse(addOns),
+              addOns: addOns,
             },
           ],
         });
@@ -720,17 +728,25 @@ exports.addToCart = async (req, res, next) => {
 
             return (
               String(dish.id) === String(dishId) &&
-              JSON.stringify(arr) === JSON.stringify(JSON.parse(addOns))
+              JSON.stringify(arr) === JSON.stringify(addOns)
             );
           }
         );
         if (dishIndex < 0) {
           // dish not found
-          cart.totalPrice += +dishPrice * +dishCount;
+          let choicePrice = 0;
+          if (addOns.length > 0) {
+            addOns.map((addon) => {
+              addon.choice.map((c) => {
+                return (choicePrice += c.price);
+              });
+            });
+          }
+          cart.totalPrice += +dishPrice * +dishCount + choicePrice;
           cart.userCarts[restaurantCartIndex].dishes.push({
             id: dishId,
             count: +dishCount,
-            addOns: JSON.parse(addOns),
+            addOns: addOns,
           });
           const cartSaved = await cart.save();
           const cartToSend = await Cart.findById(cartSaved._id)
@@ -739,12 +755,19 @@ exports.addToCart = async (req, res, next) => {
             .exec();
           res.status(201).json({ added: true, cart: cartToSend });
         } else {
+          let choicePrice = 0;
+          if (addOns.length > 0) {
+            addOns.map((addon) => {
+              addon.choice.map((c) => {
+                return (choicePrice += c.price);
+              });
+            });
+          }
           // dish found
           cart.userCarts[restaurantCartIndex].dishes[dishIndex].count +=
             +dishCount;
-          cart.totalPrice += +dishPrice * +dishCount;
-          cart.userCarts[restaurantCartIndex].dishes[dishIndex].addOns =
-            JSON.parse(addOns);
+          cart.totalPrice += +dishPrice * +dishCount + choicePrice;
+          cart.userCarts[restaurantCartIndex].dishes[dishIndex].addOns = addOns;
           const cartSaved = await cart.save();
           const cartToSend = await Cart.findById(cartSaved._id)
             .populate("userCarts.restaurant")
@@ -754,9 +777,17 @@ exports.addToCart = async (req, res, next) => {
         }
       }
     } else {
+      let choicePrice = 0;
+      if (addOns.length > 0) {
+        addOns.map((addon) => {
+          addon.choice.map((c) => {
+            return (choicePrice += c.price);
+          });
+        });
+      }
       const newCart = new Cart({
         user: userId,
-        totalPrice: +dishPrice * +dishCount,
+        totalPrice: +dishPrice * +dishCount + choicePrice,
         userCarts: [
           {
             restaurant: dish.restaurant,
@@ -764,7 +795,7 @@ exports.addToCart = async (req, res, next) => {
               {
                 id: dishId,
                 count: +dishCount,
-                addOns: JSON.parse(addOns),
+                addOns: addOns,
               },
             ],
           },
@@ -814,8 +845,21 @@ exports.removeFromCart = async (req, res, next) => {
       error.status = 404;
       throw error;
     }
+
+    let choicePrice = 0;
+    let addons = cart.userCarts[restaurantCartIndex].dishes[dishIndex].addOns;
+    if (addons.length > 0) {
+      addons.map((addon) => {
+        addon.choice.map((c) => {
+          return (choicePrice += c.price);
+        });
+      });
+    }
+
     cart.totalPrice -=
-      +dishPrice * +cart.userCarts[restaurantCartIndex].dishes[dishIndex].count;
+      +(
+        dishPrice * +cart.userCarts[restaurantCartIndex].dishes[dishIndex].count
+      ) + choicePrice;
     cart.userCarts[restaurantCartIndex].dishes = cart.userCarts[
       restaurantCartIndex
     ].dishes.filter((dish) => String(dish._id) !== String(dishCartId));
