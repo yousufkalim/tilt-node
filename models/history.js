@@ -29,6 +29,17 @@ const HistorySchema = new Schema(
                   ref: "Dish",
                 },
                 count: Number,
+                addOns: [
+                  {
+                    name: String,
+                    choice: [
+                      {
+                        name: String,
+                        price: Number,
+                      },
+                    ],
+                  },
+                ],
               },
             ],
           },
@@ -60,6 +71,17 @@ const HistorySchema = new Schema(
                   ref: "Dish",
                 },
                 count: Number,
+                addOns: [
+                  {
+                    name: String,
+                    choice: [
+                      {
+                        name: String,
+                        price: Number,
+                      },
+                    ],
+                  },
+                ],
               },
             ],
             totalPrice: Number,
@@ -96,6 +118,17 @@ const HistorySchema = new Schema(
                   ref: "Dish",
                 },
                 count: Number,
+                addOns: [
+                  {
+                    name: String,
+                    choice: [
+                      {
+                        name: String,
+                        price: Number,
+                      },
+                    ],
+                  },
+                ],
               },
             ],
             totalPrice: Number,

@@ -434,7 +434,6 @@ exports.editUser = async (req, res, next) => {
 exports.addExpoToken = async (req, res, next) => {
   const userId = req.userId;
   const expoToken = req.body.expoToken;
-  console.log("expoToken", expoToken);
   try {
     const user = await User.findByIdAndUpdate(userId, { expoToken: expoToken })
       .populate("user.package")
@@ -676,6 +675,8 @@ exports.addToCart = async (req, res, next) => {
   const dishId = req.body.dishId;
   const dishPrice = req.body.dishPrice;
   const dishCount = req.body.dishCount;
+  const addOns = req.body.addOns;
+
   try {
     const cart = await Cart.findOne({ user: userId });
     const dish = await Dish.findById(dishId);
@@ -694,6 +695,7 @@ exports.addToCart = async (req, res, next) => {
             {
               id: dishId,
               count: +dishCount,
+              addOns: JSON.parse(addOns),
             },
           ],
         });
@@ -705,7 +707,22 @@ exports.addToCart = async (req, res, next) => {
         res.status(201).json({ added: true, cart: cartToSend });
       } else {
         const dishIndex = cart.userCarts[restaurantCartIndex].dishes.findIndex(
-          (dish) => String(dish.id) === String(dishId)
+          (dish) => {
+            let arr = [];
+            dish.addOns.map((addOn) => {
+              let choice = [];
+              addOn.choice.map((c) => {
+                choice.push({ name: c.name, price: c.price });
+              });
+
+              arr.push({ name: addOn.name, choice: choice });
+            });
+
+            return (
+              String(dish.id) === String(dishId) &&
+              JSON.stringify(arr) === JSON.stringify(JSON.parse(addOns))
+            );
+          }
         );
         if (dishIndex < 0) {
           // dish not found
@@ -713,6 +730,7 @@ exports.addToCart = async (req, res, next) => {
           cart.userCarts[restaurantCartIndex].dishes.push({
             id: dishId,
             count: +dishCount,
+            addOns: JSON.parse(addOns),
           });
           const cartSaved = await cart.save();
           const cartToSend = await Cart.findById(cartSaved._id)
@@ -725,6 +743,8 @@ exports.addToCart = async (req, res, next) => {
           cart.userCarts[restaurantCartIndex].dishes[dishIndex].count +=
             +dishCount;
           cart.totalPrice += +dishPrice * +dishCount;
+          cart.userCarts[restaurantCartIndex].dishes[dishIndex].addOns =
+            JSON.parse(addOns);
           const cartSaved = await cart.save();
           const cartToSend = await Cart.findById(cartSaved._id)
             .populate("userCarts.restaurant")
@@ -744,6 +764,7 @@ exports.addToCart = async (req, res, next) => {
               {
                 id: dishId,
                 count: +dishCount,
+                addOns: JSON.parse(addOns),
               },
             ],
           },
@@ -766,6 +787,7 @@ exports.addToCart = async (req, res, next) => {
 exports.removeFromCart = async (req, res, next) => {
   let userId = req.userId;
   const dishId = req.body.dishId;
+  const dishCartId = req.body.dishCartId;
   const dishPrice = req.body.dishPrice;
   try {
     const cart = await Cart.findOne({ user: userId });
@@ -785,7 +807,7 @@ exports.removeFromCart = async (req, res, next) => {
       throw error;
     }
     let dishIndex = cart.userCarts[restaurantCartIndex].dishes.findIndex(
-      (dish) => String(dish.id) === String(dishId)
+      (dish) => String(dish._id) === String(dishCartId)
     );
     if (dishIndex < 0) {
       const error = new Error(Texts.not_dish);
@@ -796,7 +818,7 @@ exports.removeFromCart = async (req, res, next) => {
       +dishPrice * +cart.userCarts[restaurantCartIndex].dishes[dishIndex].count;
     cart.userCarts[restaurantCartIndex].dishes = cart.userCarts[
       restaurantCartIndex
-    ].dishes.filter((dish) => String(dish.id) !== String(dishId));
+    ].dishes.filter((dish) => String(dish._id) !== String(dishCartId));
     const cartSaved = await cart.save();
     const cartToSend = await Cart.findById(cartSaved._id)
       .populate("userCarts.restaurant")
@@ -827,14 +849,11 @@ exports.getCart = async (req, res, next) => {
 exports.order = async (req, res, next) => {
   let userId = req.userId;
   const user = await User.findById(userId);
-  // console.log("user details ===> ", JSON.stringify(user.user.company, null, 2));
-
   const cart = await Cart.find({
     restaurantCarts: { $elemMatch: { company: user.user.company } },
   }).populate("restaurantCarts.company");
 
   if (cart.length === 0) {
-    console.log("CHecking second order");
     const allUsersInCompany = await User.find({
       $and: [{ "user.company": user.user.company }, { _id: { $ne: user._id } }],
     });
@@ -857,46 +876,6 @@ exports.order = async (req, res, next) => {
       }
     });
   }
-
-  // Commented because the conditions were wrong and notifications were not working
-  // cart.map(async (item) => {
-  //   item.restaurantCarts.map(async (cartItems) => {
-  //     if (!cartItems.carts || cartItems.carts.length === 0) {
-  //       const companyID = await User.find({
-  //         "user.company": cartItems.company,
-  //       });
-  //       companyID.map((companyUsers) => {
-  //         if (companyUsers) {
-  //           if (companyUsers.expoToken) {
-  //             // console.log(
-  //             //   "user cart ===> ",
-  //             //   JSON.stringify(companyUsers.expoToken, null, 2)
-  //             // );
-
-  //             fetch("https://exp.host/--/api/v2/push/send", {
-  //               method: "POST",
-  //               mode: "no-cors",
-  //               headers: {
-  //                 Accept: "application/json",
-  //                 "Content-Type": "application/json",
-  //               },
-  //               body: JSON.stringify({
-  //                 to: companyUsers.expoToken,
-  //                 title: Texts.company_placed_first_order,
-  //                 body: Texts.message_to_all_person,
-  //                 // data: {
-  //                 //   orderId: companyUserCart.orderId,
-  //                 // },
-  //               }),
-  //             });
-  //           }
-  //         }
-  //       });
-  //     }
-  //   });
-  // });
-  // console.log("user cart ===> ", JSON.stringify(cart, null, 2));
-
   try {
     const cart = await Cart.findOne({ user: userId })
       .populate({
@@ -910,6 +889,7 @@ exports.order = async (req, res, next) => {
         },
       })
       .exec();
+
     if (!cart || cart.totalPrice <= 0) {
       const error = new Error(Texts.not_cart);
       error.status = 404;
@@ -918,29 +898,45 @@ exports.order = async (req, res, next) => {
     let orderId = "0000000000000000".replace(/0/g, function () {
       return (~~(Math.random() * 16)).toString(16);
     });
-    console.log("orderId", orderId);
     await Promise.all(
       cart.userCarts.map(async (userCart) => {
-        console.log("userCart", userCart);
         if (userCart.dishes.length > 0) {
           const restaurantCart = await Cart.findOne({
             user: userCart.restaurant,
           });
-          const restaurant_order = await User.findById(userCart.restaurant);
-          console.log("rest id ", restaurant_order);
+          if (restaurantCart) {
+            const restaurant_order = await User.findById(userCart.restaurant);
 
-          const companyIndex = restaurantCart.restaurantCarts.findIndex(
-            (element) =>
-              element.company.toString() ===
-              cart.user.user.company._id.toString()
-          );
+            const companyIndex = restaurantCart.restaurantCarts.findIndex(
+              (element) =>
+                element.company.toString() ===
+                cart.user.user.company._id.toString()
+            );
 
-          // console.log("Stopped ----> ", restaurantCart.restaurantCarts[companyIndex])
-
-          if (restaurantCart.restaurantCarts[companyIndex]) {
-            if (!restaurant_order) {
-            } else if (!restaurant_order.expoToken) {
-            } else if (!restaurantCart.restaurantCarts[companyIndex].stopped) {
+            if (restaurantCart.restaurantCarts[companyIndex]) {
+              if (!restaurant_order) {
+              } else if (!restaurant_order.expoToken) {
+              } else if (
+                !restaurantCart.restaurantCarts[companyIndex].stopped
+              ) {
+                fetch("https://exp.host/--/api/v2/push/send", {
+                  method: "POST",
+                  mode: "no-cors",
+                  headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    to: restaurant_order.expoToken,
+                    title: "Nouvelle commande! 📬",
+                    body: Texts.new_order_recived,
+                    // data: {
+                    //   orderId: companyUserCart.orderId,
+                    // },
+                  }),
+                });
+              }
+            } else {
               fetch("https://exp.host/--/api/v2/push/send", {
                 method: "POST",
                 mode: "no-cors",
@@ -958,25 +954,7 @@ exports.order = async (req, res, next) => {
                 }),
               });
             }
-          } else {
-            fetch("https://exp.host/--/api/v2/push/send", {
-              method: "POST",
-              mode: "no-cors",
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                to: restaurant_order.expoToken,
-                title: "Nouvelle commande! 📬",
-                body: Texts.new_order_recived,
-                // data: {
-                //   orderId: companyUserCart.orderId,
-                // },
-              }),
-            });
           }
-
           if (!restaurantCart) {
             // restaurantCart not found
             const newRestaurantCart = new Cart({
@@ -995,6 +973,7 @@ exports.order = async (req, res, next) => {
                 },
               ],
             });
+
             await newRestaurantCart.save();
           } else {
             const companyIndex = restaurantCart.restaurantCarts.findIndex(
@@ -1016,6 +995,7 @@ exports.order = async (req, res, next) => {
                   },
                 ],
               });
+
               await restaurantCart.save();
             } else {
               // company found
@@ -1038,6 +1018,7 @@ exports.order = async (req, res, next) => {
                   totalPrice: cart.totalPrice,
                   dishes: userCart.dishes,
                 });
+
                 await restaurantCart.save();
               } else {
                 // user entry found
@@ -1048,9 +1029,20 @@ exports.order = async (req, res, next) => {
                   restaurantCart.restaurantCarts[companyIndex].carts[userIndex]
                     .dishes;
                 userCart.dishes.map((element) => {
+                  let arr = [];
+                  element.addOns.map((addOn) => {
+                    let choice = [];
+                    addOn.choice.map((c) => {
+                      choice.push({ name: c.name, price: c.price });
+                    });
+
+                    arr.push({ name: addOn.name, choice: choice });
+                  });
+
                   newDishesArray.push({
                     id: element.id,
                     count: element.count,
+                    addOns: arr,
                   });
                 });
                 restaurantCart.restaurantCarts[companyIndex].carts[
@@ -1104,6 +1096,7 @@ exports.order = async (req, res, next) => {
         ],
       })
       .exec();
+
     if (history) {
       history.orderHistory.push({
         totalPrice: cart.totalPrice,
