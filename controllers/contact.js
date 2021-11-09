@@ -14,7 +14,7 @@ exports.sendEmail = async (req, res, next) => {
 
     const mailOptions = {
       from: process.env.CONTACT_FORM_EMAIL_FROM_EMAIL,
-      to: process.env.CONTACT_FORM_EMAIL_FROM_EMAIL,
+      to: "contact@tilt-entreprise.com",
       subject: "Contact Form Email",
       html: `
           <p><b>Prénom:</b> ${prenom}</p>
