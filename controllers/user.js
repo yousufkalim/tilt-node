@@ -563,6 +563,7 @@ exports.deleteUser = async (req, res, next) => {
       throw err;
     }
     user.status = "deleted";
+    user.email = user.email.substring(0, 2) + Date.now() + "@abx.xyz";
     const userSaved = await user.save();
     res.status(201).json({
       deleted: true,

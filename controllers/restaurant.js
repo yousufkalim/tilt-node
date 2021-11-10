@@ -239,6 +239,7 @@ exports.deleteRestaurant = async (req, res, next) => {
     );
     let blockIds = user.block;
     user.status = "deleted";
+    user.email = user.email.substring(0, 2) + Date.now() + "@abx.xyz";
     user.block = undefined;
     user.restaurant.dishes = [];
     const restaurantSaved = await user.save();
